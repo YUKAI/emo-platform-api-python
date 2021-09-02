@@ -39,7 +39,7 @@ class Client:
 	BASE_URL = "https://platform-api.bocco.me"
 
 	def __init__(self, refresh_token):
-		self.headers = {'accept':'*/*', 'Content-Type':'application/json'}
+		self.headers = {'accept':'*/*'}
 		self.access_token, self.refresh_token = self.get_access_token(refresh_token)
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
 
@@ -49,10 +49,15 @@ class Client:
 							headers=self.headers)
 		return result.status_code, result.json()
 
-	def _post(self, path, data = {}):
+	def _post(self, path, data = {}, files = None, content_type = 'application/json'):
+		if content_type == 'application/json':
+			self.headers['Content-Type'] = 'application/json'
 		result = requests.post(self.BASE_URL + path,
 							data=data,
+							files = files,
 							headers=self.headers)
+		if content_type == 'application/json':
+			self.headers.pop('Content-Type')
 		return result.status_code, result.json()
 
 	def _put(self, path, data = {}):
@@ -130,9 +135,8 @@ class Room:
 
 	def send_audio_msg(self, audio_data_path):
 		with open(audio_data_path, 'rb') as audio_data:
-			# ? payload format
-			payload = {'audio' : base64.b64encode(audio_data.read())}
-		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/audio', json.dumps(payload))
+			files = {'audio' : audio_data}
+			return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/audio', files=files, content_type=None)
 
 	def send_image(self, image_data):
 		# ? payload format

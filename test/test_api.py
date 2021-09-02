@@ -68,10 +68,10 @@ class TestRoomSendData(unittest.TestCase):
 		rooms_id_list = cls.client.get_rooms_id()
 		cls.room = cls.client.create_room_client(rooms_id_list[0])
 
-	# def test_send_audio_msg(self):
-	# 	print("\n" + "="*20 + " room send audio msg " + "="*20)
-	# 	audio_data_path = "../assets/sample_audio.mp3"
-	# 	print(self.room.send_audio_msg(audio_data_path))
+	def test_send_audio_msg(self):
+		print("\n" + "="*20 + " room send audio msg " + "="*20)
+		audio_data_path = "../assets/sample_audio.mp3"
+		print(self.room.send_audio_msg(audio_data_path))
 
 	# def test_send_image(self):
 	# 	pass
