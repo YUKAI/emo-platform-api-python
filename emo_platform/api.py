@@ -27,6 +27,11 @@ class Head:
 		self.angle = angle
 		self.vertical_angle = vertical_angle
 
+class WebHook:
+	def __init__(self, description, url):
+		self.description = description
+		self.url = url
+
 class ResStatus:
 	OK = 200
 
@@ -53,6 +58,11 @@ class Client:
 	def _put(self, path, data = {}):
 		result = requests.put(self.BASE_URL + path,
 							data=data,
+							headers=self.headers)
+		return result.status_code, result.json()
+
+	def _delete(self, path):
+		result = requests.delete(self.BASE_URL + path,
 							headers=self.headers)
 		return result.status_code, result.json()
 
@@ -85,15 +95,23 @@ class Client:
 	def get_motions_list(self):
 		return self._get('/v1/motions')
 
-	def register_webhook(self, url):
-		payload = {'description': 'my webhook', 'url' : url}
-		result = self._post('/v1/webhook', json.dumps(payload))
-		print(result)
+	def get_webhook_setting(self):
+		return self._get('/v1/webhook')
+
+	def change_webhook_setting(self, webhook):
+		payload = {'description': webhook.description, 'url' : webhook.url}
+		return self._put('/v1/webhook', json.dumps(payload))
 
 	def register_webhook_event(self, events):
 		payload = {'events' : events}
 		return self._put('/v1/webhook/events', json.dumps(payload))
 
+	def create_webhook_setting(self, webhook):
+		payload = {'description': webhook.description, 'url' : webhook.url}
+		return self._post('/v1/webhook', json.dumps(payload))
+
+	def delete_webhook_setting(self):
+		return self._delete('/v1/webhook')
 
 class Room:
 	def __init__(self, base_client, room_id):
