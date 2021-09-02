@@ -16,6 +16,20 @@ def emo_callback():  # emoからのwebhookを受信した際の処理
 	else:
 		abort(400)
 
+class Color:
+	def __init__(self, red, green, blue):
+		self.red = red
+		self.green = green
+		self.blue = blue
+
+class Head:
+	def __init__(self, angle, vertical_angle):
+		self.angle = angle
+		self.vertical_angle = vertical_angle
+
+class ResStatus:
+	OK = 200
+
 class Client:
 	BASE_URL = "https://platform-api.bocco.me"
 
@@ -23,27 +37,30 @@ class Client:
 		self.headers = {'accept':'*/*', 'Content-Type':'application/json'}
 		self.access_token, self.refresh_token = self.get_access_token(refresh_token)
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
-		self.room_id = None
 
 	def _get(self, path, params = {}):
-		return requests.get(self.BASE_URL + path,
+		result = requests.get(self.BASE_URL + path,
 							params=params,
-							headers=self.headers).json()
+							headers=self.headers)
+		return result.status_code, result.json()
 
 	def _post(self, path, data = {}):
-		return requests.post(self.BASE_URL + path,
+		result = requests.post(self.BASE_URL + path,
 							data=data,
-							headers=self.headers).json()
+							headers=self.headers)
+		return result.status_code, result.json()
 
 	def _put(self, path, data = {}):
-		return requests.put(self.BASE_URL + path,
+		result = requests.put(self.BASE_URL + path,
 							data=data,
-							headers=self.headers).json()
+							headers=self.headers)
+		return result.status_code, result.json()
 
 	def get_access_token(self, refresh_token):
 		payload = {'refresh_token' : refresh_token}
-		result = self._post('/oauth/token/refresh', json.dumps(payload))
-		return result["access_token"], result["refresh_token"]
+		status, result = self._post('/oauth/token/refresh', json.dumps(payload))
+		if status == ResStatus.OK:
+			return result["access_token"], result["refresh_token"]
 
 	def get_account_info(self):
 		return self._get('/v1/me')
@@ -52,7 +69,7 @@ class Client:
 		return self._get('/v1/rooms')
 
 	def get_rooms_id(self):
-		result = self._get('/v1/rooms')
+		_, result = self._get('/v1/rooms')
 		try:
 			room_number = len(result['rooms'])
 		except KeyError:
@@ -97,7 +114,6 @@ class Room:
 		with open(audio_data_path, 'rb') as audio_data:
 			# ? payload format
 			payload = {'audio' : base64.b64encode(audio_data.read())}
-			# import pdb; pdb.set_trace()
 		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/audio', json.dumps(payload))
 
 	def send_image(self, image_data):
@@ -110,24 +126,31 @@ class Room:
 		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/text', json.dumps(payload))
 
 	def send_stamp(self, stamp_id, msg=None):
-		# ! msg size 1~20 validation
 		payload = {'uuid' : stamp_id}
 		if msg:
 			payload['text'] = msg
 		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/stamp', json.dumps(payload))
 
+	def send_original_motion(self, file_path):
+		with open(file_path) as f:
+			payload = f.read()
+		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages', json.dumps(payload))
+
+	def change_led_color(self, color):
+		payload = {'red' : color.red, 'green' : color.green, 'blue' : color.blue}
+		return self.base_client._post('/v1/rooms/' + self.room_id + '/motions/led_color', json.dumps(payload))
+
+	def move_to(self, head):
+		payload = {'angle' : head.angle, 'vertical_angle' : head.vertical_angle}
+		return self.base_client._post('/v1/rooms/' + self.room_id + '/motions/move_to', json.dumps(payload))
+
+	def send_motion(self, motion_id):
+		payload = {'uuid': motion_id}
+		return self.base_client._post('/v1/rooms/' + self.room_id + '/motions/preset', json.dumps(payload))
+
 	def get_emo_settings(self):
 		return self.base_client._get('/v1/rooms/' + self.room_id + '/emo/settings')
 
-# client = Client(
-# )
-
-# rooms_id_list = client.get_rooms_id()
-# room1 = client.create_room_client(rooms_id_list[0])
-# # print(room1.get_room_msgs())
-# room1.send_msg("おはよう")
-# # print(client.get_account_info())
-# # client.send_msg("ニーハオ")
 # # client.register_webhook('https://8d23-118-238-204-180.ngrok.io')
 # # client.get_webhook_setting()
 # # # client.register_webhook("https://webhook.site/6d557ad5-862b-4bef-897c-5129c12f2379")
@@ -138,6 +161,3 @@ class Room:
 # # while True:
 # # 	time.sleep(0.1)
 # # app.run(host="localhost", port=3000)
-
-# # req.date()  # サーバ、クライアント間の時刻同期
-# # req.webhook_url("http://"+req.getIPv4()+":5000/webhook")
