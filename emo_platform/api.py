@@ -35,11 +35,15 @@ class WebHook:
 class ResStatus:
 	OK = 200
 
+class PostContentType:
+	APPLICATION_JSON = 'application/json'
+	MULTIPART_FORMDATA = None
+
 class Client:
 	BASE_URL = "https://platform-api.bocco.me"
 
 	def __init__(self, refresh_token):
-		self.headers = {'accept':'*/*'}
+		self.headers = {'accept':'*/*', 'Content-Type':PostContentType.APPLICATION_JSON}
 		self.access_token, self.refresh_token = self.get_access_token(refresh_token)
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
 
@@ -49,15 +53,12 @@ class Client:
 							headers=self.headers)
 		return result.status_code, result.json()
 
-	def _post(self, path, data = {}, files = None, content_type = 'application/json'):
-		if content_type == 'application/json':
-			self.headers['Content-Type'] = 'application/json'
+	def _post(self, path, data = {}, files = None, content_type = PostContentType.APPLICATION_JSON):
+		self.headers['Content-Type'] = content_type
 		result = requests.post(self.BASE_URL + path,
 							data=data,
 							files = files,
 							headers=self.headers)
-		if content_type == 'application/json':
-			self.headers.pop('Content-Type')
 		return result.status_code, result.json()
 
 	def _put(self, path, data = {}):
@@ -136,12 +137,12 @@ class Room:
 	def send_audio_msg(self, audio_data_path):
 		with open(audio_data_path, 'rb') as audio_data:
 			files = {'audio' : audio_data}
-			return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/audio', files=files, content_type=None)
+			return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/audio', files=files, content_type=PostContentType.MULTIPART_FORMDATA)
 
-	def send_image(self, image_data):
-		# ? payload format
-		payload = {'image' : image_data}
-		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/image', json.dumps(payload))
+	def send_image(self, image_data_path):
+		with open(image_data_path, 'rb') as image_data:
+			files = {'image' : image_data}
+			return self.base_client._post('/v1/rooms/' + self.room_id + '/messages/image', files=files, content_type=PostContentType.MULTIPART_FORMDATA)
 
 	def send_msg(self, msg):
 		payload = {'text' : msg}

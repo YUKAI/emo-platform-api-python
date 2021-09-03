@@ -73,8 +73,10 @@ class TestRoomSendData(unittest.TestCase):
 		audio_data_path = "../assets/sample_audio.mp3"
 		print(self.room.send_audio_msg(audio_data_path))
 
-	# def test_send_image(self):
-	# 	pass
+	def test_send_image(self):
+		print("\n" + "="*20 + " room send image " + "="*20)
+		image_data_path = "../assets/sample_image.jpg"
+		print(self.room.send_image(image_data_path))
 
 	# @unittest.skip("")
 	def test_send_msg(self):
