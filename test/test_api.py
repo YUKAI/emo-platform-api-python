@@ -17,6 +17,11 @@ class TestClientPrintInfo(unittest.TestCase):
 		print("\n" + "="*20 + " account info " + "="*20)
 		print(self.client.get_account_info())
 
+	@unittest.skip("delete account info")
+	def test_delete_account_info(self):
+		print("\n" + "="*20 + " delete account info " + "="*20)
+		print(self.client.delete_account_info())
+
 	def test_get_rooms_list(self):
 		print("\n" + "="*20 + " rooms list " + "="*20)
 		print(self.client.get_rooms_list())

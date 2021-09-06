@@ -86,6 +86,9 @@ class Client:
 	def get_account_info(self):
 		return self._get('/v1/me')
 
+	def delete_account_info(self):
+		return self._delete('/v1/me')
+
 	def get_rooms_list(self):
 		return self._get('/v1/rooms')
 
