@@ -54,7 +54,7 @@ class TestRoomPrintInfo(unittest.TestCase):
 
 	def test_get_sensor_values(self):
 		print("\n" + "="*20 + " room sensor values " + "="*20)
-		_, sensor_list = self.room.get_sensors_list()
+		sensor_list = self.room.get_sensors_list()
 		print(self.room.get_sensor_values(sensor_list['sensors'][0]['uuid']))
 
 	def test_get_emo_settings(self):
@@ -86,7 +86,7 @@ class TestRoomSendData(unittest.TestCase):
 	# @unittest.skip("")
 	def test_send_stamp(self):
 		print("\n" + "="*20 + " room send all stamps " + "="*20)
-		_, stamp_list = self.client.get_stamps_list()
+		stamp_list = self.client.get_stamps_list()
 		for stamp in stamp_list['stamps']:
 			time.sleep(7) # for avoiding rate limit
 			print("\n" + "="*10 + " room send stamp " + "="*10)
@@ -112,7 +112,7 @@ class TestRoomSendData(unittest.TestCase):
 	# @unittest.skip("")
 	def test_send_motion(self):
 		print("\n" + "="*20 + " room send all motions " + "="*20)
-		_, motion_list = self.client.get_motions_list()
+		motion_list = self.client.get_motions_list()
 		for motion in motion_list['motions']:
 			time.sleep(7) # for avoiding rate limit
 			print("\n" + "="*10 + " room send motion " + "="*10)

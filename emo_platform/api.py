@@ -4,6 +4,7 @@ import time
 import base64
 from threading import Thread
 from flask import Flask, request, abort
+from emo_platform.exceptions import http_error_handler
 app = Flask(__name__)
 
 @ app.route("/", methods=['POST'])
@@ -32,9 +33,6 @@ class WebHook:
 		self.description = description
 		self.url = url
 
-class ResStatus:
-	OK = 200
-
 class PostContentType:
 	APPLICATION_JSON = 'application/json'
 	MULTIPART_FORMDATA = None
@@ -51,7 +49,9 @@ class Client:
 		result = requests.get(self.BASE_URL + path,
 							params=params,
 							headers=self.headers)
-		return result.status_code, result.json()
+		with http_error_handler():
+			result.raise_for_status()
+		return result.json()
 
 	def _post(self, path, data = {}, files = None, content_type = PostContentType.APPLICATION_JSON):
 		self.headers['Content-Type'] = content_type
@@ -59,24 +59,29 @@ class Client:
 							data=data,
 							files = files,
 							headers=self.headers)
-		return result.status_code, result.json()
+		with http_error_handler():
+			result.raise_for_status()
+		return result.json()
 
 	def _put(self, path, data = {}):
 		result = requests.put(self.BASE_URL + path,
 							data=data,
 							headers=self.headers)
-		return result.status_code, result.json()
+		with http_error_handler():
+			result.raise_for_status()
+		return result.json()
 
 	def _delete(self, path):
 		result = requests.delete(self.BASE_URL + path,
 							headers=self.headers)
-		return result.status_code, result.json()
+		with http_error_handler():
+			result.raise_for_status()
+		return result.json()
 
 	def get_access_token(self, refresh_token):
 		payload = {'refresh_token' : refresh_token}
-		status, result = self._post('/oauth/token/refresh', json.dumps(payload))
-		if status == ResStatus.OK:
-			return result["access_token"], result["refresh_token"]
+		result = self._post('/oauth/token/refresh', json.dumps(payload))
+		return result["access_token"], result["refresh_token"]
 
 	def get_account_info(self):
 		return self._get('/v1/me')
@@ -85,7 +90,7 @@ class Client:
 		return self._get('/v1/rooms')
 
 	def get_rooms_id(self):
-		_, result = self._get('/v1/rooms')
+		result = self._get('/v1/rooms')
 		try:
 			room_number = len(result['rooms'])
 		except KeyError:
