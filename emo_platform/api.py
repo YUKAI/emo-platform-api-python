@@ -164,8 +164,8 @@ class Room:
 
 	def send_original_motion(self, file_path):
 		with open(file_path) as f:
-			payload = f.read()
-		return self.base_client._post('/v1/rooms/' + self.room_id + '/messages', json.dumps(payload))
+			payload = json.load(f)
+			return self.base_client._post('/v1/rooms/' + self.room_id + '/motions', json.dumps(payload))
 
 	def change_led_color(self, color):
 		payload = {'red' : color.red, 'green' : color.green, 'blue' : color.blue}
