@@ -4,7 +4,7 @@ import time
 import base64
 from threading import Thread
 from flask import Flask, request, abort
-from emo_platform.exceptions import http_error_handler
+from emo_platform.exceptions import http_error_handler, NoRoomError
 app = Flask(__name__)
 
 @ app.route("/", methods=['POST'])
@@ -97,7 +97,7 @@ class Client:
 		try:
 			room_number = len(result['rooms'])
 		except KeyError:
-			return []
+			raise NoRoomError("Get no room id.")
 		return [result['rooms'][i]['uuid'] for i in range(room_number)]
 
 	def create_room_client(self, room_id):
