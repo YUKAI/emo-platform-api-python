@@ -44,9 +44,27 @@ class TestClient(unittest.TestCase):
 		print("\n" + "="*20 + " motions list " + "="*20)
 		print(self.client.get_motions_list())
 
-	# def test_get_webhook_setting(self):
-	# 	print("\n" + "="*20 + " webhook setting " + "="*20)
-	# 	print(self.client.get_webhook_setting())
+	def test_webhook(self):
+		print("\n" + "="*20 + " create webhook setting " + "="*20)
+		print(self.client.create_webhook_setting(api.WebHook("new", "https://8d23-118-238-204-180.ngrok.io")))
+
+		print("\n" + "="*20 + " create webhook setting " + "="*20)
+		print(self.client.create_webhook_setting(api.WebHook("new2", "https://7d23-118-238-204-180.ngrok.io")))
+
+		print("\n" + "="*20 + " get webhook setting " + "="*20)
+		print(self.client.get_webhook_setting())
+
+		print("\n" + "="*20 + " change webhook setting " + "="*20)
+		print(self.client.change_webhook_setting(api.WebHook("update", "https://7d23-118-238-204-180.ngrok.io")))
+
+		print("\n" + "="*20 + " get webhook setting " + "="*20)
+		print(self.client.get_webhook_setting())
+
+		print("\n" + "="*20 + " delete webhook setting " + "="*20)
+		print(self.client.delete_webhook_setting())
+
+		print("\n" + "="*20 + " get webhook setting " + "="*20)
+		print(self.client.get_webhook_setting())
 
 class TestRoomPrintInfo(unittest.TestCase):
 	@classmethod
