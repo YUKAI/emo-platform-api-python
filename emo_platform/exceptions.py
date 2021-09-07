@@ -20,6 +20,9 @@ class UnknownError(EmoPlatformEror):
 class NoRoomError(EmoPlatformEror):
 	pass
 
+class NoRefreshTokenError(EmoPlatformEror):
+	pass
+
 def http_status_to_exception(code):
 	if code == 401:
 		return UnauthorizedError

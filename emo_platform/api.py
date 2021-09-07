@@ -1,10 +1,11 @@
 import requests
 import json
 import time
-import base64
+import os
+from functools import partial
 from threading import Thread
 from flask import Flask, request, abort
-from emo_platform.exceptions import http_error_handler, NoRoomError
+from emo_platform.exceptions import http_error_handler, NoRoomError, NoRefreshTokenError, UnauthorizedError
 app = Flask(__name__)
 
 @ app.route("/", methods=['POST'])
@@ -39,49 +40,114 @@ class PostContentType:
 
 class Client:
 	BASE_URL = "https://platform-api.bocco.me"
+	TOKEN_FILE = "../key/emo-platform-api.json"
 
-	def __init__(self, refresh_token):
+	def __init__(self):
 		self.headers = {'accept':'*/*', 'Content-Type':PostContentType.APPLICATION_JSON}
-		self.access_token, self.refresh_token = self.get_access_token(refresh_token)
+		with open(self.TOKEN_FILE) as f:
+			tokens = json.load(f)
+		access_token = tokens['access_token']
+
+		if access_token == "":
+			try:
+				access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+			except KeyError:
+				self.update_tokens()
+		else :
+			self.access_token = access_token
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
 
-	def _get(self, path, params = {}):
-		result = requests.get(self.BASE_URL + path,
-							params=params,
-							headers=self.headers)
-		with http_error_handler():
-			result.raise_for_status()
-		return result.json()
+	def update_tokens(self):
+		with open(self.TOKEN_FILE, "r") as f:
+			tokens = json.load(f)
+		refresh_token = tokens['refresh_token']
 
-	def _post(self, path, data = {}, files = None, content_type = PostContentType.APPLICATION_JSON):
+		if refresh_token != "":
+			try:
+				refresh_token, self.access_token = self.get_access_token(refresh_token)
+				self.headers['Authorization'] = 'Bearer ' + self.access_token
+				tokens['refresh_token'] = refresh_token
+				tokens['access_token'] = self.access_token
+				with open(self.TOKEN_FILE, "w") as f:
+					json.dump(tokens, f)
+			except UnauthorizedError:
+				tokens['refresh_token'] = ""
+				tokens['access_token'] = ""
+				with open(self.TOKEN_FILE, "w") as f:
+					json.dump(tokens, f)
+				refresh_token = ""
+
+		if refresh_token == "":
+			try:
+				refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
+			except KeyError:
+				raise NoRefreshTokenError("Please set refresh_token as environment variable")
+
+			try:
+				refresh_token, self.access_token = self.get_access_token(refresh_token)
+				self.headers['Authorization'] = 'Bearer ' + self.access_token
+				tokens['refresh_token'] = refresh_token
+				tokens['access_token'] = self.access_token
+				with open(self.TOKEN_FILE, "w") as f:
+					json.dump(tokens, f)
+			except UnauthorizedError:
+				raise NoRefreshTokenError("Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'")
+
+	def _check_http_error(self, request, update_tokens=True):
+		response = request()
+		try:
+			with http_error_handler():
+				response.raise_for_status()
+		except UnauthorizedError:
+			if not update_tokens:
+				raise UnauthorizedError("Unauthorized error while getting access_token")
+			self.update_tokens()
+			response = request()
+			with http_error_handler():
+				response.raise_for_status()
+		return response.json()
+
+	def _get(self, path, params = {}):
+		request = partial(
+			requests.get,
+			self.BASE_URL + path,
+			params=params,
+			headers=self.headers
+		)
+		return self._check_http_error(request)
+
+	def _post(self, path, data = {}, files = None, content_type = PostContentType.APPLICATION_JSON, update_tokens=True):
 		self.headers['Content-Type'] = content_type
-		result = requests.post(self.BASE_URL + path,
-							data=data,
-							files = files,
-							headers=self.headers)
-		with http_error_handler():
-			result.raise_for_status()
-		return result.json()
+		request = partial(
+			requests.post,
+			self.BASE_URL + path,
+			data=data,
+			files = files,
+			headers=self.headers
+		)
+		return self._check_http_error(request, update_tokens=update_tokens)
 
 	def _put(self, path, data = {}):
-		result = requests.put(self.BASE_URL + path,
-							data=data,
-							headers=self.headers)
-		with http_error_handler():
-			result.raise_for_status()
-		return result.json()
+		request = partial(
+			requests.put,
+			self.BASE_URL + path,
+			data=data,
+			headers=self.headers
+		)
+		return self._check_http_error(request)
 
 	def _delete(self, path):
-		result = requests.delete(self.BASE_URL + path,
-							headers=self.headers)
-		with http_error_handler():
-			result.raise_for_status()
-		return result.json()
+		request = partial(
+			requests.delete,
+			self.BASE_URL + path,
+			headers=self.headers
+		)
+		return self._check_http_error(request)
 
 	def get_access_token(self, refresh_token):
 		payload = {'refresh_token' : refresh_token}
-		result = self._post('/oauth/token/refresh', json.dumps(payload))
-		return result["access_token"], result["refresh_token"]
+		result = self._post('/oauth/token/refresh', json.dumps(payload), update_tokens=False)
+		return result["refresh_token"], result["access_token"]
 
 	def get_account_info(self):
 		return self._get('/v1/me')

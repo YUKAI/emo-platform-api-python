@@ -6,12 +6,18 @@ import time
 import unittest
 from emo_platform import api
 
-refresh_token = "cd86f829-ebdd-4c74-aaad-7c7cb8896cfb"
 
-class TestClientPrintInfo(unittest.TestCase):
+class TestGetTokens(unittest.TestCase):
+
+	def test_get_access_token(self):
+		client = api.Client()
+		print(client.get_account_info())
+
+
+class TestClient(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		cls.client = api.Client(refresh_token)
+		cls.client = api.Client()
 
 	def test_get_account_info(self):
 		print("\n" + "="*20 + " account info " + "="*20)
@@ -45,7 +51,7 @@ class TestClientPrintInfo(unittest.TestCase):
 class TestRoomPrintInfo(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		cls.client = api.Client(refresh_token)
+		cls.client = api.Client()
 		rooms_id_list = cls.client.get_rooms_id()
 		cls.room = cls.client.create_room_client(rooms_id_list[0])
 
@@ -69,7 +75,7 @@ class TestRoomPrintInfo(unittest.TestCase):
 class TestRoomSendData(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
-		cls.client = api.Client(refresh_token)
+		cls.client = api.Client()
 		rooms_id_list = cls.client.get_rooms_id()
 		cls.room = cls.client.create_room_client(rooms_id_list[0])
 
