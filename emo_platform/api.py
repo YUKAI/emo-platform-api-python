@@ -4,19 +4,22 @@ import time
 import os
 from functools import partial
 from threading import Thread
-from flask import Flask, request, abort
 from emo_platform.exceptions import http_error_handler, NoRoomError, NoRefreshTokenError, UnauthorizedError
-app = Flask(__name__)
 
-@ app.route("/", methods=['POST'])
-def emo_callback():  # emoからのwebhookを受信した際の処理
-	if request.method == 'POST':
-		global event_data
-		event_data = request.json
-		print(json.dumps(event_data, indent=2))
-		return 'success', 200
-	else:
-		abort(400)
+from typing import Dict
+from fastapi import FastAPI, Body
+from pydantic import BaseModel
+import uvicorn
+
+class EmoWebhook(BaseModel):
+	request_id : str
+	uuid : str
+	serial_number : str
+	nickname : str
+	timestamp : int
+	event : str
+	data : dict
+	receiver : str
 
 class Color:
 	def __init__(self, red, green, blue):
@@ -56,6 +59,7 @@ class Client:
 		else :
 			self.access_token = access_token
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
+		self.webhook_events_cb = {}
 
 	def update_tokens(self):
 		with open(self.TOKEN_FILE, "r") as f:
@@ -193,6 +197,22 @@ class Client:
 	def delete_webhook_setting(self):
 		return self._delete('/v1/webhook')
 
+	def event(self, event):
+		def decorator(func):
+			self.webhook_events_cb[event] = func
+		return decorator
+
+	def start_webhook_event(self, host="localhost", port=8000):
+		self.register_webhook_event(list(self.webhook_events_cb.keys()))
+		app = FastAPI()
+		@app.post("/")
+		def emo_callback(body : EmoWebhook):
+			try:
+				self.webhook_events_cb[body.event](body)
+			except KeyError:
+				print("no event")
+		uvicorn.run(app, host=host, port=port)
+
 class Room:
 	def __init__(self, base_client, room_id):
 		self.base_client = base_client
@@ -248,13 +268,8 @@ class Room:
 	def get_emo_settings(self):
 		return self.base_client._get('/v1/rooms/' + self.room_id + '/emo/settings')
 
-# # client.register_webhook('https://8d23-118-238-204-180.ngrok.io')
-# # client.get_webhook_setting()
-# # # client.register_webhook("https://webhook.site/6d557ad5-862b-4bef-897c-5129c12f2379")
-# # client.register_webhook_event(["radar.detected"])
-
-# # thread = Thread(target=app.run)
-# # thread.start()
-# # while True:
-# # 	time.sleep(0.1)
-# # app.run(host="localhost", port=3000)
+	# def __repr__(self):
+	# 	# TODO: implement repr
+	# 	return f"{self.access_token}"
+	# 	# example of slack sdk
+	# 	# return f"<slack_sdk.scim.{self.__class__.__name__}: {self.to_dict()}>"

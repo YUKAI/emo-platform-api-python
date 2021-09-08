@@ -146,3 +146,26 @@ class TestRoomSendData(unittest.TestCase):
 			time.sleep(7) # for avoiding rate limit
 			print("\n" + "="*10 + " room send motion " + "="*10)
 			print(self.room.send_motion(motion['uuid']))
+
+class TestWebHookCallback(unittest.TestCase):
+
+	def test_get_access_token(self):
+		client = api.Client()
+		client.change_webhook_setting(api.WebHook("test", "http://2f0e-118-238-204-180.ngrok.io"))
+
+		@client.event('message.received')
+		def message_callback(body):
+			print(body)
+			while(True):
+				print(body.uuid)
+				time.sleep(5)
+
+		@client.event('radar.detected')
+		def radar_callback(body):
+			print(body)
+
+		from threading import Thread
+		thread = Thread(target=client.start_webhook_event)
+		thread.start()
+		while True:
+			time.sleep(0.1)
