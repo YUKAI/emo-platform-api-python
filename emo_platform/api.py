@@ -47,6 +47,7 @@ class PostContentType:
 class Client:
 	BASE_URL = "https://platform-api.bocco.me"
 	TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
+	DEFAULT_ROOM_ID = ""
 
 	def __init__(self):
 		self.headers = {'accept':'*/*', 'Content-Type':PostContentType.APPLICATION_JSON}
@@ -62,6 +63,7 @@ class Client:
 		else :
 			self.access_token = access_token
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
+		self.room_id_list = [self.DEFAULT_ROOM_ID]
 		self.webhook_events_cb = {}
 		self.request_id_deque = deque([],10)
 
@@ -179,7 +181,9 @@ class Client:
 			room_number = len(result['rooms'])
 		except KeyError:
 			raise NoRoomError("Get no room id.")
-		return [result['rooms'][i]['uuid'] for i in range(room_number)]
+		rooms_id = [result['rooms'][i]['uuid'] for i in range(room_number)]
+		self.room_id_list = rooms_id + [self.DEFAULT_ROOM_ID]
+		return rooms_id
 
 	def create_room_client(self, room_id: str):
 		return Room(self, room_id)
@@ -208,9 +212,21 @@ class Client:
 	def delete_webhook_setting(self) -> dict:
 		return self._delete('/v1/webhook')
 
-	def event(self, event: str) -> Callable:
+	def event(self, event: str, room_id_list: List[str] = [DEFAULT_ROOM_ID]) -> Callable:
 		def decorator(func):
-			self.webhook_events_cb[event] = func
+
+			if not event in self.webhook_events_cb:
+				self.webhook_events_cb[event] = {}
+
+			if self.room_id_list != [self.DEFAULT_ROOM_ID]:
+				self.get_rooms_id()
+
+			for room_id in room_id_list:
+				if room_id in self.room_id_list:
+					self.webhook_events_cb[event][room_id] = func
+				else :
+					raise NoRoomError(f"Try to register wrong room id: '{room_id}'")
+
 		return decorator
 
 	def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
@@ -221,11 +237,12 @@ class Client:
 		def emo_callback(request: Request, body : EmoWebhook):
 			if request.headers.get('x-platform-api-secret') == secret_key:
 				if not body.request_id in self.request_id_deque:
+					room_id = body.uuid
 					try:
-						self.webhook_events_cb[body.event](body)
-						self.request_id_deque.append(body.request_id)
+						self.webhook_events_cb[body.event][room_id](body)
 					except KeyError:
-						print("no event")
+						self.webhook_events_cb[body.event][self.DEFAULT_ROOM_ID](body)
+					self.request_id_deque.append(body.request_id)
 		uvicorn.run(app, host=host, port=port)
 
 class Room:
