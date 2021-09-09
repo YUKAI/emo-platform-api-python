@@ -1,6 +1,5 @@
 import sys
 import os
-sys.path.append(os.path.abspath(".."))
 
 import time
 import unittest
@@ -46,16 +45,16 @@ class TestClient(unittest.TestCase):
 
 	def test_webhook(self):
 		print("\n" + "="*20 + " create webhook setting " + "="*20)
-		print(self.client.create_webhook_setting(api.WebHook("new", "https://8d23-118-238-204-180.ngrok.io")))
+		print(self.client.create_webhook_setting(api.WebHook("https://8d23-118-238-204-180.ngrok.io", "new")))
 
 		print("\n" + "="*20 + " create webhook setting " + "="*20)
-		print(self.client.create_webhook_setting(api.WebHook("new2", "https://7d23-118-238-204-180.ngrok.io")))
+		print(self.client.create_webhook_setting(api.WebHook("https://7d23-118-238-204-180.ngrok.io", "new2")))
 
 		print("\n" + "="*20 + " get webhook setting " + "="*20)
 		print(self.client.get_webhook_setting())
 
 		print("\n" + "="*20 + " change webhook setting " + "="*20)
-		print(self.client.change_webhook_setting(api.WebHook("update", "https://7d23-118-238-204-180.ngrok.io")))
+		print(self.client.change_webhook_setting(api.WebHook("https://7d23-118-238-204-180.ngrok.io", "update")))
 
 		print("\n" + "="*20 + " get webhook setting " + "="*20)
 		print(self.client.get_webhook_setting())
@@ -151,18 +150,18 @@ class TestWebHookCallback(unittest.TestCase):
 
 	def test_get_access_token(self):
 		client = api.Client()
-		client.change_webhook_setting(api.WebHook("test", "http://2f0e-118-238-204-180.ngrok.io"))
-
+		result = client.change_webhook_setting(api.WebHook("http://25ca-118-86-111-67.ngrok.io"))
+		print(result)
 		@client.event('message.received')
 		def message_callback(body):
 			print(body)
-			while(True):
-				print(body.uuid)
-				time.sleep(5)
+			# while(True):
+			# 	print(body.data["message"])
+			# 	time.sleep(5)
 
-		@client.event('radar.detected')
-		def radar_callback(body):
-			print(body)
+		# @client.event('illuminance.changed')
+		# def radar_callback(body):
+		# 	print(body)
 
 		from threading import Thread
 		thread = Thread(target=client.start_webhook_event)
