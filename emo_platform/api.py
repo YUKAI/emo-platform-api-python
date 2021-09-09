@@ -4,10 +4,11 @@ import time
 import os
 from functools import partial
 from threading import Thread
+from collections import deque
 from emo_platform.exceptions import http_error_handler, NoRoomError, NoRefreshTokenError, UnauthorizedError
 
 from typing import Callable, List, Optional
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Request
 from pydantic import BaseModel
 import uvicorn
 
@@ -62,6 +63,7 @@ class Client:
 			self.access_token = access_token
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
 		self.webhook_events_cb = {}
+		self.request_id_deque = deque([],10)
 
 	def update_tokens(self) -> None:
 		with open(self.TOKEN_FILE, "r") as f:
@@ -212,15 +214,18 @@ class Client:
 		return decorator
 
 	def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
-		self.register_webhook_event(list(self.webhook_events_cb.keys()))
+		response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
+		secret_key = response['secret']
 		app = FastAPI()
 		@app.post("/")
-		def emo_callback(body : EmoWebhook):
-			try:
-				self.webhook_events_cb[body.event](body)
-				return body
-			except KeyError:
-				print("no event")
+		def emo_callback(request: Request, body : EmoWebhook):
+			if request.headers.get('x-platform-api-secret') == secret_key:
+				if not body.request_id in self.request_id_deque:
+					try:
+						self.webhook_events_cb[body.event](body)
+						self.request_id_deque.append(body.request_id)
+					except KeyError:
+						print("no event")
 		uvicorn.run(app, host=host, port=port)
 
 class Room:
