@@ -4,6 +4,7 @@ import os
 from functools import partial
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
+from emo_platform.models import Color, Head, WebHook
 from emo_platform.exceptions import http_error_handler, NoRoomError, NoRefreshTokenError, UnauthorizedError
 
 from typing import Callable, List, Optional
@@ -22,22 +23,6 @@ class EmoWebhook(BaseModel):
 	event : str
 	data : dict
 	receiver : str
-
-class Color:
-	def __init__(self, red: int, green: int, blue: int):
-		self.red = red
-		self.green = green
-		self.blue = blue
-
-class Head:
-	def __init__(self, angle: int = 0, vertical_angle: int = 0):
-		self.angle = angle
-		self.vertical_angle = vertical_angle
-
-class WebHook:
-	def __init__(self, url :str, description : str = ""):
-		self.url = url
-		self.description = description
 
 class PostContentType:
 	APPLICATION_JSON = 'application/json'
