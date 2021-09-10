@@ -14,6 +14,9 @@ class UnauthorizedError(EmoPlatformEror):
 class NotFoundError(EmoPlatformEror):
 	pass
 
+class BadRequestError(EmoPlatformEror):
+	pass
+
 class UnknownError(EmoPlatformEror):
 	pass
 
@@ -24,6 +27,8 @@ class NoRefreshTokenError(EmoPlatformEror):
 	pass
 
 def http_status_to_exception(code):
+	if code == 400:
+		return BadRequestError
 	if code == 401:
 		return UnauthorizedError
 	elif code == 404:
