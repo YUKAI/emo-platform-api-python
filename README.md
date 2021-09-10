@@ -5,7 +5,7 @@ If poetry has not been installed, please see [this page](https://python-poetry.o
 
 ```bash
 # Python 3.6+ required
-poetry install
+poetry install --no-dev
 ```
 
 When you execute python code,
