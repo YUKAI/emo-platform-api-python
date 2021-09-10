@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 import os
 from functools import partial
 from collections import deque
@@ -48,6 +47,7 @@ class Client:
 	BASE_URL = "https://platform-api.bocco.me"
 	TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
 	DEFAULT_ROOM_ID = ""
+	MAX_SAVED_REQUEST_ID = 10
 
 	def __init__(self):
 		self.headers = {'accept':'*/*', 'Content-Type':PostContentType.APPLICATION_JSON}
@@ -62,10 +62,11 @@ class Client:
 				self.update_tokens()
 		else :
 			self.access_token = access_token
+
 		self.headers['Authorization'] = 'Bearer ' + self.access_token
 		self.room_id_list = [self.DEFAULT_ROOM_ID]
 		self.webhook_events_cb = {}
-		self.request_id_deque = deque([],10)
+		self.request_id_deque = deque([], self.MAX_SAVED_REQUEST_ID)
 		self.webhook_cb_executor = ThreadPoolExecutor()
 
 	def update_tokens(self) -> None:
@@ -92,7 +93,7 @@ class Client:
 			try:
 				refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
 			except KeyError:
-				raise NoRefreshTokenError("Please set refresh_token as environment variable")
+				raise NoRefreshTokenError("Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'")
 
 			try:
 				refresh_token, self.access_token = self.get_access_token(refresh_token)
@@ -305,9 +306,3 @@ class Room:
 
 	def get_emo_settings(self) -> dict:
 		return self.base_client._get('/v1/rooms/' + self.room_id + '/emo/settings')
-
-	# def __repr__(self):
-	# 	# TODO: implement repr
-	# 	return f"{self.access_token}"
-	# 	# example of slack sdk
-	# 	# return f"<slack_sdk.scim.{self.__class__.__name__}: {self.to_dict()}>"
