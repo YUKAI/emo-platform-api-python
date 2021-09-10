@@ -54,7 +54,7 @@ class Client:
 
         if access_token == "":
             try:
-                access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+                self.access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
             except KeyError:
                 self.update_tokens()
         else:
