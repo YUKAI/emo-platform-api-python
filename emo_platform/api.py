@@ -3,8 +3,8 @@ import json
 import time
 import os
 from functools import partial
-from threading import Thread
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from emo_platform.exceptions import http_error_handler, NoRoomError, NoRefreshTokenError, UnauthorizedError
 
 from typing import Callable, List, Optional
@@ -66,6 +66,7 @@ class Client:
 		self.room_id_list = [self.DEFAULT_ROOM_ID]
 		self.webhook_events_cb = {}
 		self.request_id_deque = deque([],10)
+		self.webhook_cb_executor = ThreadPoolExecutor()
 
 	def update_tokens(self) -> None:
 		with open(self.TOKEN_FILE, "r") as f:
@@ -232,17 +233,22 @@ class Client:
 	def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
 		response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
 		secret_key = response['secret']
+
 		app = FastAPI()
 		@app.post("/")
 		def emo_callback(request: Request, body : EmoWebhook):
 			if request.headers.get('x-platform-api-secret') == secret_key:
 				if not body.request_id in self.request_id_deque:
 					room_id = body.uuid
+					event_cb = self.webhook_events_cb[body.event]
 					try:
-						self.webhook_events_cb[body.event][room_id](body)
+						cb_func = event_cb[room_id]
 					except KeyError:
-						self.webhook_events_cb[body.event][self.DEFAULT_ROOM_ID](body)
+						cb_func = event_cb[self.DEFAULT_ROOM_ID]
+					self.webhook_cb_executor.submit(cb_func, body)
 					self.request_id_deque.append(body.request_id)
+					return 'success', 200
+
 		uvicorn.run(app, host=host, port=port)
 
 class Room:
