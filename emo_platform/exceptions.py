@@ -1,47 +1,58 @@
 from contextlib import contextmanager
+
 import requests
 
+
 class EmoPlatformEror(Exception):
-	def __init__(self, message):
-		self.message = message
+    def __init__(self, message):
+        self.message = message
+
 
 class RateLimitError(EmoPlatformEror):
-	pass
+    pass
+
 
 class UnauthorizedError(EmoPlatformEror):
-	pass
+    pass
+
 
 class NotFoundError(EmoPlatformEror):
-	pass
+    pass
+
 
 class BadRequestError(EmoPlatformEror):
-	pass
+    pass
+
 
 class UnknownError(EmoPlatformEror):
-	pass
+    pass
+
 
 class NoRoomError(EmoPlatformEror):
-	pass
+    pass
+
 
 class NoRefreshTokenError(EmoPlatformEror):
-	pass
+    pass
+
 
 def http_status_to_exception(code):
-	if code == 400:
-		return BadRequestError
-	if code == 401:
-		return UnauthorizedError
-	elif code == 404:
-		return NotFoundError
-	elif code == 429:
-		return RateLimitError
-	else:
-		return UnknownError
+    if code == 400:
+        return BadRequestError
+    if code == 401:
+        return UnauthorizedError
+    elif code == 404:
+        return NotFoundError
+    elif code == 429:
+        return RateLimitError
+    else:
+        return UnknownError
+
 
 @contextmanager
 def http_error_handler():
-	try:
-		yield None
-	except requests.HTTPError as e:
-		http_exception = http_status_to_exception(e.response.status_code)
-		raise http_exception(e.response.json())
+    try:
+        yield None
+    except requests.HTTPError as e:
+        http_exception = http_status_to_exception(e.response.status_code)
+        raise http_exception(e.response.json())

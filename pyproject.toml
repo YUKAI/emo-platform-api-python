@@ -14,6 +14,9 @@ fastapi = "^0.68.1"
 uvicorn = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
+black = "*"
+flake8 = "*"
+isort = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
