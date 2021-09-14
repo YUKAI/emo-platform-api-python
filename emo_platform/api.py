@@ -43,7 +43,8 @@ class Client:
     DEFAULT_ROOM_ID = ""
     MAX_SAVED_REQUEST_ID = 10
 
-    def __init__(self):
+    def __init__(self, endpoint_url: str = BASE_URL):
+        self.endpoint_url = endpoint_url
         self.headers = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
@@ -122,7 +123,7 @@ class Client:
 
     def _get(self, path: str, params: dict = {}) -> dict:
         request = partial(
-            requests.get, self.BASE_URL + path, params=params, headers=self.headers
+            requests.get, self.endpoint_url + path, params=params, headers=self.headers
         )
         return self._check_http_error(request)
 
@@ -137,7 +138,7 @@ class Client:
         self.headers["Content-Type"] = content_type
         request = partial(
             requests.post,
-            self.BASE_URL + path,
+            self.endpoint_url + path,
             data=data,
             files=files,
             headers=self.headers,
@@ -146,12 +147,14 @@ class Client:
 
     def _put(self, path: str, data: dict = {}) -> dict:
         request = partial(
-            requests.put, self.BASE_URL + path, data=data, headers=self.headers
+            requests.put, self.endpoint_url + path, data=data, headers=self.headers
         )
         return self._check_http_error(request)
 
     def _delete(self, path: str) -> dict:
-        request = partial(requests.delete, self.BASE_URL + path, headers=self.headers)
+        request = partial(
+            requests.delete, self.endpoint_url + path, headers=self.headers
+        )
         return self._check_http_error(request)
 
     def get_access_token(self, refresh_token: str) -> tuple:
