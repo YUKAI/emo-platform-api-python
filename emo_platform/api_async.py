@@ -57,7 +57,8 @@ class AsyncClient(async_init):
     DEFAULT_ROOM_ID = ""
     MAX_SAVED_REQUEST_ID = 10
 
-    async def __init__(self):
+    async def __init__(self, endpoint_url: str = BASE_URL):
+        self.endpoint_url = endpoint_url
         self.headers = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
@@ -142,7 +143,7 @@ class AsyncClient(async_init):
     async def _get(self, path: str, params: dict = {}) -> dict:
         async with aiohttp.ClientSession() as session:
             request = partial(
-                session.get, self.BASE_URL + path, params=params, headers=self.headers
+                session.get, self.endpoint_url + path, params=params, headers=self.headers
             )
             return await self._check_http_error(request)
 
@@ -161,7 +162,7 @@ class AsyncClient(async_init):
         async with aiohttp.ClientSession() as session:
             request = partial(
                 session.post,
-                self.BASE_URL + path,
+                self.endpoint_url + path,
                 data=data,
                 headers=self.headers,
             )
@@ -170,13 +171,13 @@ class AsyncClient(async_init):
     async def _put(self, path: str, data: dict = {}) -> dict:
         async with aiohttp.ClientSession() as session:
             request = partial(
-                session.put, self.BASE_URL + path, data=data, headers=self.headers
+                session.put, self.endpoint_url + path, data=data, headers=self.headers
             )
             return await self._check_http_error(request)
 
     async def _delete(self, path: str) -> dict:
         async with aiohttp.ClientSession() as session:
-            request = partial(session.delete, self.BASE_URL + path, headers=self.headers)
+            request = partial(session.delete, self.endpoint_url + path, headers=self.headers)
             return await self._check_http_error(request)
 
     async def get_access_token(self, refresh_token: str) -> tuple:
