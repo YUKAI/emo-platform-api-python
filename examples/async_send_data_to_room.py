@@ -5,14 +5,12 @@ from emo_platform import AsyncClient, Color, Head
 
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
-client, room = None, None
+client = AsyncClient()
+rooms_id_list = client.get_rooms_id()
+room = client.create_room_client(rooms_id_list[0])
 
 
 async def main():
-    global client, room
-    client = await AsyncClient()
-    rooms_id_list = await client.get_rooms_id()
-    room = client.create_room_client(rooms_id_list[0])
 
     # Uncomment method you want to execute
 

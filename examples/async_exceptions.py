@@ -3,13 +3,11 @@ import asyncio
 from emo_platform import AsyncClient, BadRequestError, NotFoundError, RateLimitError
 
 
-client, room = None, None
+client = AsyncClient()
+rooms_id_list = client.get_rooms_id()
+room = client.create_room_client(rooms_id_list[0])
 
 async def main():
-    global client, room
-    client = await AsyncClient()
-    rooms_id_list = await client.get_rooms_id()
-    room = client.create_room_client(rooms_id_list[0])
     await no_webhook_setting()
     await send_over_sized_msg()
     # await over_rate_limit() ## After calling this method, wait 1 minute until rate limit released.

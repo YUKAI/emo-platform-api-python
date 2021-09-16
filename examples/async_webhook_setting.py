@@ -3,11 +3,9 @@ import asyncio
 from emo_platform import AsyncClient, WebHook
 
 
-client = None
+client = AsyncClient()
 
 async def main():
-    global client
-    client = await AsyncClient()
     webhook = WebHook("http://localhost:8000", "test")
     events = ["message.received"]
     await create_webhook_setting(webhook)
