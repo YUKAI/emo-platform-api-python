@@ -18,14 +18,14 @@ from emo_platform.models import Color, Head, WebHook
 
 
 class AsyncClient(Client):
-    async def update_tokens(self) -> None:
+    async def _update_tokens(self) -> None:
         with open(self.TOKEN_FILE, "r") as f:
             tokens = json.load(f)
         refresh_token = tokens["refresh_token"]
 
         if refresh_token != "":
             try:
-                refresh_token, self.access_token = await self.get_access_token(
+                refresh_token, self.access_token = await self._get_access_token(
                     refresh_token
                 )
                 self.headers["Authorization"] = "Bearer " + self.access_token
@@ -49,7 +49,7 @@ class AsyncClient(Client):
                 )
 
             try:
-                refresh_token, self.access_token = await self.get_access_token(
+                refresh_token, self.access_token = await self._get_access_token(
                     refresh_token
                 )
                 self.headers["Authorization"] = "Bearer " + self.access_token
@@ -74,7 +74,7 @@ class AsyncClient(Client):
                     raise UnauthorizedError(
                         "Unauthorized error while getting access_token"
                     )
-                await self.update_tokens()
+                await self._update_tokens()
                 response = await request()
                 with aiohttp_error_handler():
                     response.raise_for_status()
@@ -125,7 +125,7 @@ class AsyncClient(Client):
             )
             return await self._acheck_http_error(request)
 
-    async def get_access_token(self, refresh_token: str) -> tuple:
+    async def _get_access_token(self, refresh_token: str) -> tuple:
         payload = {"refresh_token": refresh_token}
         result = await self._apost(
             "/oauth/token/refresh", json.dumps(payload), update_tokens=False
