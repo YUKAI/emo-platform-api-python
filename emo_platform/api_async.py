@@ -156,44 +156,17 @@ class AsyncClient(Client):
         payload = {"description": webhook.description, "url": webhook.url}
         return await self._aput("/v1/webhook", json.dumps(payload))
 
-    async def register_webhook_event(self, events: List[str]) -> dict:
-        payload = {"events": events}
-        return await self._aput("/v1/webhook/events", json.dumps(payload))
-
-    async def create_webhook_setting(self, webhook: WebHook) -> dict:
-        payload = {"description": webhook.description, "url": webhook.url}
-        return await self._apost("/v1/webhook", json.dumps(payload))
-
     async def delete_webhook_setting(self) -> dict:
         return await self._adelete("/v1/webhook")
 
-    # def event(
-    #     self, event: str, room_id_list: List[str] = [DEFAULT_ROOM_ID]
-    # ) -> Callable:
-    #     def decorator(func):
-
-    #         if event not in self.webhook_events_cb:
-    #             self.webhook_events_cb[event] = {}
-
-    #         if self.room_id_list != [self.DEFAULT_ROOM_ID]:
-    #                 self.get_rooms_id()
-
-    #         for room_id in room_id_list:
-    #             if room_id in self.room_id_list:
-    #                 self.webhook_events_cb[event][room_id] = func
-    #             else:
-    #                 raise NoRoomError(f"Try to register wrong room id: '{room_id}'")
-
-    #     return decorator
-
-    async def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
-        response = await self.register_webhook_event(list(self.webhook_events_cb.keys()))
+    def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+        response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response["secret"]
 
         app = FastAPI()
 
         @app.post("/")
-        def emo_callback(request: Request, body: EmoWebhook):
+        async def emo_callback(request: Request, body: EmoWebhook):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     room_id = body.uuid
@@ -202,7 +175,7 @@ class AsyncClient(Client):
                         cb_func = event_cb[room_id]
                     except KeyError:
                         cb_func = event_cb[self.DEFAULT_ROOM_ID]
-                    self.webhook_cb_executor.submit(cb_func, body)
+                    asyncio.create_task(cb_func(body))
                     self.request_id_deque.append(body.request_id)
                     return "success", 200
 
