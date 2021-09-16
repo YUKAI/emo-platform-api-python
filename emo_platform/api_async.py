@@ -1,35 +1,23 @@
+import asyncio
 import json
 import os
-from collections import deque
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
-import requests
 import aiohttp
-import asyncio
 import uvicorn
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
 
-from emo_platform.api import (
-    Client,
-    EMO_PLATFORM_PATH,
-    EmoWebhook,
-    PostContentType
-)
+from emo_platform.api import Client, EmoWebhook, PostContentType
 from emo_platform.exceptions import (
     NoRefreshTokenError,
-    NoRoomError,
     UnauthorizedError,
-    http_error_handler,
-    aiohttp_error_handler
+    aiohttp_error_handler,
 )
 from emo_platform.models import Color, Head, WebHook
 
 
 class AsyncClient(Client):
-
     async def update_tokens(self) -> None:
         with open(self.TOKEN_FILE, "r") as f:
             tokens = json.load(f)
@@ -37,7 +25,9 @@ class AsyncClient(Client):
 
         if refresh_token != "":
             try:
-                refresh_token, self.access_token = await self.get_access_token(refresh_token)
+                refresh_token, self.access_token = await self.get_access_token(
+                    refresh_token
+                )
                 self.headers["Authorization"] = "Bearer " + self.access_token
                 tokens["refresh_token"] = refresh_token
                 tokens["access_token"] = self.access_token
@@ -59,7 +49,9 @@ class AsyncClient(Client):
                 )
 
             try:
-                refresh_token, self.access_token = await self.get_access_token(refresh_token)
+                refresh_token, self.access_token = await self.get_access_token(
+                    refresh_token
+                )
                 self.headers["Authorization"] = "Bearer " + self.access_token
                 tokens["refresh_token"] = refresh_token
                 tokens["access_token"] = self.access_token
@@ -70,14 +62,18 @@ class AsyncClient(Client):
                     "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
                 )
 
-    async def _acheck_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
+    async def _acheck_http_error(
+        self, request: Callable, update_tokens: bool = True
+    ) -> dict:
         async with request() as response:
             try:
                 with aiohttp_error_handler():
                     response.raise_for_status()
             except UnauthorizedError:
                 if not update_tokens:
-                    raise UnauthorizedError("Unauthorized error while getting access_token")
+                    raise UnauthorizedError(
+                        "Unauthorized error while getting access_token"
+                    )
                 await self.update_tokens()
                 response = await request()
                 with aiohttp_error_handler():
@@ -87,7 +83,10 @@ class AsyncClient(Client):
     async def _aget(self, path: str, params: dict = {}) -> dict:
         async with aiohttp.ClientSession() as session:
             request = partial(
-                session.get, self.endpoint_url + path, params=params, headers=self.headers
+                session.get,
+                self.endpoint_url + path,
+                params=params,
+                headers=self.headers,
             )
             return await self._acheck_http_error(request)
 
@@ -101,7 +100,7 @@ class AsyncClient(Client):
     ) -> dict:
         if content_type is None:
             self.headers.pop("Content-Type")
-        else :
+        else:
             self.headers["Content-Type"] = content_type
         async with aiohttp.ClientSession() as session:
             request = partial(
@@ -121,7 +120,9 @@ class AsyncClient(Client):
 
     async def _adelete(self, path: str) -> dict:
         async with aiohttp.ClientSession() as session:
-            request = partial(session.delete, self.endpoint_url + path, headers=self.headers)
+            request = partial(
+                session.delete, self.endpoint_url + path, headers=self.headers
+            )
             return await self._acheck_http_error(request)
 
     async def get_access_token(self, refresh_token: str) -> tuple:
@@ -204,7 +205,7 @@ class Room:
     async def send_audio_msg(self, audio_data_path: str) -> dict:
         with open(audio_data_path, "rb") as audio_data:
             data = aiohttp.FormData()
-            data.add_field('audio', audio_data, content_type='multipart/form-data')
+            data.add_field("audio", audio_data, content_type="multipart/form-data")
             return await self.base_client._apost(
                 "/v1/rooms/" + self.room_id + "/messages/audio",
                 data=data,
@@ -214,7 +215,7 @@ class Room:
     async def send_image(self, image_data_path: str) -> dict:
         with open(image_data_path, "rb") as image_data:
             data = aiohttp.FormData()
-            data.add_field('image', image_data, content_type='multipart/form-data')
+            data.add_field("image", image_data, content_type="multipart/form-data")
             # files = {"image": image_data}
             return await self.base_client._apost(
                 "/v1/rooms/" + self.room_id + "/messages/image",
@@ -262,4 +263,6 @@ class Room:
         )
 
     async def get_emo_settings(self) -> dict:
-        return await self.base_client._aget("/v1/rooms/" + self.room_id + "/emo/settings")
+        return await self.base_client._aget(
+            "/v1/rooms/" + self.room_id + "/emo/settings"
+        )

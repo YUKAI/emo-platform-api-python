@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 
-import requests
 import aiohttp
+import requests
+
 
 class EmoPlatformEror(Exception):
     def __init__(self, message):
@@ -56,6 +57,7 @@ def http_error_handler():
     except requests.HTTPError as e:
         http_exception = http_status_to_exception(e.response.status_code)
         raise http_exception(e.response.json())
+
 
 @contextmanager
 def aiohttp_error_handler():

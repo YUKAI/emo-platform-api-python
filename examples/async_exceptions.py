@@ -2,10 +2,10 @@ import asyncio
 
 from emo_platform import AsyncClient, BadRequestError, NotFoundError, RateLimitError
 
-
 client = AsyncClient()
 rooms_id_list = client.get_rooms_id()
 room = client.create_room_client(rooms_id_list[0])
+
 
 async def main():
     await no_webhook_setting()

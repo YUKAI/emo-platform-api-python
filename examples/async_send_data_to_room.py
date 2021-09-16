@@ -1,8 +1,7 @@
-import os
 import asyncio
+import os
 
 from emo_platform import AsyncClient, Color, Head
-
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 client = AsyncClient()
@@ -11,6 +10,7 @@ room = client.create_room_client(rooms_id_list[0])
 
 
 async def main():
+    pass
 
     # Uncomment method you want to execute
 
@@ -56,7 +56,7 @@ async def send_all_stamp_motions():
     print("\n" + "=" * 20 + " room send all stamps " + "=" * 20)
     stamp_list = await client.get_stamps_list()
     for stamp in stamp_list["stamps"]:
-        await asyncio.sleep(7) # for avoiding rate limit
+        await asyncio.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send stamp " + "=" * 10)
         print(await room.send_stamp(stamp["uuid"]))
 

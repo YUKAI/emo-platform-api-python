@@ -1,8 +1,7 @@
-from threading import Thread
 import asyncio
+from threading import Thread
 
 from emo_platform import AsyncClient, WebHook
-
 
 client = AsyncClient()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -21,12 +20,15 @@ async def radar_callback(body):
     print(body)
     print(body.data)
 
+
 thread = Thread(target=client.start_webhook_event)
 thread.start()
 
+
 async def main():
-    while(True):
+    while True:
         await asyncio.sleep(0.5)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

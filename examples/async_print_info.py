@@ -4,6 +4,7 @@ from emo_platform import AsyncClient
 
 client = AsyncClient()
 
+
 async def main():
     await get_account_info()
     await get_rooms_list()
