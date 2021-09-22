@@ -1,7 +1,10 @@
 import unittest
-import os, json
+import os, json, time
 import requests, responses
+from threading import Thread
 from functools import partial
+from fastapi.testclient import TestClient
+
 from emo_platform import Client
 from emo_platform.exceptions import (
     NoRefreshTokenError,
@@ -387,14 +390,237 @@ class TestWebhookRegister(unittest.TestCase, TestBaseClass):
 			def test_webhook_callback():
 				pass
 
-# class TestWebhookReceive(unittest.TestCase, TestBaseClass):
+class TestWebhookReceive(unittest.TestCase, TestBaseClass):
 
-# 	def setUp(self):
-# 		super().init()
-# 		super().room_init()
-# 		super().set_tokens()
+	def setUp(self):
+		super().init()
+		super().room_init()
+		super().set_tokens()
 
+		self.test_webhook_info = {"secret": "test_secret_key"}
+		def webhook_info_callback(request):
+			if request.headers['Authorization'] == 'Bearer ' + self.right_access_token:
+				return 200, {}, json.dumps(self.test_webhook_info)
+			else:
+				return 401, {}, json.dumps({})
 
-# 	def test_webhook_receive(self):
-# 		client = Client(self.test_endpoint)
-# 		client.start_webhook_event()
+		self.responses.add_callback(
+			responses.PUT,
+			self.test_endpoint + '/v1/webhook/events',
+			callback=webhook_info_callback,
+			content_type='application/json'
+		)
+
+		self.room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
+
+	def test_webhook_receive(self):
+		client = Client(self.test_endpoint)
+
+		@client.event("test_event")
+		def test_webhook_callback(body):
+			self.assertEqual(body.request_id, 'test_id')
+			self.assertEqual(body.uuid, '52b0e129-2512-4696-9d06-8ddb842ba6ce')
+			self.assertEqual(body.serial_number, 'test_serial_no')
+			self.assertEqual(body.nickname, 'test_nickname')
+			self.assertEqual(body.timestamp, 0)
+			self.assertEqual(body.event, 'test_event')
+			self.assertEqual(body.data, {})
+			self.assertEqual(body.receiver, 'test_receiver')
+
+		thread = Thread(target=client.start_webhook_event)
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json={
+				"request_id": "test_id",
+				"uuid": self.room_uuid,
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+			}
+		)
+		self.assertEqual(response.json(), ["success", 200])
+
+	def test_webhook_receive_with_room_id(self):
+		client = Client(self.test_endpoint)
+
+		@client.event("test_event", [self.room_uuid])
+		def test_webhook_callback(body):
+			self.assertEqual(body.request_id, 'test_id')
+			self.assertEqual(body.uuid, '52b0e129-2512-4696-9d06-8ddb842ba6ce')
+			self.assertEqual(body.serial_number, 'test_serial_no')
+			self.assertEqual(body.nickname, 'test_nickname')
+			self.assertEqual(body.timestamp, 0)
+			self.assertEqual(body.event, 'test_event')
+			self.assertEqual(body.data, {})
+			self.assertEqual(body.receiver, 'test_receiver')
+
+		thread = Thread(target=client.start_webhook_event, args=("localhost", 8001,))
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json={
+				"request_id": "test_id",
+				"uuid": self.room_uuid,
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+			}
+		)
+		self.assertEqual(response.json(), ["success", 200])
+
+	def test_webhook_receive_with_wrong_room_id(self):
+		client = Client(self.test_endpoint)
+
+		@client.event("test_event", [self.room_uuid])
+		def test_webhook_callback(body):
+			pass
+
+		thread = Thread(target=client.start_webhook_event, args=("localhost", 8002,))
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json={
+				"request_id": "test_id",
+				"uuid": "wrong_room_id",
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+			}
+		)
+		self.assertEqual(response.json(), ["fail. no callback associated with the room.", 500])
+
+	def test_webhook_receive_with_wrong_secret_key(self):
+		client = Client(self.test_endpoint)
+
+		@client.event("test_event")
+		def test_webhook_callback(body):
+			pass
+
+		thread = Thread(target=client.start_webhook_event, args=("localhost", 8003,))
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_wrong_secret_key"},
+			json={
+				"request_id": "test_id",
+				"uuid": self.room_uuid,
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+			}
+		)
+		self.assertEqual(response.json(), None)
+
+	def test_webhook_receive_with_same_request_id(self):
+		client = Client(self.test_endpoint)
+
+		@client.event("test_event")
+		def test_webhook_callback(body):
+			pass
+
+		thread = Thread(target=client.start_webhook_event, args=("localhost", 8004,))
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		test_body = {
+				"request_id": "test_id",
+				"uuid": self.room_uuid,
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+		}
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json=test_body
+		)
+		self.assertEqual(response.json(), ["success", 200])
+
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json=test_body
+		)
+		self.assertEqual(response.json(), None)
+
+		for i in range(client.MAX_SAVED_REQUEST_ID):
+			test_body["request_id"] = str(i)
+			response = app_client.post(
+				"/",
+				headers={"x-platform-api-secret": "test_secret_key"},
+				json=test_body
+			)
+			self.assertEqual(response.json(), ["success", 200])
+
+		test_body["request_id"] = "test_id"
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json=test_body
+		)
+		self.assertEqual(response.json(), ["success", 200])
+
+	def test_webhook_receive_with_heavy_process_callback(self):
+		client = Client(self.test_endpoint)
+
+		self.test_callback_done = False
+		@client.event("test_event")
+		def test_webhook_callback(body):
+			time.sleep(1)
+			self.test_callback_done = True
+
+		thread = Thread(target=client.start_webhook_event, args=("localhost", 8005,))
+		thread.setDaemon(True)
+		thread.start()
+		time.sleep(0.01)
+		app_client = TestClient(client.app)
+		response = app_client.post(
+			"/",
+			headers={"x-platform-api-secret": "test_secret_key"},
+			json={
+				"request_id": "test_id",
+				"uuid": self.room_uuid,
+				"serial_number": "test_serial_no",
+				"nickname": "test_nickname",
+				"timestamp": 0,
+				"event": "test_event",
+				"data": {},
+				"receiver": "test_receiver"
+			}
+		)
+		self.assertEqual(response.json(), ["success", 200])
+		self.assertFalse(self.test_callback_done)
+		time.sleep(2)
+		self.assertTrue(self.test_callback_done)
