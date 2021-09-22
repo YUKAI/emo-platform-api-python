@@ -1,6 +1,6 @@
 import unittest
 import os, json
-import responses
+import requests, responses
 from functools import partial
 from emo_platform import Client
 from emo_platform.exceptions import (
@@ -12,10 +12,9 @@ from emo_platform.exceptions import (
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f'{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json'
-class TestGetTokens(unittest.TestCase):
 
-	def setUp(self):
-		# reset environment variables
+class TestBaseClass(object):
+	def init(self):
 		try:
 			os.environ.pop("EMO_PLATFORM_API_REFRESH_TOKEN")
 		except KeyError:
@@ -71,6 +70,12 @@ class TestGetTokens(unittest.TestCase):
 			content_type='application/json'
 		)
 
+
+
+class TestGetTokens(unittest.TestCase, TestBaseClass):
+
+	def setUp(self):
+		super().init()
 		self.addCleanup(self.responses.stop)
 		self.addCleanup(self.responses.reset)
 
@@ -251,3 +256,42 @@ class TestGetTokens(unittest.TestCase):
 		client = Client(self.test_endpoint)
 		with self.assertRaises(NoRefreshTokenError):
 			client.get_account_info()
+
+
+class TestCheckHttpError(unittest.TestCase, TestBaseClass):
+
+	def setUp(self):
+		super().init()
+		self.addCleanup(self.responses.stop)
+		self.addCleanup(self.responses.reset)
+
+	def test_http_request_success(self):
+		os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+		os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
+
+		client = Client(self.test_endpoint)
+		request = partial(
+            requests.get, self.test_endpoint + '/v1/me', headers={"Authorization" : 'Bearer ' + self.right_access_token}
+        )
+		client._check_http_error(request=request)
+
+	def test_http_request_fail(self):
+		os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+		os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+
+		client = Client(self.test_endpoint)
+		request = partial(
+            requests.get, self.test_endpoint + '/v1/me', headers={"Authorization" : ""}
+        )
+		with self.assertRaises(UnauthorizedError):
+			client._check_http_error(request=request, update_tokens=False)
+
+	def test_http_request_success_with_retry(self):
+		os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+		os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+
+		client = Client(self.test_endpoint)
+		request = partial(
+            requests.get, self.test_endpoint + '/v1/me', headers=client.headers
+		)
+		self.assertEqual(client._check_http_error(request=request), self.test_account_info)
