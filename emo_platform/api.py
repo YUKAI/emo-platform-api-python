@@ -233,23 +233,28 @@ class Client:
         response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response["secret"]
 
-        app = FastAPI()
+        self.app = FastAPI()
 
-        @app.post("/")
+        @self.app.post("/")
         def emo_callback(request: Request, body: EmoWebhook):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
-                    room_id = body.uuid
-                    event_cb = self.webhook_events_cb[body.event]
                     try:
-                        cb_func = event_cb[room_id]
+                        event_cb = self.webhook_events_cb[body.event]
                     except KeyError:
+                        return "fail. no callback associated with the event.", 500
+                    room_id = body.uuid
+                    if room_id in event_cb:
+                        cb_func = event_cb[room_id]
+                    elif self.DEFAULT_ROOM_ID in event_cb:
                         cb_func = event_cb[self.DEFAULT_ROOM_ID]
+                    else :
+                        return "fail. no callback associated with the room.", 500
                     self.webhook_cb_executor.submit(cb_func, body)
                     self.request_id_deque.append(body.request_id)
                     return "success", 200
 
-        uvicorn.run(app, host=host, port=port)
+        uvicorn.run(self.app, host=host, port=port)
 
 
 class Room:
