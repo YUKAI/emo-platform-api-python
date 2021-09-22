@@ -248,7 +248,7 @@ class Client:
                         cb_func = event_cb[room_id]
                     elif self.DEFAULT_ROOM_ID in event_cb:
                         cb_func = event_cb[self.DEFAULT_ROOM_ID]
-                    else :
+                    else:
                         return "fail. no callback associated with the room.", 500
                     self.webhook_cb_executor.submit(cb_func, body)
                     self.request_id_deque.append(body.request_id)
