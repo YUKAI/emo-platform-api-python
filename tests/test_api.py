@@ -70,6 +70,24 @@ class TestBaseClass(object):
 			content_type='application/json'
 		)
 
+	def room_init(self):
+		self.test_rooms_info = {"rooms": [{"uuid": "52b0e129-2512-4696-9d06-8ddb842ba6ce"}]}
+		def rooms_info_callback(request):
+			if request.headers['Authorization'] == 'Bearer ' + self.right_access_token:
+				return 200, {}, json.dumps(self.test_rooms_info)
+			else:
+				return 401, {}, json.dumps({})
+
+		self.responses.add_callback(
+			responses.GET,
+			self.test_endpoint + '/v1/rooms',
+			callback=rooms_info_callback,
+			content_type='application/json'
+		)
+
+	def set_tokens(self):
+		os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+		os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
 
 
 class TestGetTokens(unittest.TestCase, TestBaseClass):
@@ -295,3 +313,88 @@ class TestCheckHttpError(unittest.TestCase, TestBaseClass):
             requests.get, self.test_endpoint + '/v1/me', headers=client.headers
 		)
 		self.assertEqual(client._check_http_error(request=request), self.test_account_info)
+
+class TestGetRoomsId(unittest.TestCase, TestBaseClass):
+
+	def setUp(self):
+		super().init()
+		super().room_init()
+		super().set_tokens()
+
+		self.addCleanup(self.responses.stop)
+		self.addCleanup(self.responses.reset)
+
+	def test_get_rooms_id(self):
+		client = Client(self.test_endpoint)
+		for room_uuid in range(10):
+			rooms_id = client.get_rooms_id()
+			for room in self.test_rooms_info["rooms"]:
+				self.assertTrue(room["uuid"] in rooms_id)
+			self.test_rooms_info["rooms"].append({"uuid" : str(room_uuid)})
+
+	def test_get_no_rooms_id(self):
+		client = Client(self.test_endpoint)
+		self.test_rooms_info = {}
+		with self.assertRaises(NoRoomError):
+			client.get_rooms_id()
+
+class TestWebhookRegister(unittest.TestCase, TestBaseClass):
+
+	def setUp(self):
+		super().init()
+		super().room_init()
+		super().set_tokens()
+
+	def test_register_event(self):
+		client = Client(self.test_endpoint)
+		return_val = "test_webhook_callback"
+		@client.event("test_event")
+		def test_webhook_callback():
+			return return_val
+
+		self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+
+		return_val = "test_webhook_callback_new"
+		@client.event("test_event")
+		def test_webhook_callback_new():
+			return return_val
+
+		self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+
+	def test_register_event_with_room_id(self):
+		client = Client(self.test_endpoint)
+		old_room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
+		new_room_uuid = "new_room_uuid"
+		self.test_rooms_info["rooms"].append({"uuid" : new_room_uuid})
+
+		return_val = "test_webhook_callback"
+		@client.event("test_event", [old_room_uuid])
+		def test_webhook_callback():
+			return return_val
+
+		return_val_new = "test_webhook_callback_new"
+		@client.event("test_event", [new_room_uuid])
+		def test_webhook_callback_new():
+			return return_val_new
+
+		self.assertEqual(client.webhook_events_cb["test_event"][old_room_uuid](), return_val)
+		self.assertEqual(client.webhook_events_cb["test_event"][new_room_uuid](), return_val_new)
+
+	def test_register_event_with_nonexistent_room_id(self):
+		client = Client(self.test_endpoint)
+		with self.assertRaises(NoRoomError):
+			@client.event("test_event", ["nonexistent_room_id"])
+			def test_webhook_callback():
+				pass
+
+# class TestWebhookReceive(unittest.TestCase, TestBaseClass):
+
+# 	def setUp(self):
+# 		super().init()
+# 		super().room_init()
+# 		super().set_tokens()
+
+
+# 	def test_webhook_receive(self):
+# 		client = Client(self.test_endpoint)
+# 		client.start_webhook_event()
