@@ -217,11 +217,11 @@ class Client:
         account_info : dict
             取得したアカウント情報。
             {
-                name:          string,
-                email:         string,
-                profile_image: string,
-                uuid:          string,
-                plan:          string
+                name:          str,
+                email:         str,
+                profile_image: str,
+                uuid:          str,
+                plan:          str
             }
 
         Raises
@@ -242,11 +242,11 @@ class Client:
         account_info : dict
             削除したアカウント情報。
             {
-                name:          string,
-                email:         string,
-                profile_image: string,
-                uuid:          string,
-                plan:          string
+                name:          str,
+                email:         str,
+                profile_image: str,
+                uuid:          str,
+                plan:          str
             }
 
         Raises
@@ -273,14 +273,14 @@ class Client:
                     total:  int,
                 }
                 rooms: [{
-                    uuid:      string,
-                    name:      string,
-                    room_type: string,
+                    uuid:      str,
+                    name:      str,
+                    room_type: str,
                     room_members: [{
-                        uuid:          string,
-                        user_type:     string,
-                        nickname:      string,
-                        profile_image: string,
+                        uuid:          str,
+                        user_type:     str,
+                        nickname:      str,
+                        profile_image: str,
                     }]
                 }]
             }
@@ -350,10 +350,10 @@ class Client:
                     total:  int,
                 }
                 stamps: [{
-                    uuid:    string,
-                    name:    string,
-                    summary: string,
-                    image:   string
+                    uuid:    str,
+                    name:    str,
+                    summary: str,
+                    image:   str
                 }]
             }
 
@@ -380,9 +380,9 @@ class Client:
                     total:  int,
                 }
                 motions: [{
-                    name:    string,
-                    uuid:    string,
-                    preview: string,
+                    name:    str,
+                    uuid:    str,
+                    preview: str,
                 }]
             }
 
@@ -401,32 +401,115 @@ class Client:
         Returns
         -------
         webhook_info : dict
-            取得したWebhookの情報。
+            現在のWebhookの設定。
             {
-                description: string,
-                events:      list,
-                status:      string,
-                secret:      string,
-                url:         string,
+                description: str,
+                events:      List[str],
+                status:      str,
+                secret:      str,
+                url:         str,
             }
 
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているGETの処理が失敗した場合
+            あるいは、BOCCO emoにWebhookの設定がされていない場合。
 
         """
         return self._get("/v1/webhook")
 
     def change_webhook_setting(self, webhook: WebHook) -> dict:
+        """
+        Webhookの設定を変更する。
+
+        Parameters
+        ----------
+        webhook : emo_platform.WebHook
+            適用するWebhookの設定。
+
+        Returns
+        -------
+        webhook_info : dict
+            変更後のWebhookの設定。
+            {
+                description: str,
+                events:      List[str],
+                status:      str,
+                secret:      str,
+                url:         str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPUTの処理が失敗した場合
+            あるいは、BOCCO emoにWebhookの設定がされていない場合。
+
+        """
         payload = {"description": webhook.description, "url": webhook.url}
         return self._put("/v1/webhook", json.dumps(payload))
 
     def register_webhook_event(self, events: List[str]) -> dict:
+        """
+        Webhook通知するイベントを指定する。
+
+        Parameters
+        ----------
+        events : List[str]
+            指定するWebhook event。
+            eventの種類は下記から確認できる。
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        Returns
+        -------
+        webhook_info : dict
+            設定したWebhookの情報。
+            {
+                description: str,
+                events:      List[str],
+                status:      str,
+                secret:      str,
+                url:         str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPUTの処理が失敗した場合
+            あるいは、BOCCO emoにWebhookの設定がされていない場合。
+
+        """
         payload = {"events": events}
         return self._put("/v1/webhook/events", json.dumps(payload))
 
     def create_webhook_setting(self, webhook: WebHook) -> dict:
+        """
+        Webhookの設定を作成する。
+
+        Parameters
+        ----------
+        webhook : emo_platform.WebHook
+            作成するWebhookの設定。
+
+        Returns
+        -------
+        webhook_info : dict
+            作成したWebhookの設定。
+            {
+                description: str,
+                events:      List[str],
+                status:      str,
+                secret:      str,
+                url:         str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"description": webhook.description, "url": webhook.url}
         return self._post("/v1/webhook", json.dumps(payload))
 
@@ -439,17 +522,18 @@ class Client:
         webhook_info : dict
             削除したWebhookの情報。
             {
-                description: string,
+                description: str,
                 events:      list,
-                status:      string,
-                secret:      string,
-                url:         string,
+                status:      str,
+                secret:      str,
+                url:         str,
             }
 
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているDELETEの処理が失敗した場合。
+            関数内部で行っているDELETEの処理が失敗した場合
+            あるいは、BOCCO emoにWebhookの設定がされていない場合。
 
         """
         return self._delete("/v1/webhook")
@@ -457,6 +541,34 @@ class Client:
     def event(
         self, event: str, room_id_list: List[str] = [DEFAULT_ROOM_ID]
     ) -> Callable:
+        """
+        Webhookの指定のeventが通知されたときに呼び出す関数を登録する。
+
+        Usage
+        -----
+            client = emo_platform.Client()
+            @client.event("message.received")
+            def test_event_callback(body):
+                print(body)
+
+        Parameters
+        ----------
+        event : str
+            指定するWebhook event。
+            eventの種類は下記から確認できる。
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        room_id_list : List[str], default [""]
+            指定したWebhook eventの通知を監視する部屋を指定できる。
+            引数なしだと、全ての部屋を監視する。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部呼んでいるget_rooms_id()が例外を出した場合
+            あるいは、存在しない部屋を引数:room_id_listに含めていた場合。
+
+        """
         def decorator(func):
 
             if event not in self.webhook_events_cb:
@@ -474,6 +586,37 @@ class Client:
         return decorator
 
     def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+        """
+        BOCCO emoのWebhookのイベント通知を開始し、通知時に登録した関数が呼び出されるようにする。
+
+        Usage
+        -----
+        bloking処理になっているため、以下の例のようにスレッドを立てて用いる。
+
+            client = emo_platform.Client()
+            @client.event("message.received")
+            def test_event_callback(body):
+                print(body)
+            thread = Thread(target=client.start_webhook_event)
+            thread.start()
+
+            # main処理
+            main()
+
+        Parameters
+        ----------
+        host : str, default localhost
+            Webhookの通知を受けるローカルサーバーのホスト名。
+
+        port : int, default 8000
+            Webhookの通知を受けるローカルサーバーのポート番号。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼んでいるregister_webhook_event()が例外を出した場合。
+
+        """
         response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response["secret"]
 
@@ -502,11 +645,60 @@ class Client:
 
 
 class Room:
+    """
+    部屋固有の各種apiを呼び出すclient。
+
+    Parameters
+    ----------
+    base_client : emo_platform.Client
+        このclientを作成しているclient。
+
+    room_id : str
+        部屋のuuid。
+
+    """
     def __init__(self, base_client: Client, room_id: str):
         self.base_client = base_client
         self.room_id = room_id
 
-    def get_msgs(self, ts: int = None) -> dict:
+    def get_msgs(self, ts: Optional[int] = None) -> dict:
+        """
+        部屋に投稿されたメッセージを取得する。
+
+        Parameters
+        ----------
+        ts : int or None
+            指定した場合は、その時刻以前のメッセージを取得できる。
+            指定の仕方：2021/07/01 12:30:45以前なら、20210701123045000
+
+        Returns
+        -------
+        response : dict
+            投稿されたメッセージの情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         params = {"before": ts} if ts else {}
         return self.base_client._get(
             "/v1/rooms/" + self.room_id + "/messages", params=params
@@ -531,9 +723,9 @@ class Room:
             取得した設定値。
             {
                 sensors: [{
-                    uuid:            string,
-                    sensor_type:     string,
-                    nickname:        string,
+                    uuid:            str,
+                    sensor_type:     str,
+                    nickname:        str,
                     signal_strength: int,
                     battery:         int,
                 }]
@@ -548,11 +740,82 @@ class Room:
         return self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
 
     def get_sensor_values(self, sensor_id: str) -> dict:
+        """
+        部屋センサの送信値を取得する。
+
+        Parameters
+        ----------
+        sensor_id : str
+            部屋センサのuuid。
+            各部屋センサのuuidは、センサ一覧取得(get_sensors_list)で確認できる。
+
+        Returns
+        -------
+        response : dict
+            部屋センサの送信値の情報。
+            {
+                sensor_type: str,
+                uuid:        str,
+                nickname:    str,
+                events: [{
+                    temperature: int or float,
+                    humidity:    int or float,
+                    illuminance: int or float,
+                }]
+            }
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self.base_client._get(
             "/v1/rooms/" + self.room_id + "/sensors/" + sensor_id + "/values"
         )
 
     def send_audio_msg(self, audio_data_path: str) -> dict:
+        """
+        音声ファイルを部屋に投稿する。
+
+        Note
+        ----
+        送信できるファイルには下記の制限がある。
+            フォーマット:    MP3, M4A
+            ファイルサイズ:  1MB
+
+        Parameters
+        ----------
+        audio_data_path : str
+            投稿する音声ファイルの絶対パス。
+
+        Returns
+        -------
+        response : dict
+            音声ファイル投稿時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         with open(audio_data_path, "rb") as audio_data:
             files = {"audio": audio_data}
             return self.base_client._post(
@@ -562,6 +825,48 @@ class Room:
             )
 
     def send_image(self, image_data_path: str) -> dict:
+        """
+        画像ファイルを部屋に投稿する。
+
+        Note
+        ----
+        送信できるファイルには下記の制限がある。
+            フォーマット:    JPG, PNG
+            ファイルサイズ:  1MB
+
+        Parameters
+        ----------
+        image_data_path : str
+            投稿する画像ファイルの絶対パス。
+
+        Returns
+        -------
+        response : dict
+            画像投稿時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         with open(image_data_path, "rb") as image_data:
             files = {"image": image_data}
             return self.base_client._post(
@@ -571,12 +876,89 @@ class Room:
             )
 
     def send_msg(self, msg: str) -> dict:
+        """
+        テキストメッセージを部屋に投稿する。
+
+        Parameters
+        ----------
+        msg : str
+            投稿するメッセージ。
+
+        Returns
+        -------
+        response : dict
+            メッセージ投稿時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"text": msg}
         return self.base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/text", json.dumps(payload)
         )
 
     def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> dict:
+        """
+        スタンプを部屋に投稿する。
+
+        Parameters
+        ----------
+        stamp_id : str
+            スタンプのuuid。
+            各スタンプのuuidは、スタンプ一覧取得(get_stamps_list)で確認できる。
+
+        msg : Optional[str], default None
+            スタンプ投稿時に、BOCCO emoが行うモーション再生と共に発話されるメッセージ。
+            Noneの場合は、発話なしでモーションが再生される。
+
+        Returns
+        -------
+        response : dict
+            スタンプモーション送信時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"uuid": stamp_id}
         if msg:
             payload["text"] = msg
@@ -585,6 +967,44 @@ class Room:
         )
 
     def send_original_motion(self, file_path: str) -> dict:
+        """
+        独自定義した、オリジナルのモーションをBOCCO emoに送信する。
+        詳しくは、以下を参照。
+        https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions
+
+        Parameters
+        ----------
+        file_path : str
+            モーションファイルを置いている絶対パス。
+
+        Returns
+        -------
+        response : dict
+            モーション送信時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         with open(file_path) as f:
             payload = json.load(f)
             return self.base_client._post(
@@ -592,18 +1012,126 @@ class Room:
             )
 
     def change_led_color(self, color: Color) -> dict:
+        """
+        3秒間のみ、ほっぺたの色を指定した色に変更するモーションをBOCCO emoに送信する。
+
+        Parameters
+        ----------
+        color : emo_platform.Color
+            送信するほっぺたの色。
+
+        Returns
+        -------
+        response : dict
+            モーション送信時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
         return self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/led_color", json.dumps(payload)
         )
 
     def move_to(self, head: Head) -> dict:
+        """
+        首の角度を変更するモーションをBOCCO emoに送信する。
+
+        Parameters
+        ----------
+        head : emo_platform.Head
+            送信する首の角度。
+
+        Returns
+        -------
+        response : dict
+            モーション送信時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"angle": head.angle, "vertical_angle": head.vertical_angle}
         return self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/move_to", json.dumps(payload)
         )
 
     def send_motion(self, motion_id: str) -> dict:
+        """
+        プリセットモーションをBOCCO emoに送信する。
+
+        Parameters
+        ----------
+        motion_id : str
+            プリセットモーションのuuid
+            各プリセットモーションのuuidは、モーション一覧取得(get_motions_list)で確認できる。
+
+        Returns
+        -------
+        response : dict
+            モーション送信時の情報。
+            {
+                sequence:  int,
+                unique_id: str,
+                user: {
+                    uuid:          str,
+                    user_type:     str,
+                    nickname:      str,
+                    profile_image: str,
+                }
+                message: {
+                    ja: str,
+                }
+                media:     str,
+                audio_url: str,
+                image_url: str,
+                lang:      str,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"uuid": motion_id}
         return self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/preset", json.dumps(payload)
@@ -618,15 +1146,15 @@ class Room:
         settings : dict
             取得した設定値。
             {
-                nickname:      string,
-                wakeword:      string,
+                nickname:      str,
+                wakeword:      str,
                 volume:        int,
                 voice_pitch:   int,
                 voice_speed:   int,
-                lang:          string,
-                serial_number: string,
-                timezone:      string,
-                zip_code:      string
+                lang:          str,
+                serial_number: str,
+                timezone:      str,
+                zip_code:      str
             }
 
         Raises
