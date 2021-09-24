@@ -22,6 +22,7 @@ EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 class EmoWebhook(BaseModel):
+    """BOCCO emoからのWebhook通知のデータフォーマット"""
     request_id: str
     uuid: str
     serial_number: str
@@ -33,11 +34,26 @@ class EmoWebhook(BaseModel):
 
 
 class PostContentType:
+    """POSTするデータの種類"""
     APPLICATION_JSON = "application/json"
     MULTIPART_FORMDATA = None
 
 
 class Client:
+    """
+    各種apiを呼び出すclient。
+
+    Parameters
+    ----------
+    endpoint_url : str, default https://platform-api.bocco.me
+        BOCCO emo platform apiにアクセスするためのendpoint。
+
+    Raises
+    ----------
+    NoRefreshTokenError
+        refresh tokenが設定されていない、もしくは間違っている場合。
+
+    """
     BASE_URL = "https://platform-api.bocco.me"
     TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
     DEFAULT_ROOM_ID = ""
@@ -68,6 +84,15 @@ class Client:
         self.webhook_cb_executor = ThreadPoolExecutor()
 
     def update_tokens(self) -> None:
+        """
+        refresh tokenを用いて、refresh tokenとaccess tokenを取得して、jsonファイルに保存する。
+
+        Raises
+        ----------
+        NoRefreshTokenError
+            refresh tokenが設定されていない、もしくは間違っている場合。
+
+        """
         with open(self.TOKEN_FILE, "r") as f:
             tokens = json.load(f)
         refresh_token = tokens["refresh_token"]
@@ -158,6 +183,25 @@ class Client:
         return self._check_http_error(request)
 
     def get_access_token(self, refresh_token: str) -> tuple:
+        """
+        refresh_tokenを用いて、refresh tokenとaccess tokenを取得する。
+
+        Parameters
+        ----------
+        refresh_token : str
+            refresh tokenとaccess tokenを取得するのに用いるrefresh token。
+
+        Returns
+        -------
+        refresh_token, access_token : tuple
+            取得したrefresh tokenとaccess token。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        """
         payload = {"refresh_token": refresh_token}
         result = self._post(
             "/oauth/token/refresh", json.dumps(payload), update_tokens=False
@@ -165,15 +209,106 @@ class Client:
         return result["refresh_token"], result["access_token"]
 
     def get_account_info(self) -> dict:
+        """
+        アカウント情報を取得する。
+
+        Returns
+        -------
+        account_info : dict
+            取得したアカウント情報。
+            {
+                name:          string,
+                email:         string,
+                profile_image: string,
+                uuid:          string,
+                plan:          string
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self._get("/v1/me")
 
     def delete_account_info(self) -> dict:
+        """
+        アカウントを削除する。
+        アカウントを削除すると、紐づくWebhook等の設定も全て削除される。
+
+        Returns
+        -------
+        account_info : dict
+            削除したアカウント情報。
+            {
+                name:          string,
+                email:         string,
+                profile_image: string,
+                uuid:          string,
+                plan:          string
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているDELETEの処理が失敗した場合。
+
+        """
         return self._delete("/v1/me")
 
     def get_rooms_list(self) -> dict:
+        """
+        ユーザが参加している部屋の一覧を取得する。
+        取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られる。
+
+        Returns
+        -------
+        rooms_list : dict
+            取得した部屋一覧情報。
+            {
+                listing: {
+                    offset: int,
+                    limit:  int,
+                    total:  int,
+                }
+                rooms: [{
+                    uuid:      string,
+                    name:      string,
+                    room_type: string,
+                    room_members: [{
+                        uuid:          string,
+                        user_type:     string,
+                        nickname:      string,
+                        profile_image: string,
+                    }]
+                }]
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self._get("/v1/rooms")
 
-    def get_rooms_id(self) -> list:
+    def get_rooms_id(self) -> List[str]:
+        """
+        ユーザーが参加している全ての部屋のidを取得する。
+
+        Returns
+        -------
+        rooms_id : List[str]
+            取得した部屋のid。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合
+            あるいは、ユーザーが参加している部屋が1つもなかった場合。
+
+        """
         result = self._get("/v1/rooms")
         try:
             room_number = len(result["rooms"])
@@ -184,15 +319,103 @@ class Client:
         return rooms_id
 
     def create_room_client(self, room_id: str):
+        """
+        部屋固有の各種apiを呼び出すclientを作成する。
+
+        Parameters
+        ----------
+        room_id : str
+            部屋のid。
+
+        Returns
+        -------
+        room_client : Room
+            部屋のclient。
+
+        """
         return Room(self, room_id)
 
     def get_stamps_list(self) -> dict:
+        """
+        利用可能なスタンプ一覧を取得する。
+
+        Returns
+        -------
+        stamps_info : dict
+            取得したスタンプ一覧情報。
+            {
+                listing: {
+                    offset: int,
+                    limit:  int,
+                    total:  int,
+                }
+                stamps: [{
+                    uuid:    string,
+                    name:    string,
+                    summary: string,
+                    image:   string
+                }]
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self._get("/v1/stamps")
 
     def get_motions_list(self) -> dict:
+        """
+        利用可能なプリセットモーション一覧を取得する。
+
+        Returns
+        -------
+        stamps_info : dict
+            取得したプリセットモーション一覧情報。
+            {
+                listing: {
+                    offset: int,
+                    limit:  int,
+                    total:  int,
+                }
+                motions: [{
+                    name:    string,
+                    uuid:    string,
+                    preview: string,
+                }]
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self._get("/v1/motions")
 
     def get_webhook_setting(self) -> dict:
+        """
+        現在設定されているWebhookの情報を取得する。
+
+        Returns
+        -------
+        webhook_info : dict
+            取得したWebhookの情報。
+            {
+                description: string,
+                events:      list,
+                status:      string,
+                secret:      string,
+                url:         string,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self._get("/v1/webhook")
 
     def change_webhook_setting(self, webhook: WebHook) -> dict:
@@ -208,6 +431,27 @@ class Client:
         return self._post("/v1/webhook", json.dumps(payload))
 
     def delete_webhook_setting(self) -> dict:
+        """
+        現在設定されているWebhookの情報を削除する。
+
+        Returns
+        -------
+        webhook_info : dict
+            削除したWebhookの情報。
+            {
+                description: string,
+                events:      list,
+                status:      string,
+                secret:      string,
+                url:         string,
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているDELETEの処理が失敗した場合。
+
+        """
         return self._delete("/v1/webhook")
 
     def event(
@@ -269,6 +513,38 @@ class Room:
         )
 
     def get_sensors_list(self) -> dict:
+        """
+        BOCCO emoとペアリングされているセンサの一覧を取得する。
+
+        Notes
+        -----
+        センサの種別
+            sensor_type	センサの種別
+            movement	振動センサ
+            human	人感センサ
+            lock	鍵センサ
+            room	部屋センサ
+
+        Returns
+        -------
+        sensors_info : dict
+            取得した設定値。
+            {
+                sensors: [{
+                    uuid:            string,
+                    sensor_type:     string,
+                    nickname:        string,
+                    signal_strength: int,
+                    battery:         int,
+                }]
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
 
     def get_sensor_values(self, sensor_id: str) -> dict:
@@ -334,4 +610,29 @@ class Room:
         )
 
     def get_emo_settings(self) -> dict:
+        """
+        現在のBOCCO emoの設定値を取得する。
+
+        Returns
+        -------
+        settings : dict
+            取得した設定値。
+            {
+                nickname:      string,
+                wakeword:      string,
+                volume:        int,
+                voice_pitch:   int,
+                voice_speed:   int,
+                lang:          string,
+                serial_number: string,
+                timezone:      string,
+                zip_code:      string
+            }
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        """
         return self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
