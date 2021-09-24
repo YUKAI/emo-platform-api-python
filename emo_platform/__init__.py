@@ -1,7 +1,7 @@
 from .api import Client
 from .exceptions import (
     BadRequestError,
-    EmoPlatformEror,
+    EmoPlatformError,
     NoRefreshTokenError,
     NoRoomError,
     NotFoundError,

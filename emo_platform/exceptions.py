@@ -3,36 +3,36 @@ from contextlib import contextmanager
 import requests
 
 
-class EmoPlatformEror(Exception):
+class EmoPlatformError(Exception):
     def __init__(self, message):
         self.message = message
 
 
-class RateLimitError(EmoPlatformEror):
+class RateLimitError(EmoPlatformError):
     pass
 
 
-class UnauthorizedError(EmoPlatformEror):
+class UnauthorizedError(EmoPlatformError):
     pass
 
 
-class NotFoundError(EmoPlatformEror):
+class NotFoundError(EmoPlatformError):
     pass
 
 
-class BadRequestError(EmoPlatformEror):
+class BadRequestError(EmoPlatformError):
     pass
 
 
-class UnknownError(EmoPlatformEror):
+class UnknownError(EmoPlatformError):
     pass
 
 
-class NoRoomError(EmoPlatformEror):
+class NoRoomError(EmoPlatformError):
     pass
 
 
-class NoRefreshTokenError(EmoPlatformEror):
+class NoRefreshTokenError(EmoPlatformError):
     pass
 
 
