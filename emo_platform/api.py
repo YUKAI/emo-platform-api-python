@@ -53,6 +53,11 @@ class Client:
     NoRefreshTokenError
         refresh tokenが設定されていない、もしくは間違っている場合。
 
+    Note
+    ----
+    保存されているaccess tokenの期限が切れていた場合
+        保存されているrefresh tokenをもとに自動的に更新される。その際にAPI呼び出しが1回行われる。
+
     """
     BASE_URL = "https://platform-api.bocco.me"
     TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
