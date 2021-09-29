@@ -430,59 +430,66 @@ class TestGetRoomsId(unittest.TestCase, TestBaseClass):
 			client.get_rooms_id()
 
 
-# class TestWebhookRegister(unittest.TestCase, TestBaseClass):
-#     def setUp(self):
-#         super().init()
-#         super().room_init()
-#         super().set_tokens()
+class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
 
-#     def test_register_event(self):
-#         client = Client(self.test_endpoint)
-#         return_val = "test_webhook_callback"
+	async def asyncSetUp(self):
+		self.init_server()
+		self.init_room_server()
 
-#         @client.event("test_event")
-#         def test_webhook_callback():
-#             return return_val
+		self.reset_tokens()
+		self.set_tokens()
 
-#         self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+		self.addCleanup(self.responses.stop)
+		self.addCleanup(self.responses.reset)
 
-#         return_val = "test_webhook_callback_new"
+	async def test_register_event(self):
+		client = Client(self.test_endpoint)
+		return_val = "test_webhook_callback"
 
-#         @client.event("test_event")
-#         def test_webhook_callback_new():
-#             return return_val
+		@client.event("test_event")
+		async def test_webhook_callback():
+			return return_val
 
-#         self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+		self.assertEqual(await client.webhook_events_cb["test_event"][""](), return_val)
 
-#     def test_register_event_with_room_id(self):
-#         client = Client(self.test_endpoint)
-#         old_room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
-#         new_room_uuid = "new_room_uuid"
-#         self.test_rooms_info["rooms"].append({"uuid": new_room_uuid})
+		return_val = "test_webhook_callback_new"
 
-#         return_val = "test_webhook_callback"
+		@client.event("test_event")
+		async def test_webhook_callback_new():
+			return return_val
 
-#         @client.event("test_event", [old_room_uuid])
-#         def test_webhook_callback():
-#             return return_val
+		self.assertEqual(await client.webhook_events_cb["test_event"][""](), return_val)
 
-#         return_val_new = "test_webhook_callback_new"
+	# TODO: Uncomment after merging non async version
+	# async def test_register_event_with_room_id(self):
+	# 	client = Client(self.test_endpoint)
+	# 	old_room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
+	# 	new_room_uuid = "new_room_uuid"
+	# 	self.test_rooms_info["rooms"].append({"uuid": new_room_uuid})
 
-#         @client.event("test_event", [new_room_uuid])
-#         def test_webhook_callback_new():
-#             return return_val_new
+	# 	return_val = "test_webhook_callback"
 
-#         self.assertEqual(
-#             client.webhook_events_cb["test_event"][old_room_uuid](), return_val
-#         )
-#         self.assertEqual(
-#             client.webhook_events_cb["test_event"][new_room_uuid](), return_val_new
-#         )
+	# 	@client.event("test_event", [old_room_uuid])
+	# 	async def test_webhook_callback():
+	# 		return return_val
 
-#     def test_register_event_with_nonexistent_room_id(self):
-#         client = Client(self.test_endpoint)
-#         with self.assertRaises(NoRoomError):
+	# 	return_val_new = "test_webhook_callback_new"
 
-#             @client.event("test_event", ["nonexistent_room_id"])
-#             def test_webhook_callback():
-#                 pass
+	# 	@client.event("test_event", [new_room_uuid])
+	# 	async def test_webhook_callback_new():
+	# 		return return_val_new
+
+	# 	self.assertEqual(
+	# 		await client.webhook_events_cb["test_event"][old_room_uuid](), return_val
+	# 	)
+	# 	self.assertEqual(
+	# 		await client.webhook_events_cb["test_event"][new_room_uuid](), return_val_new
+	# 	)
+
+	async def test_register_event_with_nonexistent_room_id(self):
+		client = Client(self.test_endpoint)
+		with self.assertRaises(NoRoomError):
+
+			@client.event("test_event", ["nonexistent_room_id"])
+			async def test_webhook_callback():
+				pass
