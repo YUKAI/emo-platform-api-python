@@ -29,7 +29,7 @@ def main():
     # send_original_motion(motion_data_path)
 
     # color = Color(100, 255, 155)
-    # change_led_color(color)
+    # print(change_led_color(color))
 
     # head = Head(45, 10)
     # move_to(head)
@@ -55,10 +55,10 @@ def send_msg(text):
 def send_all_stamp_motions():
     print("\n" + "=" * 20 + " room send all stamps " + "=" * 20)
     stamp_list = client.get_stamps_list()
-    for stamp in stamp_list["stamps"]:
+    for stamp in stamp_list.stamps:
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send stamp " + "=" * 10)
-        print(room.send_stamp(stamp["uuid"]))
+        print(room.send_stamp(stamp.uuid))
 
 
 def send_original_motion(motion_data_path):
@@ -79,10 +79,10 @@ def move_to(head):
 def send_all_preset_motions():
     print("\n" + "=" * 20 + " room send all motions " + "=" * 20)
     motion_list = client.get_motions_list()
-    for motion in motion_list["motions"]:
+    for motion in motion_list.motions:
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send motion " + "=" * 10)
-        print(room.send_motion(motion["uuid"]))
+        print(room.send_motion(motion.uuid))
 
 
 if __name__ == "__main__":
