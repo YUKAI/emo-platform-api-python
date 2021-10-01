@@ -10,24 +10,7 @@ import responses
 from fastapi.testclient import TestClient
 
 from emo_platform import Client
-from emo_platform.exceptions import (
-    NoRefreshTokenError,
-    NoRoomError,
-    UnauthorizedError,
-)
-from emo_platform.response import (
-    EmoAccountInfo,
-    EmoTokens,
-    EmoRoomInfo,
-    EmoMessageInfo,
-    EmoMsgsInfo,
-    EmoStampsInfo,
-    EmoMotionsInfo,
-    EmoWebhookInfo,
-    EmoSensorsInfo,
-    EmoRoomSensorInfo,
-    EmoSettingsInfo,
-)
+from emo_platform.exceptions import NoRefreshTokenError, NoRoomError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
@@ -85,7 +68,7 @@ class TestBaseClass(object):
             "email": "",
             "profile_image": "",
             "uuid": "",
-            "plan": ""
+            "plan": "",
         }
 
         def account_info_callback(request):
