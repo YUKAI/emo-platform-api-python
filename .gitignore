@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# emo_platform_api tokens
+emo_platform/tokens/emo-platform-api.json
