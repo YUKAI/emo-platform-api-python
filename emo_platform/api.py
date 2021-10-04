@@ -3,10 +3,10 @@ import os
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Dict
 
 import requests
-import uvicorn
+import uvicorn # type: ignore
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
@@ -45,7 +45,7 @@ class Client:
 
     def __init__(self, endpoint_url: str = BASE_URL):
         self.endpoint_url = endpoint_url
-        self.headers = {
+        self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
         }
@@ -63,8 +63,8 @@ class Client:
 
         self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self.DEFAULT_ROOM_ID]
-        self.webhook_events_cb = {}
-        self.request_id_deque = deque([], self.MAX_SAVED_REQUEST_ID)
+        self.webhook_events_cb: Dict[str, Dict[str,Callable]] = {}
+        self.request_id_deque: deque = deque([], self.MAX_SAVED_REQUEST_ID)
         self.webhook_cb_executor = ThreadPoolExecutor()
 
     def update_tokens(self) -> None:
@@ -130,9 +130,9 @@ class Client:
     def _post(
         self,
         path: str,
-        data: dict = {},
+        data: str = "{}",
         files: Optional[dict] = None,
-        content_type: PostContentType = PostContentType.APPLICATION_JSON,
+        content_type: Optional[str] = PostContentType.APPLICATION_JSON,
         update_tokens: bool = True,
     ) -> dict:
         self.headers["Content-Type"] = content_type
@@ -145,7 +145,7 @@ class Client:
         )
         return self._check_http_error(request, update_tokens=update_tokens)
 
-    def _put(self, path: str, data: dict = {}) -> dict:
+    def _put(self, path: str, data: str = "{}") -> dict:
         request = partial(
             requests.put, self.endpoint_url + path, data=data, headers=self.headers
         )
