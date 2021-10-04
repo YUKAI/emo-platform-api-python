@@ -27,6 +27,7 @@ from emo_platform.response import (
     EmoStampsInfo,
     EmoTokens,
     EmoWebhookInfo,
+    EmoWebhookBody
 )
 
 
@@ -189,7 +190,7 @@ class AsyncClient(Client):
         app = FastAPI()
 
         @app.post("/")
-        async def emo_callback(request: Request, body: EmoWebhook):
+        async def emo_callback(request: Request, body: EmoWebhookBody):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     room_id = body.uuid

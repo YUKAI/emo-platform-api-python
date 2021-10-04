@@ -29,20 +29,10 @@ from emo_platform.response import (
     EmoStampsInfo,
     EmoTokens,
     EmoWebhookInfo,
+    EmoWebhookBody
 )
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
-
-
-class EmoWebhook(BaseModel):
-    request_id: str
-    uuid: str
-    serial_number: str
-    nickname: str
-    timestamp: int
-    event: str
-    data: dict
-    receiver: str
 
 
 class PostContentType:
@@ -268,7 +258,7 @@ class Client:
         self.app = FastAPI()
 
         @self.app.post("/")
-        def emo_callback(request: Request, body: EmoWebhook):
+        def emo_callback(request: Request, body: EmoWebhookBody):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     try:
