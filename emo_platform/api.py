@@ -49,8 +49,13 @@ class Client:
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
         }
-        with open(self.TOKEN_FILE) as f:
-            tokens = json.load(f)
+        try:
+            with open(self.TOKEN_FILE) as f:
+                tokens = json.load(f)
+        except FileNotFoundError:
+            with open(self.TOKEN_FILE, "w") as f:
+                tokens = {"refresh_token" : "", "access_token" : ""}
+                json.dump(tokens, f)
         access_token = tokens["access_token"]
 
         if access_token == "":
