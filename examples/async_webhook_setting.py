@@ -1,0 +1,39 @@
+import asyncio
+
+from emo_platform import AsyncClient, WebHook
+
+client = AsyncClient()
+
+
+async def main():
+    webhook = WebHook("http://localhost:8000", "test")
+    events = ["message.received"]
+    create_webhook_setting(webhook)
+    await get_webhook_setting()
+    register_webhook_event(events)
+    await get_webhook_setting()
+    await delete_webhook_setting()
+
+
+def create_webhook_setting(webhook):
+    print("\n" + "=" * 20 + " create webhook setting " + "=" * 20)
+    print(client.create_webhook_setting(webhook))
+
+
+async def get_webhook_setting():
+    print("\n" + "=" * 20 + " get webhook setting " + "=" * 20)
+    print(await client.get_webhook_setting())
+
+
+async def register_webhook_event(events):
+    print("\n" + "=" * 20 + " register webhook event " + "=" * 20)
+    print(await client.register_webhook_event(events))
+
+
+async def delete_webhook_setting():
+    print("\n" + "=" * 20 + " delete webhook setting " + "=" * 20)
+    print(await client.delete_webhook_setting())
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

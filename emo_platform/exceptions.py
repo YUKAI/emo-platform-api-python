@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 
+import aiohttp
 import requests
 
 
@@ -56,3 +57,12 @@ def http_error_handler():
     except requests.HTTPError as e:
         http_exception = http_status_to_exception(e.response.status_code)
         raise http_exception(e.response.json())
+
+
+@contextmanager
+def aiohttp_error_handler():
+    try:
+        yield None
+    except aiohttp.ClientResponseError as e:
+        http_exception = http_status_to_exception(e.status)
+        raise http_exception(e.message)
