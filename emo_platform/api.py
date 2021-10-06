@@ -3,12 +3,11 @@ import os
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Callable, List, Optional, Dict
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Union
 
 import requests
-import uvicorn # type: ignore
+import uvicorn  # type: ignore
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
 
 from emo_platform.exceptions import (
     NoRefreshTokenError,
@@ -28,8 +27,8 @@ from emo_platform.response import (
     EmoSettingsInfo,
     EmoStampsInfo,
     EmoTokens,
+    EmoWebhookBody,
     EmoWebhookInfo,
-    EmoWebhookBody
 )
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -57,7 +56,7 @@ class Client:
                 tokens = json.load(f)
         except FileNotFoundError:
             with open(self.TOKEN_FILE, "w") as f:
-                tokens = {"refresh_token" : "", "access_token" : ""}
+                tokens = {"refresh_token": "", "access_token": ""}
                 json.dump(tokens, f)
         access_token = tokens["access_token"]
 
@@ -71,7 +70,7 @@ class Client:
 
         self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self.DEFAULT_ROOM_ID]
-        self.webhook_events_cb: Dict[str, Dict[str,Callable]] = {}
+        self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self.request_id_deque: deque = deque([], self.MAX_SAVED_REQUEST_ID)
         self.webhook_cb_executor = ThreadPoolExecutor()
 
@@ -169,22 +168,26 @@ class Client:
         )
         return self._check_http_error(request)
 
-    def get_access_token(self, refresh_token: str) -> tuple:
+    def get_access_token(self, refresh_token: str) -> EmoTokens:
         payload = {"refresh_token": refresh_token}
         response = self._post(
             "/oauth/token/refresh", json.dumps(payload), update_tokens=False
         )
         return EmoTokens(**response)
 
-    def get_account_info(self) -> dict:
+    def get_account_info(
+        self,
+    ) -> Union[EmoAccountInfo, Coroutine[Any, Any, EmoAccountInfo]]:
         response = self._get("/v1/me")
         return EmoAccountInfo(**response)
 
-    def delete_account_info(self) -> dict:
+    def delete_account_info(
+        self,
+    ) -> Union[EmoAccountInfo, Coroutine[Any, Any, EmoAccountInfo]]:
         response = self._delete("/v1/me")
         return EmoAccountInfo(**response)
 
-    def get_rooms_list(self) -> dict:
+    def get_rooms_list(self) -> Union[EmoRoomInfo, Coroutine[Any, Any, EmoRoomInfo]]:
         response = self._get("/v1/rooms")
         return EmoRoomInfo(**response)
 
@@ -201,34 +204,44 @@ class Client:
     def create_room_client(self, room_id: str):
         return Room(self, room_id)
 
-    def get_stamps_list(self) -> dict:
+    def get_stamps_list(
+        self,
+    ) -> Union[EmoStampsInfo, Coroutine[Any, Any, EmoStampsInfo]]:
         response = self._get("/v1/stamps")
         return EmoStampsInfo(**response)
 
-    def get_motions_list(self) -> dict:
+    def get_motions_list(
+        self,
+    ) -> Union[EmoMotionsInfo, Coroutine[Any, Any, EmoMotionsInfo]]:
         response = self._get("/v1/motions")
         return EmoMotionsInfo(**response)
 
-    def get_webhook_setting(self) -> dict:
+    def get_webhook_setting(
+        self,
+    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
         response = self._get("/v1/webhook")
         return EmoWebhookInfo(**response)
 
-    def change_webhook_setting(self, webhook: WebHook) -> dict:
+    def change_webhook_setting(
+        self, webhook: WebHook
+    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
         payload = {"description": webhook.description, "url": webhook.url}
         response = self._put("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
-    def register_webhook_event(self, events: List[str]) -> dict:
+    def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
         payload = {"events": events}
         response = self._put("/v1/webhook/events", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
-    def create_webhook_setting(self, webhook: WebHook) -> dict:
+    def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
         payload = {"description": webhook.description, "url": webhook.url}
         response = self._post("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
-    def delete_webhook_setting(self) -> dict:
+    def delete_webhook_setting(
+        self,
+    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
         response = self._delete("/v1/webhook")
         return EmoWebhookInfo(**response)
 
@@ -284,24 +297,24 @@ class Room:
         self.base_client = base_client
         self.room_id = room_id
 
-    def get_msgs(self, ts: int = None) -> dict:
+    def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
         params = {"before": ts} if ts else {}
         response = self.base_client._get(
             "/v1/rooms/" + self.room_id + "/messages", params=params
         )
         return EmoMsgsInfo(**response)
 
-    def get_sensors_list(self) -> dict:
+    def get_sensors_list(self) -> EmoSensorsInfo:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
-    def get_sensor_values(self, sensor_id: str) -> dict:
+    def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
         response = self.base_client._get(
             "/v1/rooms/" + self.room_id + "/sensors/" + sensor_id + "/values"
         )
         return EmoRoomSensorInfo(**response)
 
-    def send_audio_msg(self, audio_data_path: str) -> dict:
+    def send_audio_msg(self, audio_data_path: str) -> EmoMessageInfo:
         with open(audio_data_path, "rb") as audio_data:
             files = {"audio": audio_data}
             response = self.base_client._post(
@@ -311,7 +324,7 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_image(self, image_data_path: str) -> dict:
+    def send_image(self, image_data_path: str) -> EmoMessageInfo:
         with open(image_data_path, "rb") as image_data:
             files = {"image": image_data}
             response = self.base_client._post(
@@ -321,14 +334,14 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_msg(self, msg: str) -> dict:
+    def send_msg(self, msg: str) -> EmoMessageInfo:
         payload = {"text": msg}
         response = self.base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/text", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
 
-    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> dict:
+    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
         payload = {"uuid": stamp_id}
         if msg:
             payload["text"] = msg
@@ -337,7 +350,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_original_motion(self, file_path: str) -> dict:
+    def send_original_motion(self, file_path: str) -> EmoMessageInfo:
         with open(file_path) as f:
             payload = json.load(f)
             response = self.base_client._post(
@@ -345,27 +358,27 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def change_led_color(self, color: Color) -> dict:
+    def change_led_color(self, color: Color) -> EmoMessageInfo:
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
         response = self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/led_color", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
 
-    def move_to(self, head: Head) -> dict:
+    def move_to(self, head: Head) -> EmoMessageInfo:
         payload = {"angle": head.angle, "vertical_angle": head.vertical_angle}
         response = self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/move_to", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
 
-    def send_motion(self, motion_id: str) -> dict:
+    def send_motion(self, motion_id: str) -> EmoMessageInfo:
         payload = {"uuid": motion_id}
         response = self.base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/preset", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
 
-    def get_emo_settings(self) -> dict:
+    def get_emo_settings(self) -> EmoSettingsInfo:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)

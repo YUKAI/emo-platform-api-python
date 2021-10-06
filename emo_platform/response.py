@@ -127,60 +127,78 @@ class EmoSettingsInfo(BaseModel):
     timezone: str
     zip_code: str
 
+
 class EmoKind(BaseModel):
     kind: str
+
 
 class EmoWebhookTriggerWord(BaseModel):
     trigger_word: EmoKind
 
+
 class EmoPerformedBy(BaseModel):
     performed_by: str
+
 
 class EmoWebhookRecording(BaseModel):
     recording: EmoPerformedBy
 
+
 class EmoMinutes(BaseModel):
     minutes: str
+
 
 class EmoTime(BaseModel):
     time: str
 
+
 class EmoArea(BaseModel):
     area: str
 
+
 class EmoVolume(BaseModel):
     volume: str
+
 
 class EmoVuiCommand(BaseModel):
     kind: str
     parameters: Union[EmoMinutes, EmoTime, EmoArea, EmoVolume]
 
+
 class EmoWebhookVuiCommand(BaseModel):
-    vui_command : Union[EmoVuiCommand, EmoKind]
+    vui_command: Union[EmoVuiCommand, EmoKind]
+
 
 class EmoWebhookMotion(BaseModel):
     motion: EmoKind
 
+
 class EmoTalk(BaseModel):
     talk: str
+
 
 class EmoWebhookEmoTalk(BaseModel):
     emo_talk: EmoTalk
 
+
 class EmoWebhookAccel(BaseModel):
     accel: EmoKind
+
 
 class EmoWebhookIlluminance(BaseModel):
     illuminance: EmoKind
 
+
 class EmoRadar(BaseModel):
-    begin:      bool
-    end:        bool
+    begin: bool
+    end: bool
     near_begin: bool
-    near_end:   bool
+    near_end: bool
+
 
 class EmoWebhookRadar(BaseModel):
     radar: EmoRadar
+
 
 class EmoWebhookMessageBody(BaseModel):
     sequence: int
@@ -190,20 +208,26 @@ class EmoWebhookMessageBody(BaseModel):
     media: str
     lang: str
 
+
 class EmoWebhookMessage(BaseModel):
     message: EmoWebhookMessageBody
+
 
 class EmoWebhookMovementSensor(BaseModel):
     message: EmoWebhookMessageBody
 
+
 class EmoWebhookLockSensor(BaseModel):
     message: EmoWebhookMessageBody
+
 
 class EmoWebhookHumanSensor(BaseModel):
     message: EmoWebhookMessageBody
 
+
 class EmoWebhookRoomSensor(BaseModel):
     message: EmoWebhookMessageBody
+
 
 class EmoWebhookBody(BaseModel):
     request_id: str
@@ -226,6 +250,6 @@ class EmoWebhookBody(BaseModel):
         EmoWebhookLockSensor,
         EmoWebhookHumanSensor,
         EmoWebhookRoomSensor,
-        dict
+        dict,
     ]
     receiver: str
