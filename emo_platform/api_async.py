@@ -1,8 +1,8 @@
 import asyncio
 import json
-import os, signal
+import os
 from functools import partial
-from typing import Callable, Optional, List
+from typing import Callable, List, Optional
 
 import aiohttp
 import uvicorn
@@ -160,7 +160,9 @@ class AsyncClient(Client):
     async def delete_webhook_setting(self) -> dict:
         return await self._adelete("/v1/webhook")
 
-    async def start_webhook_event(self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []) -> None:
+    async def start_webhook_event(
+        self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
+    ) -> None:
         response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response["secret"]
 
@@ -186,7 +188,9 @@ class AsyncClient(Client):
                     return "success", 200
 
         loop = asyncio.get_event_loop()
-        config = uvicorn.Config(app=self.app, host=host, port=port, loop=loop, lifespan="off")
+        config = uvicorn.Config(
+            app=self.app, host=host, port=port, loop=loop, lifespan="off"
+        )
         self.server = uvicorn.Server(config)
         await self.server.serve()
         for task in tasks:
@@ -194,6 +198,7 @@ class AsyncClient(Client):
 
     def stop_webhook_event(self):
         self.server.should_exit = True
+
 
 class Room:
     def __init__(self, base_client: Client, room_id: str):

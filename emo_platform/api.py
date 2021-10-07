@@ -3,10 +3,10 @@ import os
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Callable, List, Optional, Dict
+from typing import Callable, Dict, List, Optional
 
 import requests
-import uvicorn # type: ignore
+import uvicorn  # type: ignore
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
@@ -54,7 +54,7 @@ class Client:
                 tokens = json.load(f)
         except FileNotFoundError:
             with open(self.TOKEN_FILE, "w") as f:
-                tokens = {"refresh_token" : "", "access_token" : ""}
+                tokens = {"refresh_token": "", "access_token": ""}
                 json.dump(tokens, f)
         access_token = tokens["access_token"]
 
@@ -68,7 +68,7 @@ class Client:
 
         self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self.DEFAULT_ROOM_ID]
-        self.webhook_events_cb: Dict[str, Dict[str,Callable]] = {}
+        self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self.request_id_deque: deque = deque([], self.MAX_SAVED_REQUEST_ID)
         self.webhook_cb_executor = ThreadPoolExecutor()
 

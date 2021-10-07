@@ -12,6 +12,7 @@ async def print_queue(queue):
         item = await queue.get()
         print(item.data)
 
+
 async def main():
     queue = asyncio.Queue()
 
@@ -23,6 +24,7 @@ async def main():
     task_queue = asyncio.create_task(print_queue(queue))
 
     await client.start_webhook_event(port=8000, tasks=[task_queue])
+
 
 if __name__ == "__main__":
     asyncio.run(main())
