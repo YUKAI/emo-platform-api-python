@@ -184,6 +184,8 @@ class Client:
             room_number = len(result["rooms"])
         except KeyError:
             raise NoRoomError("Get no room id.")
+        if room_number == 0:
+            raise NoRoomError("Get no room id.")
         rooms_id = [result["rooms"][i]["uuid"] for i in range(room_number)]
         self.room_id_list = rooms_id + [self.DEFAULT_ROOM_ID]
         return rooms_id
