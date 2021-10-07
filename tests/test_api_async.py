@@ -486,7 +486,7 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
 
 
 class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
-    def setUp(self):
+    async def asyncSetUp(self):
         self.init_server()
         self.init_room_server()
 
@@ -513,10 +513,14 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
-    def test_webhook_receive(self):
-        client = Client(self.test_endpoint)
+    async def asyncTearDown(self):
+        self.client.stop_webhook_event()
+        await self.task
 
-        @client.event("test_event")
+    async def test_webhook_receive(self):
+        self.client = Client(self.test_endpoint)
+
+        @self.client.event("test_event")
         async def test_webhook_callback(body):
             self.assertEqual(body.request_id, "test_id")
             self.assertEqual(body.uuid, "52b0e129-2512-4696-9d06-8ddb842ba6ce")
@@ -527,26 +531,32 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             self.assertEqual(body.data, {})
             self.assertEqual(body.receiver, "test_receiver")
 
-        thread = Thread(target=client.start_webhook_event)
-        thread.setDaemon(True)
-        thread.start()
-        time.sleep(0.01)
-        app_client = TestClient(client.app)
-        response = app_client.post(
-            "/",
-            headers={"x-platform-api-secret": "test_secret_key"},
-            json={
-                "request_id": "test_id",
-                "uuid": self.room_uuid,
-                "serial_number": "test_serial_no",
-                "nickname": "test_nickname",
-                "timestamp": 0,
-                "event": "test_event",
-                "data": {},
-                "receiver": "test_receiver",
-            },
-        )
-        self.assertEqual(response.json(), ["success", 200])
+        async def post_test_data():
+            async with ClientSession() as session:
+                request = partial(
+                    session.post,
+                    "http://localhost:8001",
+                    data = json.dumps({
+                    "request_id": "test_id",
+                    "uuid": self.room_uuid,
+                    "serial_number": "test_serial_no",
+                    "nickname": "test_nickname",
+                    "timestamp": 0,
+                    "event": "test_event",
+                    "data": {},
+                    "receiver": "test_receiver",
+                    }),
+                    headers={
+                        "x-platform-api-secret": "test_secret_key",
+                        "Content-Type": "application/json",
+                        "accept": "*/*",
+                    },
+                )
+                response = await request()
+                self.assertEqual(await response.json(), ["success", 200])
+
+        self.task = asyncio.create_task(self.client.start_webhook_event(port=8001))
+        await post_test_data()
 
     # TODO
     @unittest.skip("Unskip after merging non_async branch")
@@ -629,137 +639,124 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             response.json(), ["fail. no callback associated with the room.", 500]
         )
 
-    def test_webhook_receive_with_wrong_secret_key(self):
-        client = Client(self.test_endpoint)
+    async def test_webhook_receive_with_wrong_secret_key(self):
+        self.client = Client(self.test_endpoint)
 
-        @client.event("test_event")
+        @self.client.event("test_event")
         async def test_webhook_callback(body):
             pass
 
-        thread = Thread(
-            target=client.start_webhook_event,
-            args=(
-                "localhost",
-                8003,
-            ),
-        )
-        thread.setDaemon(True)
-        thread.start()
-        time.sleep(0.01)
-        app_client = TestClient(client.app)
-        response = app_client.post(
-            "/",
-            headers={"x-platform-api-secret": "test_wrong_secret_key"},
-            json={
-                "request_id": "test_id",
-                "uuid": self.room_uuid,
-                "serial_number": "test_serial_no",
-                "nickname": "test_nickname",
-                "timestamp": 0,
-                "event": "test_event",
-                "data": {},
-                "receiver": "test_receiver",
-            },
-        )
-        self.assertEqual(response.json(), None)
+        async def post_test_data():
+            async with ClientSession() as session:
+                request = partial(
+                    session.post,
+                    "http://localhost:8003",
+                    data = json.dumps({
+                    "request_id": "test_id",
+                    "uuid": self.room_uuid,
+                    "serial_number": "test_serial_no",
+                    "nickname": "test_nickname",
+                    "timestamp": 0,
+                    "event": "test_event",
+                    "data": {},
+                    "receiver": "test_receiver",
+                    }),
+                    headers={
+                        "x-platform-api-secret": "test_wrong_secret_key",
+                        "Content-Type": "application/json",
+                        "accept": "*/*",
+                    },
+                )
+                response = await request()
+                self.assertEqual(await response.json(), None)
 
-    def test_webhook_receive_with_same_request_id(self):
-        client = Client(self.test_endpoint)
+        self.task = asyncio.create_task(self.client.start_webhook_event(port=8003))
+        await post_test_data()
 
-        @client.event("test_event")
+    async def test_webhook_receive_with_same_request_id(self):
+        self.client = Client(self.test_endpoint)
+
+        @self.client.event("test_event")
         async def test_webhook_callback(body):
             pass
 
-        thread = Thread(
-            target=client.start_webhook_event,
-            args=(
-                "localhost",
-                8004,
-            ),
-        )
-        thread.setDaemon(True)
-        thread.start()
-        time.sleep(0.01)
-        app_client = TestClient(client.app)
-        test_body = {
-            "request_id": "test_id",
-            "uuid": self.room_uuid,
-            "serial_number": "test_serial_no",
-            "nickname": "test_nickname",
-            "timestamp": 0,
-            "event": "test_event",
-            "data": {},
-            "receiver": "test_receiver",
-        }
-        response = app_client.post(
-            "/", headers={"x-platform-api-secret": "test_secret_key"}, json=test_body
-        )
-        self.assertEqual(response.json(), ["success", 200])
+        async def post_test_data():
+            async with ClientSession() as session:
+                test_body = {
+                    "request_id": "test_id",
+                    "uuid": self.room_uuid,
+                    "serial_number": "test_serial_no",
+                    "nickname": "test_nickname",
+                    "timestamp": 0,
+                    "event": "test_event",
+                    "data": {},
+                    "receiver": "test_receiver",
+                }
 
-        response = app_client.post(
-            "/", headers={"x-platform-api-secret": "test_secret_key"}, json=test_body
-        )
-        self.assertEqual(response.json(), None)
+                request = partial(
+                    session.post,
+                    "http://localhost:8004",
+                    headers = {
+                        "x-platform-api-secret": "test_secret_key",
+                        "Content-Type": "application/json",
+                        "accept": "*/*",
+                    }
+                )
 
-        for i in range(client.MAX_SAVED_REQUEST_ID):
-            test_body["request_id"] = str(i)
-            response = app_client.post(
-                "/",
-                headers={"x-platform-api-secret": "test_secret_key"},
-                json=test_body,
-            )
-            self.assertEqual(response.json(), ["success", 200])
+                response = await request(data=json.dumps(test_body))
+                self.assertEqual(await response.json(), ["success", 200])
 
-        test_body["request_id"] = "test_id"
-        response = app_client.post(
-            "/", headers={"x-platform-api-secret": "test_secret_key"}, json=test_body
-        )
-        self.assertEqual(response.json(), ["success", 200])
+                response = await request(data=json.dumps(test_body))
+                self.assertEqual(await response.json(), None)
 
-    # TODO: Resolve loop problem
-    @unittest.skip("loop?")
-    def test_webhook_receive_with_heavy_process_callback(self):
-        client = Client(self.test_endpoint)
+                for i in range(self.client.MAX_SAVED_REQUEST_ID):
+                    test_body["request_id"] = str(i)
+                    response = await request(data=json.dumps(test_body))
+                    self.assertEqual(await response.json(), ["success", 200])
+
+                test_body["request_id"] = "test_id"
+                response = await request(data=json.dumps(test_body))
+                self.assertEqual(await response.json(), ["success", 200])
+
+        self.task = asyncio.create_task(self.client.start_webhook_event(port=8004))
+        await post_test_data()
+
+    async def test_webhook_receive_with_heavy_process_callback(self):
+        self.client = Client(self.test_endpoint)
 
         self.test_callback_done = False
 
-        @client.event("test_event")
+        @self.client.event("test_event")
         async def test_webhook_callback(body):
-            print("hoge")
             await asyncio.sleep(1)
-            print("hoge2")
             self.test_callback_done = True
 
-        thread = Thread(
-            target=client.start_webhook_event,
-            args=(
-                "localhost",
-                8005,
-            ),
-        )
-        thread.setDaemon(True)
-        thread.start()
-        time.sleep(0.01)
-        app_client = TestClient(client.app)
-        # async def main():
-        response = app_client.post(
-            "/",
-            headers={"x-platform-api-secret": "test_secret_key"},
-            json={
-                "request_id": "test_id",
-                "uuid": self.room_uuid,
-                "serial_number": "test_serial_no",
-                "nickname": "test_nickname",
-                "timestamp": 0,
-                "event": "test_event",
-                "data": {},
-                "receiver": "test_receiver",
-            },
-        )
-        self.assertEqual(response.json(), ["success", 200])
-        self.assertFalse(self.test_callback_done)
-        # print("hoge3")
-        # await asyncio.sleep(5)
-        # print("hoge4")
-        self.assertTrue(self.test_callback_done)
-        # asyncio.run(main())
+        async def post_test_data():
+            async with ClientSession() as session:
+                request = partial(
+                    session.post,
+                    "http://localhost:8005",
+                    data = json.dumps({
+                    "request_id": "test_id",
+                    "uuid": self.room_uuid,
+                    "serial_number": "test_serial_no",
+                    "nickname": "test_nickname",
+                    "timestamp": 0,
+                    "event": "test_event",
+                    "data": {},
+                    "receiver": "test_receiver",
+                    }),
+                    headers={
+                        "x-platform-api-secret": "test_secret_key",
+                        "Content-Type": "application/json",
+                        "accept": "*/*",
+                    },
+                )
+                response = await request()
+                self.assertEqual(await response.json(), ["success", 200])
+                self.assertFalse(self.test_callback_done)
+                await asyncio.sleep(1.5)
+                self.assertTrue(self.test_callback_done)
+
+        self.task = asyncio.create_task(self.client.start_webhook_event(port=8005))
+        await post_test_data()
