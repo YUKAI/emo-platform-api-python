@@ -19,9 +19,4 @@ def radar_callback(body):
     print(body)
     print(body.data)
 
-
-thread = Thread(target=client.start_webhook_event)
-thread.start()
-
-while True:
-    time.sleep(0.1)
+client.start_webhook_event()
