@@ -6,7 +6,7 @@ from typing import Callable, List, Optional
 
 import aiohttp
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 
 from emo_platform.api import Client, EmoWebhook, PostContentType
 from emo_platform.exceptions import (
@@ -169,7 +169,7 @@ class AsyncClient(Client):
         self.app = FastAPI()
 
         @self.app.post("/")
-        async def emo_callback(request: Request, body: EmoWebhook):
+        async def emo_callback(request: Request, body: EmoWebhook, background_tasks: BackgroundTasks):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     try:
@@ -183,7 +183,7 @@ class AsyncClient(Client):
                         cb_func = event_cb[self.DEFAULT_ROOM_ID]
                     else:
                         return "fail. no callback associated with the room.", 500
-                    asyncio.create_task(cb_func(body))
+                    background_tasks.add_task(cb_func, body)
                     self.request_id_deque.append(body.request_id)
                     return "success", 200
 
