@@ -23,7 +23,7 @@ async def no_webhook_setting():
 
 async def send_over_sized_msg():
     try:
-        await room.send_msg("あ" * 2000)
+        await room.send_msg("あ" * 2000)
     except BadRequestError as e:
         print(e)
 
