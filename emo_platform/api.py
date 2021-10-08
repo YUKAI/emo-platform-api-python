@@ -3,10 +3,10 @@ import os
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Callable, List, Optional, Dict
+from typing import Callable, Dict, List, Optional
 
 import requests
-import uvicorn # type: ignore
+import uvicorn  # type: ignore
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
@@ -40,6 +40,7 @@ class PostContentType:
 class Client:
     BASE_URL = "https://platform-api.bocco.me"
     TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
+    PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
     DEFAULT_ROOM_ID = ""
     MAX_SAVED_REQUEST_ID = 10
 
@@ -49,12 +50,49 @@ class Client:
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
         }
+
+        # get os env access token (could be old)
         try:
-            with open(self.TOKEN_FILE) as f:
-                tokens = json.load(f)
+            access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+        except KeyError:
+            raise NoRefreshTokenError(
+                "Please set access_token as environment variable 'EMO_PLATFORM_API_ACCESS_TOKEN'"
+            )
+
+        # get os env refresh token (could be old)
+        try:
+            refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
+        except KeyError:
+            raise NoRefreshTokenError(
+                "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+            )
+
+        # load prevoius os env tokens and save new os env tokens
+        current_env_tokens = {
+            "refresh_token": refresh_token,
+            "access_token": access_token,
+        }
+        try:
+            with open(self.PREVOIUS_TOKEN_FILE) as f:
+                prevoius_env_tokens = json.load(f)
+            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+                json.dump(current_env_tokens, f)
         except FileNotFoundError:
+            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+                prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
+                json.dump(current_env_tokens, f)
+
+        if current_env_tokens == prevoius_env_tokens:
+            try:
+                with open(self.TOKEN_FILE) as f:
+                    tokens = json.load(f)
+            except FileNotFoundError:
+                with open(self.TOKEN_FILE, "w") as f:
+                    tokens = {"refresh_token": "", "access_token": ""}
+                    json.dump(tokens, f)
+        else:  # reset json file when os env token updated
             with open(self.TOKEN_FILE, "w") as f:
-                tokens = {"refresh_token" : "", "access_token" : ""}
+                tokens = {"refresh_token": "", "access_token": ""}
                 json.dump(tokens, f)
         access_token = tokens["access_token"]
 
@@ -68,7 +106,7 @@ class Client:
 
         self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self.DEFAULT_ROOM_ID]
-        self.webhook_events_cb: Dict[str, Dict[str,Callable]] = {}
+        self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self.request_id_deque: deque = deque([], self.MAX_SAVED_REQUEST_ID)
         self.webhook_cb_executor = ThreadPoolExecutor()
 
