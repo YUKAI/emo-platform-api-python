@@ -200,33 +200,33 @@ class EmoWebhookRadar(BaseModel):
     radar: EmoRadar
 
 
-class EmoWebhookMessageBody(BaseModel):
+class EmoWebhookSensorMessage(BaseModel):
     sequence: int
     unique_id: str
     user: EmoRoomMember
-    message: EmoMessage
-    media: str
+    message_type: str
+    sensor_action: str
     lang: str
 
 
 class EmoWebhookMessage(BaseModel):
-    message: EmoWebhookMessageBody
+    message: EmoMessageInfo
 
 
 class EmoWebhookMovementSensor(BaseModel):
-    message: EmoWebhookMessageBody
+    movement_sensor: EmoWebhookSensorMessage
 
 
 class EmoWebhookLockSensor(BaseModel):
-    message: EmoWebhookMessageBody
+    lock_sensor: EmoWebhookSensorMessage
 
 
 class EmoWebhookHumanSensor(BaseModel):
-    message: EmoWebhookMessageBody
+    human_sensor: EmoWebhookSensorMessage
 
 
 class EmoWebhookRoomSensor(BaseModel):
-    message: EmoWebhookMessageBody
+    room_sensor: EmoWebhookSensorMessage
 
 
 class EmoWebhookBody(BaseModel):
