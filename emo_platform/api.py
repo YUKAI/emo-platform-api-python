@@ -42,6 +42,7 @@ class PostContentType:
 class Client:
     BASE_URL = "https://platform-api.bocco.me"
     TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
+    PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
     DEFAULT_ROOM_ID = ""
     MAX_SAVED_REQUEST_ID = 10
 
@@ -51,10 +52,47 @@ class Client:
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
         }
+
+        # get os env access token (could be old)
         try:
-            with open(self.TOKEN_FILE) as f:
-                tokens = json.load(f)
+            access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+        except KeyError:
+            raise NoRefreshTokenError(
+                "Please set access_token as environment variable 'EMO_PLATFORM_API_ACCESS_TOKEN'"
+            )
+
+        # get os env refresh token (could be old)
+        try:
+            refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
+        except KeyError:
+            raise NoRefreshTokenError(
+                "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+            )
+
+        # load prevoius os env tokens and save new os env tokens
+        current_env_tokens = {
+            "refresh_token": refresh_token,
+            "access_token": access_token,
+        }
+        try:
+            with open(self.PREVOIUS_TOKEN_FILE) as f:
+                prevoius_env_tokens = json.load(f)
+            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+                json.dump(current_env_tokens, f)
         except FileNotFoundError:
+            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+                prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
+                json.dump(current_env_tokens, f)
+
+        if current_env_tokens == prevoius_env_tokens:
+            try:
+                with open(self.TOKEN_FILE) as f:
+                    tokens = json.load(f)
+            except FileNotFoundError:
+                with open(self.TOKEN_FILE, "w") as f:
+                    tokens = {"refresh_token": "", "access_token": ""}
+                    json.dump(tokens, f)
+        else:  # reset json file when os env token updated
             with open(self.TOKEN_FILE, "w") as f:
                 tokens = {"refresh_token": "", "access_token": ""}
                 json.dump(tokens, f)
@@ -196,6 +234,8 @@ class Client:
         try:
             room_number = len(result["rooms"])
         except KeyError:
+            raise NoRoomError("Get no room id.")
+        if room_number == 0:
             raise NoRoomError("Get no room id.")
         rooms_id = [result["rooms"][i]["uuid"] for i in range(room_number)]
         self.room_id_list = rooms_id + [self.DEFAULT_ROOM_ID]

@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from functools import partial
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import aiohttp
 import uvicorn  # type: ignore
@@ -183,27 +183,44 @@ class AsyncClient(Client):
         response = await self._adelete("/v1/webhook")
         return EmoWebhookInfo(**response)
 
-    def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+    async def start_webhook_event(
+        self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
+    ) -> None:
         response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response.secret
 
-        app = FastAPI()
+        self.app = FastAPI()
 
-        @app.post("/")
+        @self.app.post("/")
         async def emo_callback(request: Request, body: EmoWebhookBody):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
-                    room_id = body.uuid
-                    event_cb = self.webhook_events_cb[body.event]
                     try:
-                        cb_func = event_cb[room_id]
+                        event_cb = self.webhook_events_cb[body.event]
                     except KeyError:
+                        return "fail. no callback associated with the event.", 500
+                    room_id = body.uuid
+                    if room_id in event_cb:
+                        cb_func = event_cb[room_id]
+                    elif self.DEFAULT_ROOM_ID in event_cb:
                         cb_func = event_cb[self.DEFAULT_ROOM_ID]
+                    else:
+                        return "fail. no callback associated with the room.", 500
                     asyncio.create_task(cb_func(body))
                     self.request_id_deque.append(body.request_id)
                     return "success", 200
 
-        uvicorn.run(app, host=host, port=port)
+        loop = asyncio.get_event_loop()
+        config = uvicorn.Config(
+            app=self.app, host=host, port=port, loop=loop, lifespan="off"
+        )
+        self.server = uvicorn.Server(config)
+        await self.server.serve()
+        for task in tasks:
+            task.cancel()
+
+    def stop_webhook_event(self):
+        self.server.should_exit = True
 
 
 class Room:
