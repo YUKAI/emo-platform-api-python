@@ -180,7 +180,7 @@ class Client:
     def _post(
         self,
         path: str,
-        data: str = "{}",
+        data: str = "",
         files: Optional[dict] = None,
         content_type: Optional[str] = PostContentType.APPLICATION_JSON,
         update_tokens: bool = True,
