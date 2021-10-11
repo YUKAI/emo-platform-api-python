@@ -55,10 +55,10 @@ async def send_msg(text):
 async def send_all_stamp_motions():
     print("\n" + "=" * 20 + " room send all stamps " + "=" * 20)
     stamp_list = await client.get_stamps_list()
-    for stamp in stamp_list["stamps"]:
+    for stamp in stamp_list.stamps:
         await asyncio.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send stamp " + "=" * 10)
-        print(await room.send_stamp(stamp["uuid"]))
+        print(await room.send_stamp(stamp.uuid))
 
 
 async def send_original_motion(motion_data_path):
@@ -79,10 +79,10 @@ async def move_to(head):
 async def send_all_preset_motions():
     print("\n" + "=" * 20 + " room send all motions " + "=" * 20)
     motion_list = await client.get_motions_list()
-    for motion in motion_list["motions"]:
+    for motion in motion_list.motions:
         await asyncio.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send motion " + "=" * 10)
-        print(await room.send_motion(motion["uuid"]))
+        print(await room.send_motion(motion.uuid))
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ async def get_sensors_list():
 async def get_sensor_values():
     print("\n" + "=" * 20 + " room sensor values " + "=" * 20)
     sensor_list = await room.get_sensors_list()
-    print(await room.get_sensor_values(sensor_list["sensors"][0]["uuid"]))
+    print(await room.get_sensor_values(sensor_list.sensors[0].uuid))
 
 
 async def get_emo_settings():

@@ -21,7 +21,7 @@ def no_webhook_setting():
 
 def send_over_sized_msg():
     try:
-        room.send_msg("あ" * 2000)
+        room.send_msg("あ" * 2000)
     except BadRequestError as e:
         print(e)
 
