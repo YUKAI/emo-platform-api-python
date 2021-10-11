@@ -25,7 +25,7 @@ def get_sensors_list():
 def get_sensor_values():
     print("\n" + "=" * 20 + " room sensor values " + "=" * 20)
     sensor_list = room.get_sensors_list()
-    print(room.get_sensor_values(sensor_list["sensors"][0]["uuid"]))
+    print(room.get_sensor_values(sensor_list.sensors[0].uuid))
 
 
 def get_emo_settings():

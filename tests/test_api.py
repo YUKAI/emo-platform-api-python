@@ -10,11 +10,7 @@ import responses
 from fastapi.testclient import TestClient
 
 from emo_platform import Client
-from emo_platform.exceptions import (
-    NoRefreshTokenError,
-    NoRoomError,
-    UnauthorizedError,
-)
+from emo_platform.exceptions import NoRefreshTokenError, NoRoomError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
@@ -67,7 +63,13 @@ class TestBaseClass(object):
             content_type="application/json",
         )
 
-        self.test_account_info = {"account_info": "test_api"}
+        self.test_account_info = {
+            "name": "test_api",
+            "email": "",
+            "profile_image": "",
+            "uuid": "",
+            "plan": "",
+        }
 
         def account_info_callback(request):
             if request.headers["Authorization"] == "Bearer " + self.right_access_token:
@@ -431,7 +433,13 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
         super().room_init()
         super().set_tokens()
 
-        self.test_webhook_info = {"secret": "test_secret_key"}
+        self.test_webhook_info = {
+            "description": "",
+            "events": [],
+            "status": "",
+            "secret": "test_secret_key",
+            "url": "",
+        }
 
         def webhook_info_callback(request):
             if request.headers["Authorization"] == "Bearer " + self.right_access_token:
