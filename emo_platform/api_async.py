@@ -81,7 +81,8 @@ class AsyncClient(Client):
     ) -> dict:
         async with request() as response:
             try:
-                with aiohttp_error_handler():
+                response_msg = await response.text()
+                with aiohttp_error_handler(response_msg):
                     response.raise_for_status()
             except UnauthorizedError:
                 if not update_tokens:
