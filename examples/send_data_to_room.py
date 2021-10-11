@@ -28,6 +28,24 @@ def main():
     # motion_data_path = f"{THIS_FILE_PATH}/../assets/sample_motion.json"
     # send_original_motion(motion_data_path)
 
+	# motion_data = {
+	# 	"head": [
+	# 	],
+	# 	"antenna": [
+	# 	],
+	# 	"led_cheek_l": [
+	# 	],
+	# 	"led_cheek_r": [
+	# 	],
+	# 	"led_play": [
+	# 	],
+	# 	"led_rec": [
+	# 	],
+	# 	"led_func": [
+	# 	]
+	# }
+	# send_original_motion(motion_data)
+
     # color = Color(100, 255, 155)
     # print(change_led_color(color))
 

@@ -391,13 +391,16 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_original_motion(self, file_path: str) -> EmoMessageInfo:
-        with open(file_path) as f:
-            payload = json.load(f)
-            response = self.base_client._post(
-                "/v1/rooms/" + self.room_id + "/motions", json.dumps(payload)
-            )
-            return EmoMessageInfo(**response)
+    def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+        if type(motion_data) == str:
+            with open(motion_data) as f:
+                payload = json.load(f)
+        else:
+            payload = motion_data
+        response = self.base_client._post(
+            "/v1/rooms/" + self.room_id + "/motions", json.dumps(payload)
+        )
+        return EmoMessageInfo(**response)
 
     def change_led_color(self, color: Color) -> EmoMessageInfo:
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
