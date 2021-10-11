@@ -2,6 +2,7 @@ import json
 import os
 import time
 import unittest
+import json
 from functools import partial
 from threading import Thread
 
@@ -456,6 +457,9 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
 
         self.room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
 
+        self.addCleanup(self.responses.stop)
+        self.addCleanup(self.responses.reset)
+
     def test_webhook_receive(self):
         client = Client(self.test_endpoint)
 
@@ -674,12 +678,12 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
         )
         thread.setDaemon(True)
         thread.start()
-        time.sleep(0.01)
-        app_client = TestClient(client.app)
-        response = app_client.post(
-            "/",
-            headers={"x-platform-api-secret": "test_secret_key"},
-            json={
+        time.sleep(0.1)
+        self.responses.reset()
+        self.responses.stop()
+        response = requests.post(
+            "http://localhost:8005",
+            data=json.dumps({
                 "request_id": "test_id",
                 "uuid": self.room_uuid,
                 "serial_number": "test_serial_no",
@@ -688,6 +692,11 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
                 "event": "test_event",
                 "data": {},
                 "receiver": "test_receiver",
+            }),
+            headers={
+                "x-platform-api-secret": "test_secret_key",
+                "Content-Type": "application/json",
+                "accept": "*/*",
             },
         )
         self.assertEqual(response.json(), ["success", 200])
