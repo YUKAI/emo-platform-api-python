@@ -164,11 +164,14 @@ class Client:
                 response.raise_for_status()
         except UnauthorizedError:
             if not update_tokens:
-                raise UnauthorizedError("Unauthorized error while getting access_token")
-            self.update_tokens()
-            response = request()
-            with http_error_handler():
-                response.raise_for_status()
+                raise
+        else:
+            return response.json()
+
+        self.update_tokens()
+        response = request()
+        with http_error_handler():
+            response.raise_for_status()
         return response.json()
 
     def _get(self, path: str, params: dict = {}) -> dict:
