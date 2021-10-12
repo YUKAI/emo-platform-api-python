@@ -153,9 +153,13 @@ class Client:
         try:
             _try_update_access_token(refresh_token)
         except UnauthorizedError:
-            raise NoRefreshTokenError(
-                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-            )
+            pass
+        else:
+            return
+
+        raise NoRefreshTokenError(
+            "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+        )
 
     def _check_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
         response = request()

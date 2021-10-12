@@ -70,9 +70,13 @@ class AsyncClient(Client):
         try:
             await _try_update_access_token(refresh_token)
         except UnauthorizedError:
-            raise NoRefreshTokenError(
-                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-            )
+            pass
+        else:
+            return
+
+        raise NoRefreshTokenError(
+            "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+        )
 
     async def _acheck_http_error(
         self, request: Callable, update_tokens: bool = True
