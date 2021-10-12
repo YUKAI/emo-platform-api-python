@@ -47,7 +47,10 @@ class Client:
     DEFAULT_ROOM_ID = ""
     MAX_SAVED_REQUEST_ID = 10
 
-    def __init__(self, endpoint_url: str = BASE_URL):
+    def __init__(self, endpoint_url: str = BASE_URL, token_file_path: Optional[str] = None):
+        if token_file_path is not None:
+            self.TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
+            self.PREVOIUS_TOKEN_FILE = f"{token_file_path}/emo-platform-api_previous.json"
         self.endpoint_url = endpoint_url
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
