@@ -11,16 +11,16 @@ class EmoRequestInfo:
 
 
 class EmoPlatformError(Exception):
-    def __init__(self, message):
-        self.message = message
-
-
-class EmoHttpError(EmoPlatformError):
-    def __init__(self, message, status, request):
+    def __init__(self, message, status=None, request=None):
         self.message = message
         self.status = status
         self.request = request
 
+    def __str__(self):
+        return self.message
+
+
+class EmoHttpError(EmoPlatformError):
     def __str__(self):
         return f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
 
