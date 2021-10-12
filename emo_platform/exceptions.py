@@ -77,7 +77,7 @@ def http_error_handler():
             url=e.request.url,
             headers=e.request.headers,
         )
-        raise http_exception(e.response.json(), e.response.status_code, request)
+        raise http_exception(e.response.text, e.response.status_code, request)
 
 
 @contextmanager
