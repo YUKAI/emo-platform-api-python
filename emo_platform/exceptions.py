@@ -21,8 +21,8 @@ class EmoHttpError(EmoPlatformError):
         self.status = status
         self.request = request
 
-    # def __str__(self):
-    #     return f"{self.status}, " self.message
+    def __str__(self):
+        return f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
 
 
 class RateLimitError(EmoHttpError):
