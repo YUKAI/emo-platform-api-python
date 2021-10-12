@@ -33,48 +33,46 @@ from emo_platform.response import (
 
 class AsyncClient(Client):
     async def _update_tokens(self) -> None:
-        with open(self.TOKEN_FILE, "r") as f:
-            tokens = json.load(f)
-        refresh_token = tokens["refresh_token"]
 
+        async def _try_update_access_token(refresh_token):
+            res_tokens = await self._get_access_token(refresh_token)
+            self.access_token = res_tokens.access_token
+            refresh_token = res_tokens.refresh_token
+            self.headers["Authorization"] = "Bearer " + self.access_token
+            save_tokens = {
+                "refresh_token": refresh_token,
+                "access_token" : self.access_token
+            }
+            with open(self.TOKEN_FILE, "w") as f:
+                json.dump(save_tokens, f)
+
+        # load saved tokens
+        with open(self.TOKEN_FILE, "r") as f:
+            saved_tokens = json.load(f)
+        refresh_token = saved_tokens["refresh_token"]
+
+        # try with saved refresh token
         if refresh_token != "":
             try:
-                res_tokens = await self._get_access_token(refresh_token)
-                self.access_token = res_tokens.access_token
-                refresh_token = res_tokens.refresh_token
-                self.headers["Authorization"] = "Bearer " + self.access_token
-                tokens["refresh_token"] = refresh_token
-                tokens["access_token"] = self.access_token
-                with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
+                await _try_update_access_token(refresh_token)
             except UnauthorizedError:
-                tokens["refresh_token"] = ""
-                tokens["access_token"] = ""
+                save_tokens = {
+                    "refresh_token": "",
+                    "access_token" : ""
+                }
                 with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
-                refresh_token = ""
+                    json.dump(save_tokens, f)
+            else:
+                return
 
-        if refresh_token == "":
-            try:
-                refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
-            except KeyError:
-                raise NoRefreshTokenError(
-                    "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-                )
-
-            try:
-                res_tokens = await self._get_access_token(refresh_token)
-                self.access_token = res_tokens.access_token
-                refresh_token = res_tokens.refresh_token
-                self.headers["Authorization"] = "Bearer " + self.access_token
-                tokens["refresh_token"] = refresh_token
-                tokens["access_token"] = self.access_token
-                with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
-            except UnauthorizedError:
-                raise NoRefreshTokenError(
-                    "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-                )
+        # try with current env refresh token
+        refresh_token = self.current_env_tokens["refresh_token"]
+        try:
+            await _try_update_access_token(refresh_token)
+        except UnauthorizedError:
+            raise NoRefreshTokenError(
+                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+            )
 
     async def _acheck_http_error(
         self, request: Callable, update_tokens: bool = True

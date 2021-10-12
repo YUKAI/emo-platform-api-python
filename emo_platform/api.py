@@ -70,42 +70,41 @@ class Client:
                 "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
             )
 
-        # load prevoius os env tokens and save new os env tokens
-        current_env_tokens = {
+        self.current_env_tokens = {
             "refresh_token": refresh_token,
             "access_token": access_token,
         }
+
+        # load prevoius os env tokens and save new os env tokens
         try:
             with open(self.PREVOIUS_TOKEN_FILE) as f:
                 prevoius_env_tokens = json.load(f)
-            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
-                json.dump(current_env_tokens, f)
         except FileNotFoundError:
-            with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
-                prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
-                json.dump(current_env_tokens, f)
+            prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
 
-        if current_env_tokens == prevoius_env_tokens:
+        with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+            json.dump(self.current_env_tokens, f)
+
+        # compare new os env tokens with old ones
+        if self.current_env_tokens == prevoius_env_tokens:
             try:
                 with open(self.TOKEN_FILE) as f:
-                    tokens = json.load(f)
+                    saved_tokens = json.load(f)
             except FileNotFoundError:
                 with open(self.TOKEN_FILE, "w") as f:
-                    tokens = {"refresh_token": "", "access_token": ""}
-                    json.dump(tokens, f)
+                    saved_tokens = {"refresh_token": "", "access_token": ""}
+                    json.dump(saved_tokens, f)
         else:  # reset json file when os env token updated
             with open(self.TOKEN_FILE, "w") as f:
-                tokens = {"refresh_token": "", "access_token": ""}
-                json.dump(tokens, f)
-        access_token = tokens["access_token"]
+                saved_tokens = {"refresh_token": "", "access_token": ""}
+                json.dump(saved_tokens, f)
+        saved_access_token = saved_tokens["access_token"]
 
-        if access_token == "":
-            try:
-                self.access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
-            except KeyError:
-                self.update_tokens()
+        # decide which access token to use
+        if saved_access_token == "":
+            self.access_token = self.current_env_tokens["access_token"]
         else:
-            self.access_token = access_token
+            self.access_token = saved_access_token
 
         self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self.DEFAULT_ROOM_ID]
@@ -114,48 +113,46 @@ class Client:
         self.webhook_cb_executor = ThreadPoolExecutor()
 
     def update_tokens(self) -> None:
-        with open(self.TOKEN_FILE, "r") as f:
-            tokens = json.load(f)
-        refresh_token = tokens["refresh_token"]
 
+        def _try_update_access_token(refresh_token):
+            res_tokens = self.get_access_token(refresh_token)
+            self.access_token = res_tokens.access_token
+            refresh_token = res_tokens.refresh_token
+            self.headers["Authorization"] = "Bearer " + self.access_token
+            save_tokens = {
+                "refresh_token": refresh_token,
+                "access_token" : self.access_token
+            }
+            with open(self.TOKEN_FILE, "w") as f:
+                json.dump(save_tokens, f)
+
+        # load saved tokens
+        with open(self.TOKEN_FILE, "r") as f:
+            saved_tokens = json.load(f)
+        refresh_token = saved_tokens["refresh_token"]
+
+        # try with saved refresh token
         if refresh_token != "":
             try:
-                res_tokens = self.get_access_token(refresh_token)
-                self.access_token = res_tokens.access_token
-                refresh_token = res_tokens.refresh_token
-                self.headers["Authorization"] = "Bearer " + self.access_token
-                tokens["refresh_token"] = refresh_token
-                tokens["access_token"] = self.access_token
-                with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
+                _try_update_access_token(refresh_token)
             except UnauthorizedError:
-                tokens["refresh_token"] = ""
-                tokens["access_token"] = ""
+                save_tokens = {
+                    "refresh_token": "",
+                    "access_token" : ""
+                }
                 with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
-                refresh_token = ""
+                    json.dump(save_tokens, f)
+            else:
+                return
 
-        if refresh_token == "":
-            try:
-                refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
-            except KeyError:
-                raise NoRefreshTokenError(
-                    "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-                )
-
-            try:
-                res_tokens = self.get_access_token(refresh_token)
-                self.access_token = res_tokens.access_token
-                refresh_token = res_tokens.refresh_token
-                self.headers["Authorization"] = "Bearer " + self.access_token
-                tokens["refresh_token"] = refresh_token
-                tokens["access_token"] = self.access_token
-                with open(self.TOKEN_FILE, "w") as f:
-                    json.dump(tokens, f)
-            except UnauthorizedError:
-                raise NoRefreshTokenError(
-                    "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-                )
+        # try with current env refresh token
+        refresh_token = self.current_env_tokens["refresh_token"]
+        try:
+            _try_update_access_token(refresh_token)
+        except UnauthorizedError:
+            raise NoRefreshTokenError(
+                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+            )
 
     def _check_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
         response = request()
