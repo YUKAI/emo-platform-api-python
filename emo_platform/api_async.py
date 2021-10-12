@@ -81,17 +81,20 @@ class AsyncClient(Client):
     ) -> dict:
         async with request() as response:
             try:
-                with aiohttp_error_handler():
+                response_msg = await response.text()
+                with aiohttp_error_handler(response_msg):
                     response.raise_for_status()
             except UnauthorizedError:
                 if not update_tokens:
-                    raise UnauthorizedError(
-                        "Unauthorized error while getting access_token"
-                    )
-                await self._update_tokens()
-                response = await request()
-                with aiohttp_error_handler():
-                    response.raise_for_status()
+                    raise
+            else:
+                return await response.json()
+
+        await self._update_tokens()
+        async with request() as response:
+            response_msg = await response.text()
+            with aiohttp_error_handler(response_msg):
+                response.raise_for_status()
             return await response.json()
 
     async def _aget(self, path: str, params: dict = {}) -> dict:

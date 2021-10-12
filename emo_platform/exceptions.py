@@ -1,39 +1,55 @@
 from contextlib import contextmanager
-
+from dataclasses import dataclass
 import aiohttp
 import requests
 
+@dataclass
+class EmoRequestInfo:
+    method: str
+    url   : str
+    headers : dict
 
-class EmoPlatformEror(Exception):
-    def __init__(self, message):
+
+class EmoPlatformError(Exception):
+    def __init__(self, message, status=None, request=None):
         self.message = message
+        self.status = status
+        self.request = request
+
+    def __str__(self):
+        return self.message
 
 
-class RateLimitError(EmoPlatformEror):
+class EmoHttpError(EmoPlatformError):
+    def __str__(self):
+        return f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
+
+
+class RateLimitError(EmoHttpError):
     pass
 
 
-class UnauthorizedError(EmoPlatformEror):
+class UnauthorizedError(EmoHttpError):
     pass
 
 
-class NotFoundError(EmoPlatformEror):
+class NotFoundError(EmoHttpError):
     pass
 
 
-class BadRequestError(EmoPlatformEror):
+class BadRequestError(EmoHttpError):
     pass
 
 
-class UnknownError(EmoPlatformEror):
+class UnknownError(EmoHttpError):
     pass
 
 
-class NoRoomError(EmoPlatformEror):
+class NoRoomError(EmoPlatformError):
     pass
 
 
-class NoRefreshTokenError(EmoPlatformEror):
+class NoRefreshTokenError(EmoPlatformError):
     pass
 
 
@@ -56,13 +72,23 @@ def http_error_handler():
         yield None
     except requests.HTTPError as e:
         http_exception = http_status_to_exception(e.response.status_code)
-        raise http_exception(e.response.json())
+        request = EmoRequestInfo(
+            method=e.request.method,
+            url=e.request.url,
+            headers=e.request.headers,
+        )
+        raise http_exception(e.response.text, e.response.status_code, request)
 
 
 @contextmanager
-def aiohttp_error_handler():
+def aiohttp_error_handler(response_msg):
     try:
         yield None
     except aiohttp.ClientResponseError as e:
         http_exception = http_status_to_exception(e.status)
-        raise http_exception(e.message)
+        request = EmoRequestInfo(
+            method=e.request_info.method,
+            url=e.request_info.url,
+            headers=dict(e.request_info.headers),
+        )
+        raise http_exception(response_msg, e.status, request)
