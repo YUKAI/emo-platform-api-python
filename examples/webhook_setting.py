@@ -1,3 +1,6 @@
+"""Emo Platform API python example Setting webhook.
+"""
+
 from emo_platform import Client, WebHook
 
 client = Client()

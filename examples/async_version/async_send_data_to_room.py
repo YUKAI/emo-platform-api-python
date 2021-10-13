@@ -1,23 +1,31 @@
+"""Emo Platform API python example Sending data to room.
+"""
+
 import asyncio
 import os
 
 from emo_platform import AsyncClient, Color, Head
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
+
 client = AsyncClient()
 rooms_id_list = client.get_rooms_id()
+# create room client
 room = client.create_room_client(rooms_id_list[0])
 
 
 async def main():
     pass
 
-    # Uncomment method you want to execute
+    """
+    Uncomment code block you want to execute.
+    If you execute a lot, watch out for the API rate limit.
+    """
 
-    # audio_data_path = f"{THIS_FILE_PATH}/../assets/sample_audio.mp3"
+    # audio_data_path = f"{THIS_FILE_PATH}/../../assets/sample_audio.mp3"
     # await send_audio_msg(audio_data_path)
 
-    # image_data_path = f"{THIS_FILE_PATH}/../assets/sample_image.jpg"
+    # image_data_path = f"{THIS_FILE_PATH}/../../assets/sample_image.jpg"
     # await send_image(image_data_path)
 
     # text = "こんにちは"
@@ -25,8 +33,26 @@ async def main():
 
     # await send_all_stamp_motions()
 
-    # motion_data_path = f"{THIS_FILE_PATH}/../assets/sample_motion.json"
+    # motion_data_path = f"{THIS_FILE_PATH}/../../assets/sample_motion.json"
     # await send_original_motion(motion_data_path)
+
+    # motion_data = {
+	# 	"head": [
+	# 	],
+	# 	"antenna": [
+	# 	],
+	# 	"led_cheek_l": [
+	# 	],
+	# 	"led_cheek_r": [
+	# 	],
+	# 	"led_play": [
+	# 	],
+	# 	"led_rec": [
+	# 	],
+	# 	"led_func": [
+	# 	]
+	# }
+    # await send_original_motion(motion_data) # send original motion by dict data
 
     # color = Color(100, 255, 155)
     # await change_led_color(color)

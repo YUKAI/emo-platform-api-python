@@ -1,3 +1,6 @@
+"""Emo Platform API python example Setting webhook.
+"""
+
 import asyncio
 
 from emo_platform import AsyncClient, WebHook
