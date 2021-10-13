@@ -77,7 +77,7 @@ def http_error_handler():
             url=e.request.url,
             headers=e.request.headers,
         )
-        raise http_exception(e.response.text, e.response.status_code, request)
+        raise http_exception(e.response.text, e.response.status_code, request) from e
 
 
 @contextmanager
@@ -91,4 +91,4 @@ def aiohttp_error_handler(response_msg):
             url=e.request_info.url,
             headers=dict(e.request_info.headers),
         )
-        raise http_exception(response_msg, e.status, request)
+        raise http_exception(response_msg, e.status, request) from e
