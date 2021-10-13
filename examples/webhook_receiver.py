@@ -1,3 +1,6 @@
+"""Emo Platform API python example Receiving webhook data.
+"""
+
 import time
 from threading import Thread
 
@@ -10,18 +13,13 @@ client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
 
 @client.event("message.received")
 def message_callback(body):
-    print(body)
-    print(body.data)
+    print("body:", body)
+    print("data:", body.data)
 
 
 @client.event("illuminance.changed")
-def radar_callback(body):
-    print(body)
-    print(body.data)
+def illuminance_callback(body):
+    print("body:", body)
+    print("data:", body.data)
 
-
-thread = Thread(target=client.start_webhook_event)
-thread.start()
-
-while True:
-    time.sleep(0.1)
+client.start_webhook_event()

@@ -1,19 +1,21 @@
 """Emo Platform API python example Setting webhook.
 """
 
-from emo_platform import Client, WebHook
+import asyncio
 
-client = Client()
+from emo_platform import AsyncClient, WebHook
+
+client = AsyncClient()
 
 
-def main():
+async def main():
     webhook = WebHook("http://localhost:8000", "test")
     events = ["message.received"]
     create_webhook_setting(webhook)
-    get_webhook_setting()
+    await get_webhook_setting()
     register_webhook_event(events)
-    get_webhook_setting()
-    delete_webhook_setting()
+    await get_webhook_setting()
+    await delete_webhook_setting()
 
 
 def create_webhook_setting(webhook):
@@ -21,20 +23,20 @@ def create_webhook_setting(webhook):
     print(client.create_webhook_setting(webhook))
 
 
-def get_webhook_setting():
+async def get_webhook_setting():
     print("\n" + "=" * 20 + " get webhook setting " + "=" * 20)
-    print(client.get_webhook_setting())
+    print(await client.get_webhook_setting())
 
 
-def register_webhook_event(events):
+async def register_webhook_event(events):
     print("\n" + "=" * 20 + " register webhook event " + "=" * 20)
-    print(client.register_webhook_event(events))
+    print(await client.register_webhook_event(events))
 
 
-def delete_webhook_setting():
+async def delete_webhook_setting():
     print("\n" + "=" * 20 + " delete webhook setting " + "=" * 20)
-    print(client.delete_webhook_setting())
+    print(await client.delete_webhook_setting())
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
