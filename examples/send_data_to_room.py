@@ -1,3 +1,6 @@
+"""Emo Platform API python example Sending data to room.
+"""
+
 import os
 import time
 
@@ -7,12 +10,17 @@ THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 
 client = Client()
 rooms_id_list = client.get_rooms_id()
+# create room client
 room = client.create_room_client(rooms_id_list[0])
 
 
 def main():
     pass
-    # Uncomment method you want to execute
+
+    """
+    Uncomment code block you want to execute.
+    If you execute a lot, watch out for the API rate limit.
+    """
 
     # audio_data_path = f"{THIS_FILE_PATH}/../assets/sample_audio.mp3"
     # send_audio_msg(audio_data_path)
@@ -26,9 +34,9 @@ def main():
     # send_all_stamp_motions()
 
     # motion_data_path = f"{THIS_FILE_PATH}/../assets/sample_motion.json"
-    # send_original_motion(motion_data_path)
+    # send_original_motion(motion_data_path) # send original motion by json file path
 
-	# motion_data = {
+    # motion_data = {
 	# 	"head": [
 	# 	],
 	# 	"antenna": [
@@ -44,7 +52,7 @@ def main():
 	# 	"led_func": [
 	# 	]
 	# }
-	# send_original_motion(motion_data)
+    # send_original_motion(motion_data) # send original motion by dict data
 
     # color = Color(100, 255, 155)
     # print(change_led_color(color))
@@ -77,6 +85,7 @@ def send_all_stamp_motions():
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send stamp " + "=" * 10)
         print(room.send_stamp(stamp.uuid))
+        break
 
 
 def send_original_motion(motion_data_path):
@@ -101,6 +110,7 @@ def send_all_preset_motions():
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send motion " + "=" * 10)
         print(room.send_motion(motion.uuid))
+        break
 
 
 if __name__ == "__main__":
