@@ -588,8 +588,9 @@ class Client:
             if event not in self.webhook_events_cb:
                 self.webhook_events_cb[event] = {}
 
-            if self.room_id_list == [self.DEFAULT_ROOM_ID]:
-                self.get_rooms_id()
+            if room_id_list != [self.DEFAULT_ROOM_ID]:
+                if self.room_id_list == [self.DEFAULT_ROOM_ID]:
+                    self.get_rooms_id()
 
             for room_id in room_id_list:
                 if room_id in self.room_id_list:
