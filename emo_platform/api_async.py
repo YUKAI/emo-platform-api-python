@@ -43,11 +43,11 @@ class AsyncClient(Client):
                 "refresh_token": refresh_token,
                 "access_token" : self.access_token
             }
-            with open(self.TOKEN_FILE, "w") as f:
+            with open(self._TOKEN_FILE, "w") as f:
                 json.dump(save_tokens, f)
 
         # load saved tokens
-        with open(self.TOKEN_FILE, "r") as f:
+        with open(self._TOKEN_FILE, "r") as f:
             saved_tokens = json.load(f)
         refresh_token = saved_tokens["refresh_token"]
 
@@ -60,7 +60,7 @@ class AsyncClient(Client):
                     "refresh_token": "",
                     "access_token" : ""
                 }
-                with open(self.TOKEN_FILE, "w") as f:
+                with open(self._TOKEN_FILE, "w") as f:
                     json.dump(save_tokens, f)
             else:
                 return
@@ -196,7 +196,83 @@ class AsyncClient(Client):
     async def start_webhook_event(
         self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
     ) -> None:
-        response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            イベント通知時に、登録していた関数が呼び出されるようになります。
+
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)
+
+        Example
+        -----
+        webhook通知が来たらそのデータをqueueに渡し、:func:`print_queue` で表示する例です::
+
+            import emo_platform
+
+            client = emo_platform.AsyncClient()
+
+            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
+
+            async def print_queue(queue):
+                while True:
+                    item = await queue.get()
+                    print("body:", item)
+                    print("data:", item.data)
+
+            async def main():
+                queue = asyncio.Queue()
+
+                @client.event("message.received")
+                async async def message_callback(body):
+                    await queue.put(body)
+
+                # Create task you want to execute in parallel
+                task_queue = asyncio.create_task(print_queue(queue))
+
+                # Await start_webhook_event last.
+                # Give task list to be executed in parallel as the argument.
+                await client.start_webhook_event(port=8000, tasks=[task_queue])
+
+            if __name__ == "__main__":
+                asyncio.run(main())
+
+
+        Parameters
+        ----------
+        host : str, default localhost
+            Webhookの通知を受けるローカルサーバーのホスト名。
+
+        port : int, default 8000
+            Webhookの通知を受けるローカルサーバーのポート番号。
+
+        tasks : List[asyncio.Task], default []
+            並列で実行したいタスクオブジェクトのリスト。
+
+            サーバー終了時にキャンセルされます。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼んでいる :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
+        """
+
+        response = await self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response.secret
 
         self.app = FastAPI()
@@ -212,8 +288,8 @@ class AsyncClient(Client):
                     room_id = body.uuid
                     if room_id in event_cb:
                         cb_func = event_cb[room_id]
-                    elif self.DEFAULT_ROOM_ID in event_cb:
-                        cb_func = event_cb[self.DEFAULT_ROOM_ID]
+                    elif self._DEFAULT_ROOM_ID in event_cb:
+                        cb_func = event_cb[self._DEFAULT_ROOM_ID]
                     else:
                         return "fail. no callback associated with the room.", 500
                     background_tasks.add_task(cb_func, body)
