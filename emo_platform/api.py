@@ -42,23 +42,28 @@ class PostContentType:
 
 
 class Client:
-    """各種apiを呼び出す同期版のclient。
+    """各種apiを呼び出す同期版のclient
 
     Parameters
     ----------
     endpoint_url : str, default https://platform-api.bocco.me
-        BOCCO emo platform apiにアクセスするためのendpoint。
+        BOCCO emo platform apiにアクセスするためのendpoint
 
     token_file_path : Optional[str], default None
         refresh token及びaccess tokenを保存するファイルのパス。
-        指定しない場合は、このpkg内のディレクトリに保存されます
+
+        指定しない場合は、このpkg内のディレクトリに保存されます。
 
         指定したパスには、以下の2種類のファイルが生成されます。
+
             emo-platform-api.json
                 最新のトークンを保存するファイル
+
             emo-platform-api_previous.json
                 現在、環境変数として設定されているトークンを保存するファイル
+
                 前回との差分検知のために使用されます。
+
                 差分があった場合は、emo-platform-api.jsonに保存されているトークンが削除されます。
 
     Raises
@@ -72,9 +77,19 @@ class Client:
     Note
     ----
     使用しているaccess tokenの期限が切れた場合
-        保存されているrefresh tokenをもとに自動的に更新されます。
+        refresh tokenをもとに自動的に更新されます。
+
         その際にAPI呼び出しが最大で2回行われます。
-        clientの各メソッドを実行した際も、access tokenが切れていた場合、自動更新が行われます。
+
+        refresh tokenは以下の優先順位で選ばれます。
+
+        1. emo-platform-api.jsonに保存されているrefresh token
+
+        2. 環境変数 EMO_PLATFORM_API_REFRESH_TOKENに設定されているrefresh token
+
+        ただし、emo-platform-api_previous.jsonに差分があった場合は、1はskipされるようになっています。
+
+        clientの各メソッドを実行した際も、access tokenが切れていた場合、同様に自動更新が行われます。
 
     """
     _BASE_URL = "https://platform-api.bocco.me"
@@ -156,6 +171,8 @@ class Client:
             jsonファイルに保存されているもしくは環境変数として設定されているrefresh tokenを用いて、
             refresh tokenとaccess tokenを更新、jsonファイルに保存します。
 
+            access tokenが切れると自動で呼び出されるため、基本的に外部から使用することはありません。
+
         Raises
         ----------
         NoRefreshTokenError
@@ -163,6 +180,9 @@ class Client:
 
         Note
         ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh
+
         API呼び出し回数
             最大2回
         """
@@ -267,7 +287,7 @@ class Client:
     def get_access_token(self, refresh_token: str) -> EmoTokens:
         """トークンの取得
 
-            refresh_tokenを用いて、refresh tokenとaccess tokenを取得する。
+            refresh_tokenを用いて、refresh tokenとaccess tokenを取得します。
 
         Parameters
         ----------
@@ -559,7 +579,9 @@ class Client:
     def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
         """Webhook通知するイベントの指定
 
-            eventの種類は、`こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events>`_ から確認できます。
+            eventの種類は、
+            `こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events>`_
+            から確認できます。
 
         Parameters
         ----------
@@ -819,7 +841,7 @@ class Room:
         Parameters
         ----------
         ts : int or None
-            指定した場合は、その時刻以前のメッセージを取得できる。
+            指定した場合は、その時刻以前のメッセージを取得できます。
 
                 指定方法：2021/07/01 12:30:45以前なら、20210701123045000
 
