@@ -8,7 +8,7 @@ import aiohttp
 import uvicorn  # type: ignore
 from fastapi import FastAPI, Request, BackgroundTasks
 
-from emo_platform.api import Client, PostContentType
+from emo_platform.api import Client, PostContentType, Room
 from emo_platform.exceptions import (
     NoRefreshTokenError,
     UnauthorizedError,
@@ -165,7 +165,7 @@ class AsyncClient(Client):
         return EmoRoomInfo(**response)
 
     def create_room_client(self, room_id: str):
-        return Room(self, room_id)
+        return AsyncRoom(self, room_id)
 
     async def get_stamps_list(self) -> EmoStampsInfo:
         response = await self._aget("/v1/stamps")
@@ -233,7 +233,7 @@ class AsyncClient(Client):
         self.server.should_exit = True
 
 
-class Room:
+class AsyncRoom(Room):
     def __init__(self, base_client: AsyncClient, room_id: str):
         self.base_client = base_client
         self.room_id = room_id
