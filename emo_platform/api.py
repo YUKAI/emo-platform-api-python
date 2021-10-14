@@ -576,7 +576,9 @@ class Client:
         response = self._put("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
-    def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+    def register_webhook_event(
+        self, events: List[str]
+    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
         """Webhook通知するイベントの指定
 
             eventの種類は、

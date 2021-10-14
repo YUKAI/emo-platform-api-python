@@ -184,6 +184,11 @@ class AsyncClient(Client):
         response = await self._aput("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
+    async def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+        payload = {"events": events}
+        response = await self._aput("/v1/webhook/events", json.dumps(payload))
+        return EmoWebhookInfo(**response)
+
     async def delete_webhook_setting(self) -> EmoWebhookInfo:
         response = await self._adelete("/v1/webhook")
         return EmoWebhookInfo(**response)
