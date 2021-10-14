@@ -11,7 +11,7 @@ import responses
 from fastapi.testclient import TestClient
 
 from emo_platform import Client
-from emo_platform.exceptions import NoRefreshTokenError, NoRoomError, UnauthorizedError
+from emo_platform.exceptions import TokenError, NoRoomError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
@@ -160,7 +160,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         ## wrong refresh token set to env
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_w_a_w_f_json_n_f_env_set(self):  # 1*3*1*1
@@ -173,7 +173,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
             json.dump(tokens, f)
         ## no refresh token set to env
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_w_a_n_f_json_r_f_env_set(self):  # 1*3*1*1
@@ -194,7 +194,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         ## wrong refresh token set to env
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_w_a_n_f_json_n_f_env_set(self):  # 1*3*1*1
@@ -204,7 +204,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
             json.dump(tokens, f)
         ## no refresh token set to env
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_right_access_token_env_set(self):  # 1*1*3*3
@@ -238,13 +238,13 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
             json.dump(tokens, f)
         ## wrong refresh token set to env
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
         ## set wrong access token set to env
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_n_a_w_f_json_n_f_env(self):  # 1*2*1*1
@@ -253,13 +253,13 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         with open(TOKEN_FILE, "w") as f:
             json.dump(tokens, f)
         ## no refresh token set to env
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
         ## set wrong access token set to env
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_n_a_n_f_json_r_f_env(self):  # 1*2*1*1
@@ -279,13 +279,13 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
             json.dump(tokens, f)
         ## wrong refresh token set to env
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
         ## set wrong access token set to env
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
     def test_n_a_n_f_json_n_f_env(self):  # 1*2*1*1
@@ -294,13 +294,13 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         with open(TOKEN_FILE, "w") as f:
             json.dump(tokens, f)
         ## no refresh token set to env
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
         ## set wrong access token set to env
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(NoRefreshTokenError):
+        with self.assertRaises(TokenError):
             client.get_account_info()
 
 
@@ -644,7 +644,7 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
         )
         self.assertEqual(response.json(), None)
 
-        for i in range(client.MAX_SAVED_REQUEST_ID):
+        for i in range(client._MAX_SAVED_REQUEST_ID):
             test_body["request_id"] = str(i)
             response = app_client.post(
                 "/",

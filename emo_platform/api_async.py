@@ -8,11 +8,11 @@ import aiohttp
 import uvicorn  # type: ignore
 from fastapi import FastAPI, Request, BackgroundTasks
 
-from emo_platform.api import Client, PostContentType
+from emo_platform.api import Client, PostContentType, Room
 from emo_platform.exceptions import (
-    NoRefreshTokenError,
+    TokenError,
     UnauthorizedError,
-    aiohttp_error_handler,
+    _aiohttp_error_handler,
 )
 from emo_platform.models import Color, Head, WebHook
 from emo_platform.response import (
@@ -43,11 +43,11 @@ class AsyncClient(Client):
                 "refresh_token": refresh_token,
                 "access_token" : self.access_token
             }
-            with open(self.TOKEN_FILE, "w") as f:
+            with open(self._TOKEN_FILE, "w") as f:
                 json.dump(save_tokens, f)
 
         # load saved tokens
-        with open(self.TOKEN_FILE, "r") as f:
+        with open(self._TOKEN_FILE, "r") as f:
             saved_tokens = json.load(f)
         refresh_token = saved_tokens["refresh_token"]
 
@@ -60,7 +60,7 @@ class AsyncClient(Client):
                     "refresh_token": "",
                     "access_token" : ""
                 }
-                with open(self.TOKEN_FILE, "w") as f:
+                with open(self._TOKEN_FILE, "w") as f:
                     json.dump(save_tokens, f)
             else:
                 return
@@ -74,7 +74,7 @@ class AsyncClient(Client):
         else:
             return
 
-        raise NoRefreshTokenError(
+        raise TokenError(
             "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
         )
 
@@ -84,7 +84,7 @@ class AsyncClient(Client):
         async with request() as response:
             try:
                 response_msg = await response.text()
-                with aiohttp_error_handler(response_msg):
+                with _aiohttp_error_handler(response_msg):
                     response.raise_for_status()
             except UnauthorizedError:
                 if not update_tokens:
@@ -95,7 +95,7 @@ class AsyncClient(Client):
         await self._update_tokens()
         async with request() as response:
             response_msg = await response.text()
-            with aiohttp_error_handler(response_msg):
+            with _aiohttp_error_handler(response_msg):
                 response.raise_for_status()
             return await response.json()
 
@@ -165,7 +165,7 @@ class AsyncClient(Client):
         return EmoRoomInfo(**response)
 
     def create_room_client(self, room_id: str):
-        return Room(self, room_id)
+        return AsyncRoom(self, room_id)
 
     async def get_stamps_list(self) -> EmoStampsInfo:
         response = await self._aget("/v1/stamps")
@@ -184,6 +184,11 @@ class AsyncClient(Client):
         response = await self._aput("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
+    async def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+        payload = {"events": events}
+        response = await self._aput("/v1/webhook/events", json.dumps(payload))
+        return EmoWebhookInfo(**response)
+
     async def delete_webhook_setting(self) -> EmoWebhookInfo:
         response = await self._adelete("/v1/webhook")
         return EmoWebhookInfo(**response)
@@ -191,7 +196,83 @@ class AsyncClient(Client):
     async def start_webhook_event(
         self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
     ) -> None:
-        response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            イベント通知時に、登録していた関数が呼び出されるようになります。
+
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)
+
+        Example
+        -----
+        webhook通知が来たらそのデータをqueueに渡し、:func:`print_queue` で表示する例です::
+
+            import emo_platform
+
+            client = emo_platform.AsyncClient()
+
+            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
+
+            async def print_queue(queue):
+                while True:
+                    item = await queue.get()
+                    print("body:", item)
+                    print("data:", item.data)
+
+            async def main():
+                queue = asyncio.Queue()
+
+                @client.event("message.received")
+                async async def message_callback(body):
+                    await queue.put(body)
+
+                # Create task you want to execute in parallel
+                task_queue = asyncio.create_task(print_queue(queue))
+
+                # Await start_webhook_event last.
+                # Give task list to be executed in parallel as the argument.
+                await client.start_webhook_event(port=8000, tasks=[task_queue])
+
+            if __name__ == "__main__":
+                asyncio.run(main())
+
+
+        Parameters
+        ----------
+        host : str, default localhost
+            Webhookの通知を受けるローカルサーバーのホスト名。
+
+        port : int, default 8000
+            Webhookの通知を受けるローカルサーバーのポート番号。
+
+        tasks : List[asyncio.Task], default []
+            並列で実行したいタスクオブジェクトのリスト。
+
+            サーバー終了時にキャンセルされます。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼んでいる :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
+        """
+
+        response = await self.register_webhook_event(list(self.webhook_events_cb.keys()))
         secret_key = response.secret
 
         self.app = FastAPI()
@@ -207,8 +288,8 @@ class AsyncClient(Client):
                     room_id = body.uuid
                     if room_id in event_cb:
                         cb_func = event_cb[room_id]
-                    elif self.DEFAULT_ROOM_ID in event_cb:
-                        cb_func = event_cb[self.DEFAULT_ROOM_ID]
+                    elif self._DEFAULT_ROOM_ID in event_cb:
+                        cb_func = event_cb[self._DEFAULT_ROOM_ID]
                     else:
                         return "fail. no callback associated with the room.", 500
                     background_tasks.add_task(cb_func, body)
@@ -228,7 +309,7 @@ class AsyncClient(Client):
         self.server.should_exit = True
 
 
-class Room:
+class AsyncRoom(Room):
     def __init__(self, base_client: AsyncClient, room_id: str):
         self.base_client = base_client
         self.room_id = room_id
