@@ -135,7 +135,7 @@ class TestBaseClass(object):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
 
-
+@unittest.skip("WIP")
 class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()
@@ -482,7 +482,7 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             async def test_webhook_callback():
                 pass
 
-
+@unittest.skip("WIP")
 class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()

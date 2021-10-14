@@ -108,6 +108,7 @@ class TestBaseClass(object):
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
 
 
+@unittest.skip("WIP")
 class TestGetTokens(unittest.TestCase, TestBaseClass):
     def setUp(self):
         super().init()
