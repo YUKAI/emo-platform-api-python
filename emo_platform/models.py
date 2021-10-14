@@ -2,17 +2,21 @@ from dataclasses import dataclass
 
 @dataclass
 class Color:
-    """
-    BOCCO emoのほっぺの色。
+    """BOCCO emoのほっぺの色。
 
     Parameters
     ----------
-    red : int
+    red : int, default 0
         赤の輝度(0~255)。
-    green : int
+    green : int, default 0
         緑の輝度(0~255)。
-    blue : int
+    blue : int, default 0
         青の輝度(0~255)。
+
+    Note
+    ----------
+    範囲外の値を入れた際は、最小値と最大値のうち近い方の値になります。
+
     """
 
     red  : int = 0
@@ -34,10 +38,14 @@ class Head:
 
     Parameters
     ----------
-    angle: int
+    angle: int, default 0
         左右方向の首の角度(-45~45)。
-    vertical_angle: int
+    vertical_angle: int, default 0
         上下方向の首の角度(-20~20)。
+
+    Note
+    ----------
+    範囲外の値を入れた際は、最小値と最大値のうち近い方の値になります。
 
     """
 
