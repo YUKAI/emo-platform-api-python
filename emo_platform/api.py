@@ -51,7 +51,7 @@ class Client:
 
     token_file_path : Optional[str], default None
         refresh token及びaccess tokenを保存するファイルのパス。
-        指定しない場合は、このmodule内のディレクトリに保存されます
+        指定しない場合は、このpkg内のディレクトリに保存されます
 
         指定したパスには、以下の2種類のファイルが生成されます。
             emo-platform-api.json
@@ -74,19 +74,19 @@ class Client:
     使用しているaccess tokenの期限が切れた場合
         保存されているrefresh tokenをもとに自動的に更新されます。
         その際にAPI呼び出しが最大で2回行われます。
-        各メソッドを実行した際も、access tokenが切れていた場合、自動更新が行われます。
+        clientの各メソッドを実行した際も、access tokenが切れていた場合、自動更新が行われます。
 
     """
-    BASE_URL = "https://platform-api.bocco.me"
-    TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
-    PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
-    DEFAULT_ROOM_ID = ""
-    MAX_SAVED_REQUEST_ID = 10
+    _BASE_URL = "https://platform-api.bocco.me"
+    _TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
+    _PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
+    _DEFAULT_ROOM_ID = ""
+    _MAX_SAVED_REQUEST_ID = 10
 
-    def __init__(self, endpoint_url: str = BASE_URL, token_file_path: Optional[str] = None):
+    def __init__(self, endpoint_url: str = _BASE_URL, token_file_path: Optional[str] = None):
         if token_file_path is not None:
-            self.TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
-            self.PREVOIUS_TOKEN_FILE = f"{token_file_path}/emo-platform-api_previous.json"
+            self._TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
+            self._PREVOIUS_TOKEN_FILE = f"{token_file_path}/emo-platform-api_previous.json"
         self.endpoint_url = endpoint_url
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
@@ -116,25 +116,25 @@ class Client:
 
         # load prevoius os env tokens and save new os env tokens
         try:
-            with open(self.PREVOIUS_TOKEN_FILE) as f:
+            with open(self._PREVOIUS_TOKEN_FILE) as f:
                 prevoius_env_tokens = json.load(f)
         except FileNotFoundError:
             prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
 
-        with open(self.PREVOIUS_TOKEN_FILE, "w") as f:
+        with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
             json.dump(self.current_env_tokens, f)
 
         # compare new os env tokens with old ones
         if self.current_env_tokens == prevoius_env_tokens:
             try:
-                with open(self.TOKEN_FILE) as f:
+                with open(self._TOKEN_FILE) as f:
                     saved_tokens = json.load(f)
             except FileNotFoundError:
-                with open(self.TOKEN_FILE, "w") as f:
+                with open(self._TOKEN_FILE, "w") as f:
                     saved_tokens = {"refresh_token": "", "access_token": ""}
                     json.dump(saved_tokens, f)
         else:  # reset json file when os env token updated
-            with open(self.TOKEN_FILE, "w") as f:
+            with open(self._TOKEN_FILE, "w") as f:
                 saved_tokens = {"refresh_token": "", "access_token": ""}
                 json.dump(saved_tokens, f)
         saved_access_token = saved_tokens["access_token"]
@@ -146,15 +146,15 @@ class Client:
             self.access_token = saved_access_token
 
         self.headers["Authorization"] = "Bearer " + self.access_token
-        self.room_id_list = [self.DEFAULT_ROOM_ID]
+        self.room_id_list = [self._DEFAULT_ROOM_ID]
         self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
-        self.request_id_deque: deque = deque([], self.MAX_SAVED_REQUEST_ID)
+        self.request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
 
     def update_tokens(self) -> None:
         """トークンの更新と保存
 
-        jsonファイルに保存されているもしくは環境変数として設定されているrefresh tokenを用いて、
-        refresh tokenとaccess tokenを更新、jsonファイルに保存します。
+            jsonファイルに保存されているもしくは環境変数として設定されているrefresh tokenを用いて、
+            refresh tokenとaccess tokenを更新、jsonファイルに保存します。
 
         Raises
         ----------
@@ -163,7 +163,8 @@ class Client:
 
         Note
         ----
-        API呼び出し回数: 最大2回
+        API呼び出し回数
+            最大2回
         """
 
         def _try_update_access_token(refresh_token):
@@ -175,11 +176,11 @@ class Client:
                 "refresh_token": refresh_token,
                 "access_token" : self.access_token
             }
-            with open(self.TOKEN_FILE, "w") as f:
+            with open(self._TOKEN_FILE, "w") as f:
                 json.dump(save_tokens, f)
 
         # load saved tokens
-        with open(self.TOKEN_FILE, "r") as f:
+        with open(self._TOKEN_FILE, "r") as f:
             saved_tokens = json.load(f)
         refresh_token = saved_tokens["refresh_token"]
 
@@ -192,7 +193,7 @@ class Client:
                     "refresh_token": "",
                     "access_token" : ""
                 }
-                with open(self.TOKEN_FILE, "w") as f:
+                with open(self._TOKEN_FILE, "w") as f:
                     json.dump(save_tokens, f)
             else:
                 return
@@ -265,7 +266,8 @@ class Client:
 
     def get_access_token(self, refresh_token: str) -> EmoTokens:
         """トークンの取得
-        refresh_tokenを用いて、refresh tokenとaccess tokenを取得する。
+
+            refresh_tokenを用いて、refresh tokenとaccess tokenを取得する。
 
         Parameters
         ----------
@@ -283,9 +285,11 @@ class Client:
 
         Note
         ----
-        呼び出しているAPI: https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh
 
-        API呼び出し回数: 1回
+        API呼び出し回数
+            1回
 
         """
 
@@ -309,6 +313,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/me
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         response = self._get("/v1/me")
@@ -319,7 +331,7 @@ class Client:
     ) -> Union[EmoAccountInfo, Coroutine[Any, Any, EmoAccountInfo]]:
         """アカウントの削除
 
-        紐づくWebhook等の設定も全て削除される。
+            紐づくWebhook等の設定も全て削除されます。
 
         Returns
         -------
@@ -330,6 +342,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているDELETEの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/me
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         response = self._delete("/v1/me")
@@ -338,7 +358,7 @@ class Client:
     def get_rooms_list(self) -> Union[EmoRoomInfo, Coroutine[Any, Any, EmoRoomInfo]]:
         """ユーザが参加している部屋の一覧の取得
 
-        取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られる。
+            取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
 
         Returns
         -------
@@ -348,6 +368,14 @@ class Client:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -368,6 +396,14 @@ class Client:
             関数内部で行っているGETの処理が失敗した場合
             あるいは、ユーザーが参加している部屋が1つもなかった場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
         result = self._get("/v1/rooms")
         try:
@@ -377,11 +413,13 @@ class Client:
         if room_number == 0:
             raise NoRoomError("Get no room id.")
         rooms_id = [result["rooms"][i]["uuid"] for i in range(room_number)]
-        self.room_id_list = rooms_id + [self.DEFAULT_ROOM_ID]
+        self.room_id_list = rooms_id + [self._DEFAULT_ROOM_ID]
         return rooms_id
 
     def create_room_client(self, room_id: str):
         """部屋固有の各種apiを呼び出すclientの作成
+
+            部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
 
         Parameters
         ----------
@@ -392,6 +430,11 @@ class Client:
         -------
         room_client : Room
             部屋のclient
+
+        Note
+        ----
+        API呼び出し回数
+            0回
 
         """
         return Room(self, room_id)
@@ -409,6 +452,14 @@ class Client:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/stamps
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -429,6 +480,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/motions
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         response = self._get("/v1/motions")
@@ -448,6 +507,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/webhook
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -475,6 +542,14 @@ class Client:
             関数内部で行っているPUTの処理が失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"description": webhook.description, "url": webhook.url}
@@ -484,12 +559,12 @@ class Client:
     def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
         """Webhook通知するイベントの指定
 
+            eventの種類は、`こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events>`_ から確認できます。
+
         Parameters
         ----------
         events : List[str]
             指定するWebhook event。
-            eventの種類は下記から確認できます。
-            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
 
         Returns
         -------
@@ -501,6 +576,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているPUTの処理が失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -526,6 +609,14 @@ class Client:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/webhook
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"description": webhook.description, "url": webhook.url}
@@ -548,19 +639,32 @@ class Client:
             関数内部で行っているDELETEの処理が失敗した場合
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         response = self._delete("/v1/webhook")
         return EmoWebhookInfo(**response)
 
     def event(
-        self, event: str, room_id_list: List[str] = [DEFAULT_ROOM_ID]
+        self, event: str, room_id_list: List[str] = [_DEFAULT_ROOM_ID]
     ) -> Callable:
         """Webhookの指定のeventが通知されたときに呼び出す関数の登録
 
-        Usage
+        Example
         -----
+        呼び出したい関数にdecorateして登録します::
+
+            import emo_platform
+
             client = emo_platform.Client()
+
             @client.event("message.received")
             def test_event_callback(body):
                 print(body)
@@ -569,18 +673,30 @@ class Client:
         ----------
         event : str
             指定するWebhook event。
-            eventの種類は下記から確認できます。
-            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+            eventの種類は、`こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events>`_ から確認できます。
 
         room_id_list : List[str], default [""]
-            指定したWebhook eventの通知を監視する部屋を指定できます。
+            指定したWebhook eventの通知を監視する部屋をidで指定できます。
+
             引数なしだと、全ての部屋を監視します。
 
         Raises
         ----------
         EmoPlatformError
-            関数内部呼んでいるget_rooms_id()が例外を出した場合
-            あるいは、存在しない部屋を引数:room_id_listに含めていた場合。
+            関数内部で呼んでいる :func:`get_rooms_id` が例外を出した場合
+            あるいは、存在しない部屋idを引数 :attr:`room_id_list` に含めていた場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
+
+        API呼び出し回数
+            :func:`get_rooms_id` を一度も実行していない状態で、
+            引数 :attr:`room_id_list` に部屋idを指定して実行した場合: 1回 + 最大2回(access tokenが切れていた場合)
+
+            上記以外の場合: 0回
 
         """
         def decorator(func):
@@ -588,8 +704,8 @@ class Client:
             if event not in self.webhook_events_cb:
                 self.webhook_events_cb[event] = {}
 
-            if room_id_list != [self.DEFAULT_ROOM_ID]:
-                if self.room_id_list == [self.DEFAULT_ROOM_ID]:
+            if room_id_list != [self._DEFAULT_ROOM_ID]:
+                if self.room_id_list == [self._DEFAULT_ROOM_ID]:
                     self.get_rooms_id()
 
             for room_id in room_id_list:
@@ -603,16 +719,32 @@ class Client:
     def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
         """BOCCO emoのWebhookのイベント通知の開始
 
-        イベント通知時に、登録していた関数が呼び出されるようになります。
+            イベント通知時に、登録していた関数が呼び出されるようになります。
 
-        Usage
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)
+
+        Example
         -----
-        bloking処理になっています。
+        この関数は、bloking処理になっている点に注意してください::
+
+            import emo_platform
 
             client = emo_platform.Client()
+
+            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
+
             @client.event("message.received")
             def test_event_callback(body):
                 print(body)
+
             client.start_webhook_event()
 
         Parameters
@@ -626,7 +758,15 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で呼んでいるregister_webhook_event()が例外を出した場合。
+            関数内部で呼んでいる :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -646,8 +786,8 @@ class Client:
                     room_id = body.uuid
                     if room_id in event_cb:
                         cb_func = event_cb[room_id]
-                    elif self.DEFAULT_ROOM_ID in event_cb:
-                        cb_func = event_cb[self.DEFAULT_ROOM_ID]
+                    elif self._DEFAULT_ROOM_ID in event_cb:
+                        cb_func = event_cb[self._DEFAULT_ROOM_ID]
                     else:
                         return "fail. no callback associated with the room.", 500
                     background_tasks.add_task(cb_func, body)
@@ -674,14 +814,14 @@ class Room:
         self.room_id = room_id
 
     def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
-        """
-        部屋に投稿されたメッセージを取得する。
+        """部屋に投稿されたメッセージの取得
 
         Parameters
         ----------
         ts : int or None
             指定した場合は、その時刻以前のメッセージを取得できる。
-            指定の仕方：2021/07/01 12:30:45以前なら、20210701123045000
+
+                指定方法：2021/07/01 12:30:45以前なら、20210701123045000
 
         Returns
         -------
@@ -692,6 +832,14 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/messages
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -704,14 +852,9 @@ class Room:
     def get_sensors_list(self) -> EmoSensorsInfo:
         """BOCCO emoとペアリングされているセンサの一覧の取得
 
-        Notes
-        -----
-        センサの種別
-            sensor_type	センサの種別
-            movement	振動センサ
-            human	人感センサ
-            lock	鍵センサ
-            room	部屋センサ
+            センサの種類は
+            `こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/sensors>`_
+            で確認できます。
 
         Returns
         -------
@@ -722,6 +865,14 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/sensors
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -735,7 +886,8 @@ class Room:
         ----------
         sensor_id : str
             部屋センサのuuid。
-            各部屋センサのuuidは、センサ一覧取得(get_sensors_list)で確認できます。
+
+            各部屋センサのuuidは、:func:`get_sensors_list` で確認できます。
 
         Returns
         -------
@@ -746,6 +898,15 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+            (部屋センサ以外のBOCCOセンサ / 紐づいていない部屋センサ、のidを指定した場合も含みます)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/sensors/-sensor_uuid-/values
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -757,10 +918,11 @@ class Room:
     def send_audio_msg(self, audio_data_path: str) -> EmoMessageInfo:
         """音声ファイルの部屋への投稿
 
-        Note
+        Attention
         ----
-        送信できるファイルには下記の制限があります。
+        送信できるファイルの制限について
             フォーマット:    MP3, M4A
+
             ファイルサイズ:  1MB
 
         Parameters
@@ -778,6 +940,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/audio
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         with open(audio_data_path, "rb") as audio_data:
@@ -790,13 +960,13 @@ class Room:
             return EmoMessageInfo(**response)
 
     def send_image(self, image_data_path: str) -> EmoMessageInfo:
-        """
-        画像ファイルを部屋に投稿する。
+        """画像ファイルの部屋への投稿
 
-        Note
+        Attention
         ----
-        送信できるファイルには下記の制限がある。
+        送信できるファイルの制限について
             フォーマット:    JPG, PNG
+
             ファイルサイズ:  1MB
 
         Parameters
@@ -814,6 +984,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/image
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         with open(image_data_path, "rb") as image_data:
@@ -826,8 +1004,7 @@ class Room:
             return EmoMessageInfo(**response)
 
     def send_msg(self, msg: str) -> EmoMessageInfo:
-        """
-        テキストメッセージを部屋に投稿する。
+        """テキストメッセージの部屋への投稿
 
         Parameters
         ----------
@@ -844,6 +1021,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/text
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"text": msg}
@@ -853,18 +1038,19 @@ class Room:
         return EmoMessageInfo(**response)
 
     def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
-        """
-        スタンプを部屋に投稿する。
+        """スタンプの部屋への投稿
 
         Parameters
         ----------
         stamp_id : str
             スタンプのuuid。
-            各スタンプのuuidは、スタンプ一覧取得(get_stamps_list)で確認できる。
+
+            各スタンプのuuidは、:func:`Client.get_stamps_list` で確認できます。
 
         msg : Optional[str], default None
             スタンプ投稿時に、BOCCO emoが行うモーション再生と共に発話されるメッセージ。
-            Noneの場合は、発話なしでモーションが再生される。
+
+            引数なしの場合は、発話なしでモーションが再生されます。
 
         Returns
         -------
@@ -876,6 +1062,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/stamp
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"uuid": stamp_id}
@@ -886,54 +1080,19 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def change_led_color(self, color: Color) -> dict:
-        """
-        3秒間のみ、ほっぺたの色を指定した色に変更するモーションをBOCCO emoに送信する。
-
-        Parameters
-        ----------
-        color : emo_platform.Color
-            送信するほっぺたの色。
-
-        Returns
-        -------
-        response : dict
-            モーション送信時の情報。
-            {
-                sequence:  int,
-                unique_id: str,
-                user: {
-                    uuid:          str,
-                    user_type:     str,
-                    nickname:      str,
-                    profile_image: str,
-                }
-                message: {
-                    ja: str,
-                }
-                media:     str,
-                audio_url: str,
-                image_url: str,
-                lang:      str,
-            }
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
-
-        """
-
     def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
 
-        詳しくは、以下を参照。
-        https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions
+            詳しくは、
+            `こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions>`_
+            を参照してください。
 
         Parameters
         ----------
-        file_path : str
+        file_path : str or dict
             モーションファイルを置いている絶対パス。
+
+            あるいは、モーションを記述した辞書オブジェクト。
 
         Returns
         -------
@@ -944,8 +1103,18 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
+            (モーションのデータ形式が誤っている場合も含みます)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
+
         if type(motion_data) == str:
             with open(motion_data) as f:
                 payload = json.load(f)
@@ -957,12 +1126,13 @@ class Room:
         return EmoMessageInfo(**response)
 
     def change_led_color(self, color: Color) -> EmoMessageInfo:
-        """
-        3秒間のみ、ほっぺたの色を指定した色に変更するモーションをBOCCO emoに送信する。
+        """ほっぺたの色の変更
+
+            3秒間、ほっぺたの色を指定した色に変更します。
 
         Parameters
         ----------
-        color : emo_platform.Color
+        color : Color
             送信するほっぺたの色。
 
         Returns
@@ -975,6 +1145,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/led_color
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
@@ -984,12 +1162,13 @@ class Room:
         return EmoMessageInfo(**response)
 
     def move_to(self, head: Head) -> EmoMessageInfo:
-        """
-        首の角度を変更するモーションをBOCCO emoに送信する。
+        """首の角度の変更
+
+            首の角度を変更するモーションをBOCCO emoに送信します。
 
         Parameters
         ----------
-        head : emo_platform.Head
+        head : Head
             送信する首の角度。
 
         Returns
@@ -1001,6 +1180,14 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/move_to
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
@@ -1017,7 +1204,8 @@ class Room:
         ----------
         motion_id : str
             プリセットモーションのuuid
-            各プリセットモーションのuuidは、モーション一覧取得(get_motions_list)で確認できます。
+
+            各プリセットモーションのuuidは、:func:`Client.get_motions_list` で確認できます。
 
         Returns
         -------
@@ -1029,6 +1217,14 @@ class Room:
         EmoPlatformError
             関数内部で行っているPOSTの処理が失敗した場合。
 
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/preset
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
+
         """
 
         payload = {"uuid": motion_id}
@@ -1038,8 +1234,7 @@ class Room:
         return EmoMessageInfo(**response)
 
     def get_emo_settings(self) -> EmoSettingsInfo:
-        """
-        現在のBOCCO emoの設定値を取得する。
+        """現在のBOCCO emoの設定値を取得
 
         Returns
         -------
@@ -1050,6 +1245,14 @@ class Room:
         ----------
         EmoPlatformError
             関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/emo/settings
+
+        API呼び出し回数
+            1回 + 最大2回(access tokenが切れていた場合)
 
         """
 
