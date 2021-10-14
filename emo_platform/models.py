@@ -38,9 +38,9 @@ class Head:
 
     Parameters
     ----------
-    angle: int, default 0
+    angle: float, default 0
         左右方向の首の角度(-45~45)。
-    vertical_angle: int, default 0
+    vertical_angle: float, default 0
         上下方向の首の角度(-20~20)。
 
     Note
@@ -49,14 +49,14 @@ class Head:
 
     """
 
-    angle         : int = 0
-    vertical_angle: int = 0
+    angle         : float = 0
+    vertical_angle: float = 0
 
     def __post_init__(self):
         self.angle = self._check_constraints(self.angle, -45, 45)
         self.vertical_angle = self._check_constraints(self.vertical_angle, -20, 20)
 
-    def _check_constraints(self, value: int, min_val: int, max_val: int):
+    def _check_constraints(self, value: float, min_val: float, max_val: float):
         return max(min(value, max_val), min_val)
 
 @dataclass
