@@ -1,10 +1,11 @@
 # BOCCO emo platform api python sdk
 
-## Setup for developer
+## How to install
+### Using poetry (recommended)
 If poetry has not been installed, please see [this page](https://python-poetry.org/docs/) to install.
 
 ```bash
-# Python 3.6+ required
+# Python 3.7+ required
 poetry install --no-dev
 ```
 
@@ -12,6 +13,12 @@ When you execute python code,
 
 ```bash
 poetry run python your_python_code.py
+```
+
+### Using PyPl
+
+```
+$ pip install emo_platform_api_sdk
 ```
 
 ## Setting api tokens
@@ -28,6 +35,21 @@ export EMO_PLATFORM_API_REFRESH_TOKEN="***"
 ## Usage Example
 
 You can also see other examples in "examples" directory.
+
+### Caution
+- **If you install by PyPl**, you need to give path when init Client, like below.
+	- Two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path.
+	  - These files are used to store the tokens information.
+	- See the documentation for details.
+
+```python
+import os
+from emo_platform import Client
+
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+
+client = Client(token_file_path=CURRENT_DIR)
+```
 
 ### Using client
 ```python
@@ -54,8 +76,6 @@ ngrok http 8000
 
 ```python
 from emo_platform import Client, WebHook
-from threading import Thread
-import time
 
 client = Client()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -66,12 +86,9 @@ def message_callback(data):
 	print(data)
 
 @client.event('illuminance.changed')
-def radar_callback(data):
+def illuminance_callback(data):
 	print(data)
 
-thread = Thread(target=client.start_webhook_event)
-thread.start()
+client.start_webhook_event()
 
-while True:
-	time.sleep(0.1)
 ```
