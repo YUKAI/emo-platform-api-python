@@ -37,32 +37,30 @@ def main():
     # send_original_motion(motion_data_path) # send original motion by json file path
 
     # motion_data = {
+    #     "head": [
+    #     ],
+    #     "antenna": [
+    #     ],
+    #     "led_cheek_l": [
+    #     ],
+    #     "led_cheek_r": [
+    #     ],
+    #     "led_play": [
+    #     ],
+    #     "led_rec": [
+    #     ],
+    #     "led_func": [
+    #     ]
+    # }
+    # send_original_motion(motion_data) # send original motion by dict data
 
+    # color = Color(100, 255, 155)
+    # print(change_led_color(color))
 
-# 	"head": [
-# 	],
-# 	"antenna": [
-# 	],
-# 	"led_cheek_l": [
-# 	],
-# 	"led_cheek_r": [
-# 	],
-# 	"led_play": [
-# 	],
-# 	"led_rec": [
-# 	],
-# 	"led_func": [
-# 	]
-# }
-# send_original_motion(motion_data) # send original motion by dict data
+    # head = Head(45, 10)
+    # move_to(head)
 
-# color = Color(100, 255, 155)
-# print(change_led_color(color))
-
-# head = Head(45, 10)
-# move_to(head)
-
-# send_all_preset_motions()
+    # send_all_preset_motions()
 
 
 def send_audio_msg(audio_data_path):
@@ -87,7 +85,6 @@ def send_all_stamp_motions():
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send stamp " + "=" * 10)
         print(room.send_stamp(stamp.uuid))
-        break
 
 
 def send_original_motion(motion_data_path):
@@ -112,7 +109,6 @@ def send_all_preset_motions():
         time.sleep(7)  # for avoiding rate limit
         print("\n" + "=" * 10 + " room send motion " + "=" * 10)
         print(room.send_motion(motion.uuid))
-        break
 
 
 if __name__ == "__main__":

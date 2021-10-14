@@ -37,32 +37,30 @@ async def main():
     # await send_original_motion(motion_data_path)
 
     # motion_data = {
+    #     "head": [
+    #     ],
+    #     "antenna": [
+    #     ],
+    #     "led_cheek_l": [
+    #     ],
+    #     "led_cheek_r": [
+    #     ],
+    #     "led_play": [
+    #     ],
+    #     "led_rec": [
+    #     ],
+    #     "led_func": [
+    #     ]
+    # }
+    # await send_original_motion(motion_data) # send original motion by dict data
 
+    # color = Color(100, 255, 155)
+    # await change_led_color(color)
 
-# 	"head": [
-# 	],
-# 	"antenna": [
-# 	],
-# 	"led_cheek_l": [
-# 	],
-# 	"led_cheek_r": [
-# 	],
-# 	"led_play": [
-# 	],
-# 	"led_rec": [
-# 	],
-# 	"led_func": [
-# 	]
-# }
-# await send_original_motion(motion_data) # send original motion by dict data
+    # head = Head(45, 10)
+    # await move_to(head)
 
-# color = Color(100, 255, 155)
-# await change_led_color(color)
-
-# head = Head(45, 10)
-# await move_to(head)
-
-# await send_all_preset_motions()
+    # await send_all_preset_motions()
 
 
 async def send_audio_msg(audio_data_path):
