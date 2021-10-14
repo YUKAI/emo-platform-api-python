@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Color:
     """BOCCO emoのほっぺの色。
@@ -19,17 +20,18 @@ class Color:
 
     """
 
-    red  : int = 0
+    red: int = 0
     green: int = 0
-    blue : int = 0
+    blue: int = 0
 
     def __post_init__(self):
-        self.red =  self._check_constraints(self.red)
+        self.red = self._check_constraints(self.red)
         self.green = self._check_constraints(self.green)
         self.blue = self._check_constraints(self.blue)
 
     def _check_constraints(self, value: int, min_val: int = 0, max_val: int = 255):
         return max(min(value, max_val), min_val)
+
 
 @dataclass
 class Head:
@@ -49,7 +51,7 @@ class Head:
 
     """
 
-    angle         : float = 0
+    angle: float = 0
     vertical_angle: float = 0
 
     def __post_init__(self):
@@ -58,6 +60,7 @@ class Head:
 
     def _check_constraints(self, value: float, min_val: float, max_val: float):
         return max(min(value, max_val), min_val)
+
 
 @dataclass
 class WebHook:
@@ -73,5 +76,5 @@ class WebHook:
 
     """
 
-    url        : str
+    url: str
     description: str = ""

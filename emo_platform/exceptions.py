@@ -1,14 +1,17 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
+
 import aiohttp
 import requests
+
 
 @dataclass
 class EmoRequestInfo:
     """http requestしたデータ"""
+
     method: str
-    url   : str
-    headers : dict
+    url: str
+    headers: dict
 
 
 class EmoPlatformError(Exception):
@@ -25,8 +28,11 @@ class EmoPlatformError(Exception):
 
 class EmoHttpError(EmoPlatformError):
     """http request時のエラー"""
+
     def __str__(self):
-        return f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
+        return (
+            f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
+        )
 
 
 class RateLimitError(EmoHttpError):

@@ -1,12 +1,11 @@
 import asyncio
 import json
-import os
 from functools import partial
 from typing import Callable, List, Optional, Union
 
 import aiohttp
 import uvicorn  # type: ignore
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, Request
 
 from emo_platform.api import Client, PostContentType, Room
 from emo_platform.exceptions import (
@@ -33,7 +32,6 @@ from emo_platform.response import (
 
 class AsyncClient(Client):
     async def _update_tokens(self) -> None:
-
         async def _try_update_access_token(refresh_token):
             res_tokens = await self._get_access_token(refresh_token)
             self.access_token = res_tokens.access_token
@@ -41,7 +39,7 @@ class AsyncClient(Client):
             self.headers["Authorization"] = "Bearer " + self.access_token
             save_tokens = {
                 "refresh_token": refresh_token,
-                "access_token" : self.access_token
+                "access_token": self.access_token,
             }
             with open(self._TOKEN_FILE, "w") as f:
                 json.dump(save_tokens, f)
@@ -56,10 +54,7 @@ class AsyncClient(Client):
             try:
                 await _try_update_access_token(refresh_token)
             except UnauthorizedError:
-                save_tokens = {
-                    "refresh_token": "",
-                    "access_token" : ""
-                }
+                save_tokens = {"refresh_token": "", "access_token": ""}
                 with open(self._TOKEN_FILE, "w") as f:
                     json.dump(save_tokens, f)
             else:
@@ -272,13 +267,17 @@ class AsyncClient(Client):
 
         """
 
-        response = await self.register_webhook_event(list(self.webhook_events_cb.keys()))
+        response = await self.register_webhook_event(
+            list(self.webhook_events_cb.keys())
+        )
         secret_key = response.secret
 
         self.app = FastAPI()
 
         @self.app.post("/")
-        async def emo_callback(request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks):
+        async def emo_callback(
+            request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
+        ):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     try:
@@ -373,7 +372,9 @@ class AsyncRoom(Room):
         )
         return EmoMessageInfo(**response)
 
-    async def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+    async def send_original_motion(
+        self, motion_data: Union[str, dict]
+    ) -> EmoMessageInfo:
         if type(motion_data) == str:
             with open(motion_data) as f:
                 payload = json.load(f)

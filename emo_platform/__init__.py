@@ -3,10 +3,10 @@ from .api_async import AsyncClient
 from .exceptions import (
     BadRequestError,
     EmoPlatformError,
-    TokenError,
     NoRoomError,
     NotFoundError,
     RateLimitError,
+    TokenError,
     UnauthorizedError,
     UnknownError,
 )

@@ -1,9 +1,6 @@
 """Emo Platform API python example Receiving webhook data.
 """
 
-import time
-from threading import Thread
-
 from emo_platform import Client, WebHook
 
 client = Client()
@@ -21,5 +18,6 @@ def message_callback(body):
 def illuminance_callback(body):
     print("body:", body)
     print("data:", body.data)
+
 
 client.start_webhook_event()

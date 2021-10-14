@@ -26,6 +26,7 @@ def get_latest_msg():
     print("message_info:", msg_latest.message)
     print("media:", msg_latest.media)
 
+
 def get_sensors_list():
     print("\n" + "=" * 20 + " room sensors list " + "=" * 20)
     print(room.get_sensors_list())
@@ -35,13 +36,14 @@ def get_room_sensor_info():
     print("\n" + "=" * 20 + " room sensor values " + "=" * 20)
     sensor_list = room.get_sensors_list()
     for sensor in sensor_list.sensors:
-        if(sensor.sensor_type == "room"):
+        if sensor.sensor_type == "room":
             room_sensor = sensor
             room_sensor_values = room.get_sensor_values(room_sensor.uuid)
             print("type:", room_sensor_values.sensor_type)
             print("uuid:", room_sensor_values.uuid)
             print("nickname:", room_sensor_values.nickname)
             print("events:", room_sensor_values.events)
+
 
 def get_emo_settings():
     print("\n" + "=" * 20 + " room emo settings " + "=" * 20)
@@ -55,6 +57,7 @@ def get_emo_settings():
     print("serial_number:", emo_settings.serial_number)
     print("timezone:", emo_settings.timezone)
     print("zip_code:", emo_settings.zip_code)
+
 
 if __name__ == "__main__":
     main()

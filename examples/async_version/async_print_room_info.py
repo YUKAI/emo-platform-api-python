@@ -2,6 +2,7 @@
 """
 
 import asyncio
+
 from emo_platform import AsyncClient
 
 client = AsyncClient()
@@ -37,13 +38,14 @@ async def get_sensor_values():
     print("\n" + "=" * 20 + " room sensor values " + "=" * 20)
     sensor_list = await room.get_sensors_list()
     for sensor in sensor_list.sensors:
-        if(sensor.sensor_type == "room"):
+        if sensor.sensor_type == "room":
             room_sensor = sensor
             room_sensor_values = await room.get_sensor_values(room_sensor.uuid)
             print("type:", room_sensor_values.sensor_type)
             print("uuid:", room_sensor_values.uuid)
             print("nickname:", room_sensor_values.nickname)
             print("events:", room_sensor_values.events)
+
 
 async def get_emo_settings():
     print("\n" + "=" * 20 + " room emo settings " + "=" * 20)

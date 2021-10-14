@@ -37,30 +37,32 @@ def main():
     # send_original_motion(motion_data_path) # send original motion by json file path
 
     # motion_data = {
-	# 	"head": [
-	# 	],
-	# 	"antenna": [
-	# 	],
-	# 	"led_cheek_l": [
-	# 	],
-	# 	"led_cheek_r": [
-	# 	],
-	# 	"led_play": [
-	# 	],
-	# 	"led_rec": [
-	# 	],
-	# 	"led_func": [
-	# 	]
-	# }
-    # send_original_motion(motion_data) # send original motion by dict data
 
-    # color = Color(100, 255, 155)
-    # print(change_led_color(color))
 
-    # head = Head(45, 10)
-    # move_to(head)
+# 	"head": [
+# 	],
+# 	"antenna": [
+# 	],
+# 	"led_cheek_l": [
+# 	],
+# 	"led_cheek_r": [
+# 	],
+# 	"led_play": [
+# 	],
+# 	"led_rec": [
+# 	],
+# 	"led_func": [
+# 	]
+# }
+# send_original_motion(motion_data) # send original motion by dict data
 
-    # send_all_preset_motions()
+# color = Color(100, 255, 155)
+# print(change_led_color(color))
+
+# head = Head(45, 10)
+# move_to(head)
+
+# send_all_preset_motions()
 
 
 def send_audio_msg(audio_data_path):

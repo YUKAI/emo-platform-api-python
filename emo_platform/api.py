@@ -1,18 +1,16 @@
 import json
 import os
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Union
 
 import requests
 import uvicorn  # type: ignore
-from fastapi import FastAPI, Request, BackgroundTasks
-from pydantic import BaseModel
+from fastapi import BackgroundTasks, FastAPI, Request
 
 from emo_platform.exceptions import (
-    TokenError,
     NoRoomError,
+    TokenError,
     UnauthorizedError,
     _http_error_handler,
 )
@@ -37,6 +35,7 @@ EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
 
 class PostContentType:
     """POSTするデータの種類"""
+
     APPLICATION_JSON = "application/json"
     MULTIPART_FORMDATA = None
 
@@ -92,16 +91,21 @@ class Client:
         clientの各メソッドを実行した際も、access tokenが切れていた場合、同様に自動更新が行われます。
 
     """
+
     _BASE_URL = "https://platform-api.bocco.me"
     _TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
     _PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
     _DEFAULT_ROOM_ID = ""
     _MAX_SAVED_REQUEST_ID = 10
 
-    def __init__(self, endpoint_url: str = _BASE_URL, token_file_path: Optional[str] = None):
+    def __init__(
+        self, endpoint_url: str = _BASE_URL, token_file_path: Optional[str] = None
+    ):
         if token_file_path is not None:
             self._TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
-            self._PREVOIUS_TOKEN_FILE = f"{token_file_path}/emo-platform-api_previous.json"
+            self._PREVOIUS_TOKEN_FILE = (
+                f"{token_file_path}/emo-platform-api_previous.json"
+            )
         self.endpoint_url = endpoint_url
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
@@ -194,7 +198,7 @@ class Client:
             self.headers["Authorization"] = "Bearer " + self.access_token
             save_tokens = {
                 "refresh_token": refresh_token,
-                "access_token" : self.access_token
+                "access_token": self.access_token,
             }
             with open(self._TOKEN_FILE, "w") as f:
                 json.dump(save_tokens, f)
@@ -209,10 +213,7 @@ class Client:
             try:
                 _try_update_access_token(refresh_token)
             except UnauthorizedError:
-                save_tokens = {
-                    "refresh_token": "",
-                    "access_token" : ""
-                }
+                save_tokens = {"refresh_token": "", "access_token": ""}
                 with open(self._TOKEN_FILE, "w") as f:
                     json.dump(save_tokens, f)
             else:
@@ -723,6 +724,7 @@ class Client:
             上記以外の場合: 0回
 
         """
+
         def decorator(func):
 
             if event not in self.webhook_events_cb:
@@ -800,7 +802,9 @@ class Client:
         self.app = FastAPI()
 
         @self.app.post("/")
-        def emo_callback(request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks):
+        def emo_callback(
+            request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
+        ):
             if request.headers.get("x-platform-api-secret") == secret_key:
                 if body.request_id not in self.request_id_deque:
                     try:
@@ -833,11 +837,14 @@ class Room:
         部屋のuuid。
 
     """
+
     def __init__(self, base_client: Client, room_id: str):
         self.base_client = base_client
         self.room_id = room_id
 
-    def get_msgs(self, ts: int = None) -> Union[EmoMsgsInfo, Coroutine[Any, Any, EmoMsgsInfo]]:
+    def get_msgs(
+        self, ts: int = None
+    ) -> Union[EmoMsgsInfo, Coroutine[Any, Any, EmoMsgsInfo]]:
         """部屋に投稿されたメッセージの取得
 
         Parameters
@@ -873,7 +880,9 @@ class Room:
         )
         return EmoMsgsInfo(**response)
 
-    def get_sensors_list(self) -> Union[EmoSensorsInfo, Coroutine[Any, Any, EmoSensorsInfo]]:
+    def get_sensors_list(
+        self,
+    ) -> Union[EmoSensorsInfo, Coroutine[Any, Any, EmoSensorsInfo]]:
         """BOCCO emoとペアリングされているセンサの一覧の取得
 
             センサの種類は
@@ -903,7 +912,9 @@ class Room:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
-    def get_sensor_values(self, sensor_id: str) -> Union[EmoRoomSensorInfo, Coroutine[Any, Any, EmoRoomSensorInfo]]:
+    def get_sensor_values(
+        self, sensor_id: str
+    ) -> Union[EmoRoomSensorInfo, Coroutine[Any, Any, EmoRoomSensorInfo]]:
         """部屋センサの送信値を取得
 
         Parameters
@@ -939,7 +950,9 @@ class Room:
         )
         return EmoRoomSensorInfo(**response)
 
-    def send_audio_msg(self, audio_data_path: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_audio_msg(
+        self, audio_data_path: str
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """音声ファイルの部屋への投稿
 
         Attention
@@ -983,7 +996,9 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_image(self, image_data_path: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_image(
+        self, image_data_path: str
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """画像ファイルの部屋への投稿
 
         Attention
@@ -1027,7 +1042,9 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_msg(self, msg: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_msg(
+        self, msg: str
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """テキストメッセージの部屋への投稿
 
         Parameters
@@ -1061,7 +1078,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_stamp(
+        self, stamp_id: str, msg: Optional[str] = None
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """スタンプの部屋への投稿
 
         Parameters
@@ -1104,7 +1123,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_original_motion(self, motion_data: Union[str, dict]) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_original_motion(
+        self, motion_data: Union[str, dict]
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
 
             詳しくは、
@@ -1149,7 +1170,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def change_led_color(self, color: Color) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def change_led_color(
+        self, color: Color
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """ほっぺたの色の変更
 
             3秒間、ほっぺたの色を指定した色に変更します。
@@ -1185,7 +1208,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def move_to(self, head: Head) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def move_to(
+        self, head: Head
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """首の角度の変更
 
             首の角度を変更するモーションをBOCCO emoに送信します。
@@ -1221,7 +1246,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_motion(self, motion_id: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_motion(
+        self, motion_id: str
+    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """プリセットモーションをBOCCO emoに送信
 
         Parameters
@@ -1257,7 +1284,9 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def get_emo_settings(self) -> Union[EmoSettingsInfo, Coroutine[Any, Any, EmoSettingsInfo]]:
+    def get_emo_settings(
+        self,
+    ) -> Union[EmoSettingsInfo, Coroutine[Any, Any, EmoSettingsInfo]]:
         """現在のBOCCO emoの設定値を取得
 
         Returns
