@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, BackgroundTasks
 
 from emo_platform.api import Client, PostContentType, Room
 from emo_platform.exceptions import (
-    NoRefreshTokenError,
+    TokenError,
     UnauthorizedError,
     _aiohttp_error_handler,
 )
@@ -74,7 +74,7 @@ class AsyncClient(Client):
         else:
             return
 
-        raise NoRefreshTokenError(
+        raise TokenError(
             "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
         )
 

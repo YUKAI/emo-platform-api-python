@@ -65,7 +65,7 @@ class NoRoomError(EmoPlatformError):
     pass
 
 
-class NoRefreshTokenError(EmoPlatformError):
+class TokenError(EmoPlatformError):
     """トークンが正しく設定されてない場合に出るエラー"""
 
     pass

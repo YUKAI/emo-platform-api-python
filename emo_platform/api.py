@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request, BackgroundTasks
 from pydantic import BaseModel
 
 from emo_platform.exceptions import (
-    NoRefreshTokenError,
+    TokenError,
     NoRoomError,
     UnauthorizedError,
     _http_error_handler,
@@ -112,7 +112,7 @@ class Client:
         try:
             access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
         except KeyError:
-            raise NoRefreshTokenError(
+            raise TokenError(
                 "Please set access_token as environment variable 'EMO_PLATFORM_API_ACCESS_TOKEN'"
             )
 
@@ -120,7 +120,7 @@ class Client:
         try:
             refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
         except KeyError:
-            raise NoRefreshTokenError(
+            raise TokenError(
                 "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
             )
 
@@ -227,7 +227,7 @@ class Client:
         else:
             return
 
-        raise NoRefreshTokenError(
+        raise TokenError(
             "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
         )
 
