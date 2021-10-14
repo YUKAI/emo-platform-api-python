@@ -14,7 +14,7 @@ from emo_platform.exceptions import (
     NoRefreshTokenError,
     NoRoomError,
     UnauthorizedError,
-    http_error_handler,
+    _http_error_handler,
 )
 from emo_platform.models import Color, Head, WebHook
 from emo_platform.response import (
@@ -234,7 +234,7 @@ class Client:
     def _check_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
         response = request()
         try:
-            with http_error_handler():
+            with _http_error_handler():
                 response.raise_for_status()
         except UnauthorizedError:
             if not update_tokens:
@@ -244,7 +244,7 @@ class Client:
 
         self.update_tokens()
         response = request()
-        with http_error_handler():
+        with _http_error_handler():
             response.raise_for_status()
         return response.json()
 

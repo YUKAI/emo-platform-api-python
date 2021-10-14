@@ -5,6 +5,7 @@ import requests
 
 @dataclass
 class EmoRequestInfo:
+    """http requestしたデータ"""
     method: str
     url   : str
     headers : dict
@@ -23,6 +24,7 @@ class EmoPlatformError(Exception):
 
 
 class EmoHttpError(EmoPlatformError):
+    """http request時のエラー"""
     def __str__(self):
         return f"{self.status}, {self.message}, {self.request.method}, {self.request.url}"
 
@@ -69,7 +71,7 @@ class NoRefreshTokenError(EmoPlatformError):
     pass
 
 
-def http_status_to_exception(code):
+def _http_status_to_exception(code):
     if code == 400:
         return BadRequestError
     if code == 401:
@@ -83,11 +85,11 @@ def http_status_to_exception(code):
 
 
 @contextmanager
-def http_error_handler():
+def _http_error_handler():
     try:
         yield None
     except requests.HTTPError as e:
-        http_exception = http_status_to_exception(e.response.status_code)
+        http_exception = _http_status_to_exception(e.response.status_code)
         request = EmoRequestInfo(
             method=e.request.method,
             url=e.request.url,
@@ -97,11 +99,11 @@ def http_error_handler():
 
 
 @contextmanager
-def aiohttp_error_handler(response_msg):
+def _aiohttp_error_handler(response_msg):
     try:
         yield None
     except aiohttp.ClientResponseError as e:
-        http_exception = http_status_to_exception(e.status)
+        http_exception = _http_status_to_exception(e.status)
         request = EmoRequestInfo(
             method=e.request_info.method,
             url=e.request_info.url,

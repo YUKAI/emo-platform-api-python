@@ -12,7 +12,7 @@ from emo_platform.api import Client, PostContentType, Room
 from emo_platform.exceptions import (
     NoRefreshTokenError,
     UnauthorizedError,
-    aiohttp_error_handler,
+    _aiohttp_error_handler,
 )
 from emo_platform.models import Color, Head, WebHook
 from emo_platform.response import (
@@ -84,7 +84,7 @@ class AsyncClient(Client):
         async with request() as response:
             try:
                 response_msg = await response.text()
-                with aiohttp_error_handler(response_msg):
+                with _aiohttp_error_handler(response_msg):
                     response.raise_for_status()
             except UnauthorizedError:
                 if not update_tokens:
@@ -95,7 +95,7 @@ class AsyncClient(Client):
         await self._update_tokens()
         async with request() as response:
             response_msg = await response.text()
-            with aiohttp_error_handler(response_msg):
+            with _aiohttp_error_handler(response_msg):
                 response.raise_for_status()
             return await response.json()
 
