@@ -1,3 +1,6 @@
+"""Emo Platform API python example Catching exception.
+"""
+
 import asyncio
 
 from emo_platform import AsyncClient, BadRequestError, NotFoundError, RateLimitError
