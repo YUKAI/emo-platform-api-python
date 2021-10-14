@@ -837,7 +837,7 @@ class Room:
         self.base_client = base_client
         self.room_id = room_id
 
-    def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
+    def get_msgs(self, ts: int = None) -> Union[EmoMsgsInfo, Coroutine[Any, Any, EmoMsgsInfo]]:
         """部屋に投稿されたメッセージの取得
 
         Parameters
@@ -873,7 +873,7 @@ class Room:
         )
         return EmoMsgsInfo(**response)
 
-    def get_sensors_list(self) -> EmoSensorsInfo:
+    def get_sensors_list(self) -> Union[EmoSensorsInfo, Coroutine[Any, Any, EmoSensorsInfo]]:
         """BOCCO emoとペアリングされているセンサの一覧の取得
 
             センサの種類は
@@ -903,7 +903,7 @@ class Room:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
-    def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
+    def get_sensor_values(self, sensor_id: str) -> Union[EmoRoomSensorInfo, Coroutine[Any, Any, EmoRoomSensorInfo]]:
         """部屋センサの送信値を取得
 
         Parameters
@@ -939,7 +939,7 @@ class Room:
         )
         return EmoRoomSensorInfo(**response)
 
-    def send_audio_msg(self, audio_data_path: str) -> EmoMessageInfo:
+    def send_audio_msg(self, audio_data_path: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """音声ファイルの部屋への投稿
 
         Attention
@@ -983,7 +983,7 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_image(self, image_data_path: str) -> EmoMessageInfo:
+    def send_image(self, image_data_path: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """画像ファイルの部屋への投稿
 
         Attention
@@ -1027,7 +1027,7 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_msg(self, msg: str) -> EmoMessageInfo:
+    def send_msg(self, msg: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """テキストメッセージの部屋への投稿
 
         Parameters
@@ -1061,7 +1061,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
+    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """スタンプの部屋への投稿
 
         Parameters
@@ -1104,7 +1104,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+    def send_original_motion(self, motion_data: Union[str, dict]) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
 
             詳しくは、
@@ -1149,7 +1149,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def change_led_color(self, color: Color) -> EmoMessageInfo:
+    def change_led_color(self, color: Color) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """ほっぺたの色の変更
 
             3秒間、ほっぺたの色を指定した色に変更します。
@@ -1185,7 +1185,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def move_to(self, head: Head) -> EmoMessageInfo:
+    def move_to(self, head: Head) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """首の角度の変更
 
             首の角度を変更するモーションをBOCCO emoに送信します。
@@ -1221,7 +1221,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_motion(self, motion_id: str) -> EmoMessageInfo:
+    def send_motion(self, motion_id: str) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
         """プリセットモーションをBOCCO emoに送信
 
         Parameters
@@ -1257,7 +1257,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def get_emo_settings(self) -> EmoSettingsInfo:
+    def get_emo_settings(self) -> Union[EmoSettingsInfo, Coroutine[Any, Any, EmoSettingsInfo]]:
         """現在のBOCCO emoの設定値を取得
 
         Returns
