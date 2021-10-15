@@ -10,6 +10,7 @@ Welcome to emo platform-api python sdk's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   emo_platform
 
 
 Indices and tables
