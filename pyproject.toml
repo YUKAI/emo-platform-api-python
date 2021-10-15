@@ -1,11 +1,15 @@
 [tool.poetry]
 name = "emo_platform_sdk"
 version = "1.0.0"
-description = ""
+description = "emo platform api python sdk"
 authors = ["Keita Ito <kito@ux-xu.com>"]
 packages = [
     { include = "emo_platform" },
 ]
+license = "MIT"
+homepage = "https://platform-api.bocco.me/dashboard"
+repository = "https://github.com/YUKAI/emo-platform-api-python"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.7"
