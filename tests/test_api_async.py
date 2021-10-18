@@ -15,6 +15,7 @@ from emo_platform.exceptions import TokenError, NoRoomError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
+PRE_TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api_previous.json"
 
 
 class TestBaseClass(object):
@@ -29,10 +30,15 @@ class TestBaseClass(object):
         except KeyError:
             pass
 
-        # reset json file
-        tokens = {"refresh_token": "", "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
+        try:
+            os.remove(TOKEN_FILE)
+        except:
+            pass
+
+        try:
+            os.remove(PRE_TOKEN_FILE)
+        except:
+            pass
 
         self.right_refresh_token = "RIGHT_REFRESH_TOKEN"
         self.right_access_token = "RIGHT_ACCESS_TOKEN"
@@ -100,7 +106,14 @@ class TestBaseClass(object):
                     status=401, content_type="application/json", body=json.dumps({})
                 )
 
-        self.test_account_info = {"account_info": "test_api"}
+        self.test_account_info = {
+            "name": "test_api",
+            "email": "",
+            "profile_image": "",
+            "uuid": "",
+            "plan": "",
+        }
+
 
     def init_room_server(self):
         self.test_rooms_info = {
@@ -135,7 +148,6 @@ class TestBaseClass(object):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
 
-@unittest.skip("WIP")
 class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()
@@ -148,194 +160,108 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncTearDown(self):
         await self.aiohttp_server_stop()
 
-    async def test_right_access_token_json_set(self):  # 3*3*3*3
-        # right access_token set to json
-        tokens = {"refresh_token": "", "access_token": self.right_access_token}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-
-        client = Client(self.test_endpoint)
-        self.assertEqual(client.access_token, self.right_access_token)
-        self.assertEqual(await client.get_account_info(), self.test_account_info)
-
-    async def test_w_a_r_f_json_set(self):  # 1*3*1*3
-        # wrong access_token & right refresh token set to json
-        tokens = {
-            "refresh_token": self.right_refresh_token,
-            "access_token": self.wrong_access_token,
-        }
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        client = Client(self.test_endpoint)
-        self.assertEqual(await client.get_account_info(), self.test_account_info)
-        self.assertEqual(client.access_token, self.right_access_token)
-
-    async def test_w_a_w_f_json_r_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & wrong refresh token set to json
-        tokens = {
-            "refresh_token": self.wrong_refresh_token,
-            "access_token": self.wrong_access_token,
-        }
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## right refresh token set to env
-        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
-        client = Client(self.test_endpoint)
-        self.assertEqual(await client.get_account_info(), self.test_account_info)
-
-    async def test_w_a_w_f_json_w_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & wrong refresh token set to json
-        tokens = {
-            "refresh_token": self.wrong_refresh_token,
-            "access_token": self.wrong_access_token,
-        }
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## wrong refresh token set to env
+    async def test_wr_wa_env_token_set(self): # access x, refresh x
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
         with self.assertRaises(TokenError):
             await client.get_account_info()
 
-    async def test_w_a_w_f_json_n_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & wrong refresh token set to json
-        tokens = {
-            "refresh_token": self.wrong_refresh_token,
-            "access_token": self.wrong_access_token,
-        }
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## no refresh token set to env
-        client = Client(self.test_endpoint)
-        with self.assertRaises(TokenError):
-            await client.get_account_info()
-
-    async def test_w_a_n_f_json_r_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": self.wrong_access_token}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## right refresh token set to env
+        # set right refresh token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_w_a_n_f_json_w_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": self.wrong_access_token}
+    async def test_rr_wa_env_token_set(self): # access x, refresh o
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+        # token expired during excuting
+        self.right_access_token = "NEW_ACCESS_TOKEN"
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+        # token expired before restart client
         with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## wrong refresh token set to env
+            saved_tokens = {"refresh_token": self.right_refresh_token, "access_token": self.wrong_access_token}
+            json.dump(saved_tokens, f)
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+    async def test_rr_wa_env_token_set_env_reset(self): # access x, refresh o
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+        # reset os env
+        os.environ.pop("EMO_PLATFORM_API_REFRESH_TOKEN")
+        os.environ.pop("EMO_PLATFORM_API_ACCESS_TOKEN")
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+    async def test_rr_wa_env_token_set_env_change(self): # access x, refresh o
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+        # change access env
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+        # change refresh env
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
         with self.assertRaises(TokenError):
             await client.get_account_info()
 
-    async def test_w_a_n_f_json_n_f_env_set(self):  # 1*3*1*1
-        # wrong access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": self.wrong_access_token}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## no refresh token set to env
-        client = Client(self.test_endpoint)
-        with self.assertRaises(TokenError):
-            await client.get_account_info()
-
-    async def test_right_access_token_env_set(self):  # 1*1*3*3
+    async def test_wr_ra_env_token_set(self): # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
+        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_n_a_r_f_json_set(self):  # 1*2*1*3
-        # no access_token & right refresh token set to json
-        tokens = {"refresh_token": self.right_refresh_token, "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        client = Client(self.test_endpoint)
-        self.assertEqual(await client.get_account_info(), self.test_account_info)
-        self.assertEqual(client.access_token, self.right_access_token)
+        # token expired
+        self.right_access_token = "NEW_ACCESS_TOKEN"
+        with self.assertRaises(TokenError):
+            await client.get_account_info()
 
-    async def test_n_a_w_f_json_r_f_env(self):  # 1*2*1*1
-        # no access_token & wrong refresh token set to json
-        tokens = {"refresh_token": self.wrong_refresh_token, "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## right refresh token set to env
+        # set right refresh token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_n_a_w_f_json_w_f_env(self):  # 1*2*1*1
-        # no access_token & wrong refresh token set to json
-        tokens = {"refresh_token": self.wrong_refresh_token, "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## wrong refresh token set to env
+    async def test_wr_ra_env_token_set_env_reset(self): # access o, refresh x
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
-
-        ## set wrong access token set to env
-        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
-        client = Client(self.test_endpoint)
-        with self.assertRaises(TokenError):
-            await client.get_account_info()
-
-    async def test_n_a_w_f_json_n_f_env(self):  # 1*2*1*1
-        # no access_token & wrong refresh token set to json
-        tokens = {"refresh_token": self.wrong_refresh_token, "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## no refresh token set to env
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
-
-        ## set wrong access token set to env
-        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
-        client = Client(self.test_endpoint)
-        with self.assertRaises(TokenError):
-            await client.get_account_info()
-
-    async def test_n_a_n_f_json_r_f_env(self):  # 1*2*1*1
-        # no access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## right refresh token set to env
-        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_n_a_n_f_json_w_f_env(self):  # 1*2*1*1
-        # no access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## wrong refresh token set to env
+        # reset os env
+        os.environ.pop("EMO_PLATFORM_API_REFRESH_TOKEN")
+        os.environ.pop("EMO_PLATFORM_API_ACCESS_TOKEN")
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
+
+    async def test_wr_ra_env_token_set_env_change(self): # access o, refresh x
+        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
+        client = Client(self.test_endpoint)
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-        ## set wrong access token set to env
+        # change access env
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         client = Client(self.test_endpoint)
         with self.assertRaises(TokenError):
             await client.get_account_info()
 
-    async def test_n_a_n_f_json_n_f_env(self):  # 1*2*1*1
-        # no access_token & no refresh token set to json
-        tokens = {"refresh_token": "", "access_token": ""}
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f)
-        ## no refresh token set to env
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
-
-        ## set wrong access token set to env
-        os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
+        # change refresh env
+        os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
-        with self.assertRaises(TokenError):
-            await client.get_account_info()
+        self.assertEqual(await client.get_account_info(), self.test_account_info)
 
 
 class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
