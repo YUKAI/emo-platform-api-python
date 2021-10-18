@@ -112,34 +112,39 @@ class Client:
             "Content-Type": PostContentType.APPLICATION_JSON,
         }
 
-        # get os env access token (could be old)
-        try:
-            access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
-        except KeyError:
-            raise TokenError(
-                "Please set access_token as environment variable 'EMO_PLATFORM_API_ACCESS_TOKEN'"
-            )
-
-        # get os env refresh token (could be old)
-        try:
-            refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
-        except KeyError:
-            raise TokenError(
-                "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-            )
-
-        self.current_env_tokens = {
-            "refresh_token": refresh_token,
-            "access_token": access_token,
-        }
-
-        # load prevoius os env tokens and save new os env tokens
+        # load prevoius os env tokens
         try:
             with open(self._PREVOIUS_TOKEN_FILE) as f:
                 prevoius_env_tokens = json.load(f)
         except FileNotFoundError:
             prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
 
+        # get current os env access token
+        try:
+            access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+        except KeyError as e:
+            # try to use old prevoius os env access token when current one doesn't exsist
+            if (prevoius_env_tokens["access_token"]) == "":
+                raise TokenError("set tokens as 'EMO_PLATFORM_API_ACCESS_TOKEN'") from e
+            else:
+                access_token = prevoius_env_tokens["access_token"]
+
+        # get current os env refresh token
+        try:
+            refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
+        except KeyError as e:
+            # try to use old prevoius os env refresh token when current one doesn't exsist
+            if (prevoius_env_tokens["refresh_token"]) == "":
+                raise TokenError("set tokens as 'EMO_PLATFORM_API_REFRESH_TOKEN'") from e
+            else:
+                refresh_token = prevoius_env_tokens["refresh_token"]
+
+        self.current_env_tokens = {
+            "refresh_token" : refresh_token,
+            "access_token" : access_token
+        }
+
+        # save new os env tokens
         with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
             json.dump(self.current_env_tokens, f)
 
