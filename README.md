@@ -19,7 +19,7 @@ poetry run python your_python_code.py
 
 ```
 # Python 3.7+ required
-$ pip3 install emo-platform-api_sdk
+$ pip3 install emo-platform-api-sdk
 ```
 
 ## Setting api tokens
