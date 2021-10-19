@@ -1,7 +1,7 @@
 # BOCCO emo platform api python sdk
 
 ## How to install
-### Using poetry (recommended)
+### Using poetry (if you want to use in python virtual environment)
 If poetry has not been installed, please see [this page](https://python-poetry.org/docs/) to install.
 
 ```bash
@@ -18,7 +18,8 @@ poetry run python your_python_code.py
 ### Using PyPl
 
 ```
-$ pip install emo_platform_api_sdk
+# Python 3.7+ required
+$ pip3 install emo-platform-api_sdk
 ```
 
 ## Setting api tokens
@@ -36,11 +37,11 @@ export EMO_PLATFORM_API_REFRESH_TOKEN="***"
 
 You can also see other examples in "examples" directory.
 
-### Caution
-- **If you install by PyPl**, you need to give path when init Client, like below.
-	- Two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path.
-	  - These files are used to store the tokens information.
+### Note
+- When you initialize emo_platform.Client, two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path where emo_platform module was installed.
+	- These files are used to store the tokens information.
 	- See the documentation for details.
+- You can change the path where these json files are created, as shown below.
 
 ```python
 import os
@@ -51,7 +52,7 @@ CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 client = Client(token_file_path=CURRENT_DIR)
 ```
 
-### Using client
+### Example1 : Using client
 ```python
 from emo_platform import Client, Head
 
@@ -67,7 +68,7 @@ print(room_client.get_msgs())
 room_client.move_to(Head(10,10))
 ```
 
-### Receive webhook
+### Example2 : Receive webhook
 
 In another terminal, execute ngrok and copy URL forwarded to http://localhost:8000.
 ```bash
