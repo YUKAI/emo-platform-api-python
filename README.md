@@ -1,4 +1,4 @@
-# BOCCO emo platform api python sdk
+# BOCCO emo platform api python sdk (β version)
 
 ## How to install
 ### Using poetry (if you want to use in python virtual environment)
