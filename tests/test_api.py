@@ -2,7 +2,6 @@ import json
 import os
 import time
 import unittest
-import json
 from functools import partial
 from threading import Thread
 
@@ -11,11 +10,13 @@ import responses
 from fastapi.testclient import TestClient
 
 from emo_platform import Client
-from emo_platform.exceptions import TokenError, NoRoomError, UnauthorizedError
+from emo_platform.exceptions import NoRoomError, TokenError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
-PRE_TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api_previous.json"
+PRE_TOKEN_FILE = (
+    f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api_previous.json"
+)
 
 
 class TestBaseClass(object):
@@ -31,12 +32,12 @@ class TestBaseClass(object):
 
         try:
             os.remove(TOKEN_FILE)
-        except:
+        except Exception:
             pass
 
         try:
             os.remove(PRE_TOKEN_FILE)
-        except:
+        except Exception:
             pass
 
         self.responses = responses.RequestsMock()
@@ -120,17 +121,17 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
-    def test_no_access_env_token_set(self): # access -
+    def test_no_access_env_token_set(self):  # access -
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
-    def test_no_refresh_env_token_set(self): # refresh -
+    def test_no_refresh_env_token_set(self):  # refresh -
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         with self.assertRaises(TokenError):
             client = Client(self.test_endpoint)
 
-    def test_wr_wa_env_token_set(self): # access x, refresh x
+    def test_wr_wa_env_token_set(self):  # access x, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -142,7 +143,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_rr_wa_env_token_set(self): # access x, refresh o
+    def test_rr_wa_env_token_set(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -154,12 +155,15 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
 
         # token expired before restart client
         with open(TOKEN_FILE, "w") as f:
-            saved_tokens = {"refresh_token": self.right_refresh_token, "access_token": self.wrong_access_token}
+            saved_tokens = {
+                "refresh_token": self.right_refresh_token,
+                "access_token": self.wrong_access_token,
+            }
             json.dump(saved_tokens, f)
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_rr_wa_env_token_set_env_reset(self): # access x, refresh o
+    def test_rr_wa_env_token_set_env_reset(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -171,7 +175,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_rr_wa_env_token_set_env_change(self): # access x, refresh o
+    def test_rr_wa_env_token_set_env_change(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -188,7 +192,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         with self.assertRaises(TokenError):
             client.get_account_info()
 
-    def test_wr_ra_env_token_set(self): # access o, refresh x
+    def test_wr_ra_env_token_set(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -204,7 +208,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_wr_ra_env_token_set_env_reset(self): # access o, refresh x
+    def test_wr_ra_env_token_set_env_reset(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -216,7 +220,7 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_wr_ra_env_token_set_env_change(self): # access o, refresh x
+    def test_wr_ra_env_token_set_env_change(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -613,16 +617,18 @@ class TestWebhookReceive(unittest.TestCase, TestBaseClass):
         self.responses.stop()
         response = requests.post(
             "http://localhost:8005",
-            data=json.dumps({
-                "request_id": "test_id",
-                "uuid": self.room_uuid,
-                "serial_number": "test_serial_no",
-                "nickname": "test_nickname",
-                "timestamp": 0,
-                "event": "test_event",
-                "data": {},
-                "receiver": "test_receiver",
-            }),
+            data=json.dumps(
+                {
+                    "request_id": "test_id",
+                    "uuid": self.room_uuid,
+                    "serial_number": "test_serial_no",
+                    "nickname": "test_nickname",
+                    "timestamp": 0,
+                    "event": "test_event",
+                    "data": {},
+                    "receiver": "test_receiver",
+                }
+            ),
             headers={
                 "x-platform-api-secret": "test_secret_key",
                 "Content-Type": "application/json",

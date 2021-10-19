@@ -1,21 +1,20 @@
 import asyncio
 import json
 import os
-import time
 import unittest
 from functools import partial
-from threading import Thread
 
 import responses
 from aiohttp import ClientSession, web
-from fastapi.testclient import TestClient
 
 from emo_platform import AsyncClient as Client
-from emo_platform.exceptions import TokenError, NoRoomError, UnauthorizedError
+from emo_platform.exceptions import NoRoomError, TokenError, UnauthorizedError
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
-PRE_TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api_previous.json"
+PRE_TOKEN_FILE = (
+    f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api_previous.json"
+)
 
 
 class TestBaseClass(object):
@@ -32,12 +31,12 @@ class TestBaseClass(object):
 
         try:
             os.remove(TOKEN_FILE)
-        except:
+        except Exception:
             pass
 
         try:
             os.remove(PRE_TOKEN_FILE)
-        except:
+        except Exception:
             pass
 
         self.right_refresh_token = "RIGHT_REFRESH_TOKEN"
@@ -114,7 +113,6 @@ class TestBaseClass(object):
             "plan": "",
         }
 
-
     def init_room_server(self):
         self.test_rooms_info = {
             "rooms": [{"uuid": "52b0e129-2512-4696-9d06-8ddb842ba6ce"}]
@@ -148,6 +146,7 @@ class TestBaseClass(object):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
 
+
 class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()
@@ -160,7 +159,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncTearDown(self):
         await self.aiohttp_server_stop()
 
-    async def test_wr_wa_env_token_set(self): # access x, refresh x
+    async def test_wr_wa_env_token_set(self):  # access x, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -172,7 +171,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_rr_wa_env_token_set(self): # access x, refresh o
+    async def test_rr_wa_env_token_set(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -184,12 +183,15 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
 
         # token expired before restart client
         with open(TOKEN_FILE, "w") as f:
-            saved_tokens = {"refresh_token": self.right_refresh_token, "access_token": self.wrong_access_token}
+            saved_tokens = {
+                "refresh_token": self.right_refresh_token,
+                "access_token": self.wrong_access_token,
+            }
             json.dump(saved_tokens, f)
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_rr_wa_env_token_set_env_reset(self): # access x, refresh o
+    async def test_rr_wa_env_token_set_env_reset(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -201,7 +203,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_rr_wa_env_token_set_env_change(self): # access x, refresh o
+    async def test_rr_wa_env_token_set_env_change(self):  # access x, refresh o
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
         client = Client(self.test_endpoint)
@@ -218,7 +220,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         with self.assertRaises(TokenError):
             await client.get_account_info()
 
-    async def test_wr_ra_env_token_set(self): # access o, refresh x
+    async def test_wr_ra_env_token_set(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -234,7 +236,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_wr_ra_env_token_set_env_reset(self): # access o, refresh x
+    async def test_wr_ra_env_token_set_env_reset(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -246,7 +248,7 @@ class TestGetTokens(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(await client.get_account_info(), self.test_account_info)
 
-    async def test_wr_ra_env_token_set_env_change(self): # access o, refresh x
+    async def test_wr_ra_env_token_set_env_change(self):  # access o, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.wrong_refresh_token
         client = Client(self.test_endpoint)
@@ -408,6 +410,7 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             async def test_webhook_callback():
                 pass
 
+
 class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()
@@ -428,7 +431,6 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
 
         @self.routes.put("/v1/webhook/events")
         async def a_webhook_info_callback(request):
-            payload = await request.json()
             if request.headers["Authorization"] == "Bearer " + self.right_access_token:
                 return web.Response(
                     status=200,
@@ -481,16 +483,18 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8001",
-                    data = json.dumps({
-                    "request_id": "test_id",
-                    "uuid": self.room_uuid,
-                    "serial_number": "test_serial_no",
-                    "nickname": "test_nickname",
-                    "timestamp": 0,
-                    "event": "test_event",
-                    "data": {},
-                    "receiver": "test_receiver",
-                    }),
+                    data=json.dumps(
+                        {
+                            "request_id": "test_id",
+                            "uuid": self.room_uuid,
+                            "serial_number": "test_serial_no",
+                            "nickname": "test_nickname",
+                            "timestamp": 0,
+                            "event": "test_event",
+                            "data": {},
+                            "receiver": "test_receiver",
+                        }
+                    ),
                     headers={
                         "x-platform-api-secret": "test_secret_key",
                         "Content-Type": "application/json",
@@ -523,16 +527,18 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8001",
-                    data = json.dumps({
-                    "request_id": "test_id",
-                    "uuid": self.room_uuid,
-                    "serial_number": "test_serial_no",
-                    "nickname": "test_nickname",
-                    "timestamp": 0,
-                    "event": "test_event",
-                    "data": {},
-                    "receiver": "test_receiver",
-                    }),
+                    data=json.dumps(
+                        {
+                            "request_id": "test_id",
+                            "uuid": self.room_uuid,
+                            "serial_number": "test_serial_no",
+                            "nickname": "test_nickname",
+                            "timestamp": 0,
+                            "event": "test_event",
+                            "data": {},
+                            "receiver": "test_receiver",
+                        }
+                    ),
                     headers={
                         "x-platform-api-secret": "test_secret_key",
                         "Content-Type": "application/json",
@@ -558,16 +564,18 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8002",
-                    data = json.dumps({
-                    "request_id": "test_id",
-                    "uuid": "wrong_room_id",
-                    "serial_number": "test_serial_no",
-                    "nickname": "test_nickname",
-                    "timestamp": 0,
-                    "event": "test_event",
-                    "data": {},
-                    "receiver": "test_receiver",
-                    }),
+                    data=json.dumps(
+                        {
+                            "request_id": "test_id",
+                            "uuid": "wrong_room_id",
+                            "serial_number": "test_serial_no",
+                            "nickname": "test_nickname",
+                            "timestamp": 0,
+                            "event": "test_event",
+                            "data": {},
+                            "receiver": "test_receiver",
+                        }
+                    ),
                     headers={
                         "x-platform-api-secret": "test_secret_key",
                         "Content-Type": "application/json",
@@ -576,7 +584,8 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 )
                 response = await request()
                 self.assertEqual(
-                    await response.json(), ["fail. no callback associated with the room.", 500]
+                    await response.json(),
+                    ["fail. no callback associated with the room.", 500],
                 )
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8002))
@@ -595,16 +604,18 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8003",
-                    data = json.dumps({
-                    "request_id": "test_id",
-                    "uuid": self.room_uuid,
-                    "serial_number": "test_serial_no",
-                    "nickname": "test_nickname",
-                    "timestamp": 0,
-                    "event": "test_event",
-                    "data": {},
-                    "receiver": "test_receiver",
-                    }),
+                    data=json.dumps(
+                        {
+                            "request_id": "test_id",
+                            "uuid": self.room_uuid,
+                            "serial_number": "test_serial_no",
+                            "nickname": "test_nickname",
+                            "timestamp": 0,
+                            "event": "test_event",
+                            "data": {},
+                            "receiver": "test_receiver",
+                        }
+                    ),
                     headers={
                         "x-platform-api-secret": "test_wrong_secret_key",
                         "Content-Type": "application/json",
@@ -641,11 +652,11 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8004",
-                    headers = {
+                    headers={
                         "x-platform-api-secret": "test_secret_key",
                         "Content-Type": "application/json",
                         "accept": "*/*",
-                    }
+                    },
                 )
 
                 response = await request(data=json.dumps(test_body))
@@ -682,16 +693,18 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 request = partial(
                     session.post,
                     "http://localhost:8005",
-                    data = json.dumps({
-                    "request_id": "test_id",
-                    "uuid": self.room_uuid,
-                    "serial_number": "test_serial_no",
-                    "nickname": "test_nickname",
-                    "timestamp": 0,
-                    "event": "test_event",
-                    "data": {},
-                    "receiver": "test_receiver",
-                    }),
+                    data=json.dumps(
+                        {
+                            "request_id": "test_id",
+                            "uuid": self.room_uuid,
+                            "serial_number": "test_serial_no",
+                            "nickname": "test_nickname",
+                            "timestamp": 0,
+                            "event": "test_event",
+                            "data": {},
+                            "receiver": "test_receiver",
+                        }
+                    ),
                     headers={
                         "x-platform-api-secret": "test_secret_key",
                         "Content-Type": "application/json",
