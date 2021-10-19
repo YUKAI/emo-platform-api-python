@@ -408,13 +408,10 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             async def test_webhook_callback():
                 pass
 
-@unittest.skip("WIP")
 class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
     async def asyncSetUp(self):
         self.init_server()
         self.init_room_server()
-
-        self.test_webhook_info = {"secret": "test_secret_key"}
 
         def webhook_info_callback(request):
             if request.headers["Authorization"] == "Bearer " + self.right_access_token:
@@ -429,6 +426,29 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             content_type="application/json",
         )
 
+        @self.routes.put("/v1/webhook/events")
+        async def a_webhook_info_callback(request):
+            payload = await request.json()
+            if request.headers["Authorization"] == "Bearer " + self.right_access_token:
+                return web.Response(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps(self.test_webhook_info),
+                )
+            else:
+                return web.Response(
+                    status=401, content_type="application/json", body=json.dumps({})
+                )
+
+        self.test_webhook_info = {
+            "secret": "test_secret_key",
+            "description": "",
+            "events": [],
+            "status": "",
+            "url": "",
+        }
+        await self.aiohttp_server_start()
+
         self.room_uuid = self.test_rooms_info["rooms"][0]["uuid"]
 
         self.reset_tokens()
@@ -438,6 +458,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         self.addCleanup(self.responses.reset)
 
     async def asyncTearDown(self):
+        await self.aiohttp_server_stop()
         self.client.stop_webhook_event()
         await self.task
 
@@ -480,6 +501,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 self.assertEqual(await response.json(), ["success", 200])
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8001))
+        await asyncio.sleep(1)
         await post_test_data()
 
     async def test_webhook_receive_with_room_id(self):
@@ -521,6 +543,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 self.assertEqual(await response.json(), ["success", 200])
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8001))
+        await asyncio.sleep(1)
         await post_test_data()
 
     async def test_webhook_receive_with_wrong_room_id(self):
@@ -557,6 +580,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 )
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8002))
+        await asyncio.sleep(1)
         await post_test_data()
 
     async def test_webhook_receive_with_wrong_secret_key(self):
@@ -591,6 +615,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 self.assertEqual(await response.json(), None)
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8003))
+        await asyncio.sleep(1)
         await post_test_data()
 
     async def test_webhook_receive_with_same_request_id(self):
@@ -639,6 +664,7 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 self.assertEqual(await response.json(), ["success", 200])
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8004))
+        await asyncio.sleep(1)
         await post_test_data()
 
     async def test_webhook_receive_with_heavy_process_callback(self):
@@ -679,4 +705,5 @@ class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 self.assertTrue(self.test_callback_done)
 
         self.task = asyncio.create_task(self.client.start_webhook_event(port=8005))
+        await asyncio.sleep(1)
         await post_test_data()
