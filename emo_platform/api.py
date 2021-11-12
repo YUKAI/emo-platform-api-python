@@ -1,8 +1,9 @@
 import json
 import os
 from collections import deque
+from dataclasses import asdict
 from functools import partial
-from typing import Any, Callable, Coroutine, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import requests
 import uvicorn  # type: ignore
@@ -14,7 +15,7 @@ from emo_platform.exceptions import (
     UnauthorizedError,
     _http_error_handler,
 )
-from emo_platform.models import Color, Head, WebHook
+from emo_platform.models import Color, Head, Tokens, WebHook
 from emo_platform.response import (
     EmoAccountInfo,
     EmoMessageInfo,
@@ -40,139 +41,116 @@ class PostContentType:
     MULTIPART_FORMDATA = None
 
 
-class Client:
-    """各種apiを呼び出す同期版のclient
-
-    Parameters
-    ----------
-    endpoint_url : str, default https://platform-api.bocco.me
-        BOCCO emo platform apiにアクセスするためのendpoint
-
-    token_file_path : Optional[str], default None
-        refresh token及びaccess tokenを保存するファイルのパス。
-
-        指定しない場合は、このpkg内のディレクトリに保存されます。
-
-        指定したパスには、以下の2種類のファイルが生成されます。
-
-            emo-platform-api.json
-                最新のトークンを保存するファイル
-
-            emo-platform-api_previous.json
-                現在、環境変数として設定されているトークンを保存するファイル
-
-                前回との差分検知のために使用されます。
-
-                差分があった場合は、emo-platform-api.jsonに保存されているトークンが削除されます。
-
-    Raises
-    ----------
-    NoRefreshTokenError
-        refresh tokenあるいはaccess tokenが環境変数として設定されていないもしくは間違っている場合。
-
-    RateLimitError
-        APIをレートリミットを超えて呼び出した場合。
-
-    Note
-    ----
-    使用しているaccess tokenの期限が切れた場合
-        refresh tokenをもとに自動的に更新されます。
-
-        その際にAPI呼び出しが最大で2回行われます。
-
-        refresh tokenは以下の優先順位で選ばれます。
-
-        1. emo-platform-api.jsonに保存されているrefresh token
-
-        2. 環境変数 EMO_PLATFORM_API_REFRESH_TOKENに設定されているrefresh token
-
-        ただし、emo-platform-api_previous.jsonに差分があった場合は、1はskipされるようになっています。
-
-        clientの各メソッドを実行した際も、access tokenが切れていた場合、同様に自動更新が行われます。
-
-    """
-
-    _BASE_URL = "https://platform-api.bocco.me"
+class TokenManager:
     _TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
     _PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
-    _DEFAULT_ROOM_ID = ""
-    _MAX_SAVED_REQUEST_ID = 10
+    _INITIAL_TOKENS = {"access_token": "", "refresh_token": ""}
 
     def __init__(
-        self, endpoint_url: str = _BASE_URL, token_file_path: Optional[str] = None
+        self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
     ):
-        if token_file_path is not None:
+        self._set_token_file_path(token_file_path)
+        self._prevoius_set_tokens = self._load_previous_set_tokens()
+        self._current_set_tokens = self._get_currnet_set_tokens(tokens)
+        self._save_current_set_tokens()
+        self.tokens = self._get_latest_tokens()
+
+    def _set_token_file_path(self, token_file_path) -> None:
+        if token_file_path:
             self._TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
             self._PREVOIUS_TOKEN_FILE = (
                 f"{token_file_path}/emo-platform-api_previous.json"
             )
+
+    def _load_previous_set_tokens(self) -> Tokens:
+        try:
+            with open(self._PREVOIUS_TOKEN_FILE) as f:
+                return Tokens(**json.load(f))
+        except FileNotFoundError:
+            return Tokens(**self._INITIAL_TOKENS)
+
+    def _get_currnet_set_tokens(self, tokens: Optional[Tokens]) -> Tokens:
+        if tokens:
+            return tokens
+        else:
+            return self._get_currnet_os_env_tokens()
+
+    def _get_currnet_os_env_tokens(self) -> Tokens:
+        access_token = self._get_currnet_os_env_access_token()
+        refresh_token = self._get_currnet_os_env_refresh_token()
+        return Tokens(**{"refresh_token": refresh_token, "access_token": access_token})
+
+    def _get_currnet_os_env_access_token(self) -> str:
+        try:
+            return os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
+        except KeyError as e:
+            # try to use old prevoius os env access token when current one doesn't exsist
+            if (self._prevoius_set_tokens.access_token) == "":
+                raise TokenError("set tokens as 'EMO_PLATFORM_API_ACCESS_TOKEN'") from e
+            else:
+                return self._prevoius_set_tokens.access_token
+
+    def _get_currnet_os_env_refresh_token(self) -> str:
+        try:
+            return os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
+        except KeyError as e:
+            # try to use old prevoius os env refresh token when current one doesn't exsist
+            if (self._prevoius_set_tokens.refresh_token) == "":
+                raise TokenError(
+                    "set tokens as 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+                ) from e
+            else:
+                return self._prevoius_set_tokens.refresh_token
+
+    def _save_current_set_tokens(self) -> None:
+        with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
+            json.dump(asdict(self._current_set_tokens), f)
+
+    def _get_latest_tokens(self) -> Tokens:
+        # compare new os env tokens with old ones
+        if self._current_set_tokens == self._prevoius_set_tokens:
+            try:
+                with open(self._TOKEN_FILE) as f:
+                    return Tokens(**json.load(f))
+            except FileNotFoundError:
+                with open(self._TOKEN_FILE, "w") as f:
+                    json.dump(asdict(self._current_set_tokens), f)
+                return self._current_set_tokens
+        else:  # reset json file when os env token updated
+            with open(self._TOKEN_FILE, "w") as f:
+                json.dump(asdict(self._current_set_tokens), f)
+            return self._current_set_tokens
+
+    def save_tokens(self) -> None:
+        with open(self._TOKEN_FILE, "w") as f:
+            json.dump(asdict(self.tokens), f)
+
+
+class Client:
+    _BASE_URL = "https://platform-api.bocco.me"
+    _DEFAULT_ROOM_ID = ""
+    _MAX_SAVED_REQUEST_ID = 10
+
+    def __init__(
+        self,
+        endpoint_url: str = _BASE_URL,
+        tokens: Optional[Tokens] = None,
+        token_file_path: Optional[str] = None,
+    ):
+        self._tm = TokenManager()
         self.endpoint_url = endpoint_url
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
+            "Authorization": "Bearer " + self._tm.tokens.access_token,
         }
-
-        # load prevoius os env tokens
-        try:
-            with open(self._PREVOIUS_TOKEN_FILE) as f:
-                prevoius_env_tokens = json.load(f)
-        except FileNotFoundError:
-            prevoius_env_tokens = {"refresh_token": "", "access_token": ""}
-
-        # get current os env access token
-        try:
-            access_token = os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
-        except KeyError as e:
-            # try to use old prevoius os env access token when current one doesn't exsist
-            if (prevoius_env_tokens["access_token"]) == "":
-                raise TokenError("set tokens as 'EMO_PLATFORM_API_ACCESS_TOKEN'") from e
-            else:
-                access_token = prevoius_env_tokens["access_token"]
-
-        # get current os env refresh token
-        try:
-            refresh_token = os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
-        except KeyError as e:
-            # try to use old prevoius os env refresh token when current one doesn't exsist
-            if (prevoius_env_tokens["refresh_token"]) == "":
-                raise TokenError("set tokens as 'EMO_PLATFORM_API_REFRESH_TOKEN'") from e
-            else:
-                refresh_token = prevoius_env_tokens["refresh_token"]
-
-        self.current_env_tokens = {
-            "refresh_token" : refresh_token,
-            "access_token" : access_token
-        }
-
-        # save new os env tokens
-        with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
-            json.dump(self.current_env_tokens, f)
-
-        # compare new os env tokens with old ones
-        if self.current_env_tokens == prevoius_env_tokens:
-            try:
-                with open(self._TOKEN_FILE) as f:
-                    saved_tokens = json.load(f)
-            except FileNotFoundError:
-                with open(self._TOKEN_FILE, "w") as f:
-                    saved_tokens = {"refresh_token": "", "access_token": ""}
-                    json.dump(saved_tokens, f)
-        else:  # reset json file when os env token updated
-            with open(self._TOKEN_FILE, "w") as f:
-                saved_tokens = {"refresh_token": "", "access_token": ""}
-                json.dump(saved_tokens, f)
-        saved_access_token = saved_tokens["access_token"]
-
-        # decide which access token to use
-        if saved_access_token == "":
-            self.access_token = self.current_env_tokens["access_token"]
-        else:
-            self.access_token = saved_access_token
-
-        self.headers["Authorization"] = "Bearer " + self.access_token
         self.room_id_list = [self._DEFAULT_ROOM_ID]
         self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self.request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
+
+    @property
+    def tm(self):
+        return self._tm
 
     def update_tokens(self) -> None:
         """トークンの更新と保存
@@ -196,41 +174,15 @@ class Client:
             最大2回
         """
 
-        def _try_update_access_token(refresh_token):
-            res_tokens = self.get_access_token(refresh_token)
-            self.access_token = res_tokens.access_token
-            refresh_token = res_tokens.refresh_token
-            self.headers["Authorization"] = "Bearer " + self.access_token
-            save_tokens = {
-                "refresh_token": refresh_token,
-                "access_token": self.access_token,
-            }
-            with open(self._TOKEN_FILE, "w") as f:
-                json.dump(save_tokens, f)
-
-        # load saved tokens
-        with open(self._TOKEN_FILE, "r") as f:
-            saved_tokens = json.load(f)
-        refresh_token = saved_tokens["refresh_token"]
-
-        # try with saved refresh token
-        if refresh_token != "":
-            try:
-                _try_update_access_token(refresh_token)
-            except UnauthorizedError:
-                save_tokens = {"refresh_token": "", "access_token": ""}
-                with open(self._TOKEN_FILE, "w") as f:
-                    json.dump(save_tokens, f)
-            else:
-                return
-
-        # try with current env refresh token
-        refresh_token = self.current_env_tokens["refresh_token"]
         try:
-            _try_update_access_token(refresh_token)
+            res_tokens = self.get_access_token(self._tm.tokens.refresh_token)
         except UnauthorizedError:
             pass
         else:
+            self._tm.tokens.access_token = res_tokens.access_token
+            self._tm.tokens.refresh_token = res_tokens.refresh_token
+            self.headers["Authorization"] = "Bearer " + self._tm.tokens.access_token
+            self._tm.save_tokens()
             return
 
         raise TokenError(
@@ -327,7 +279,7 @@ class Client:
 
     def get_account_info(
         self,
-    ) -> Union[EmoAccountInfo, Coroutine[Any, Any, EmoAccountInfo]]:
+    ) -> EmoAccountInfo:
         """アカウント情報の取得
 
         Returns
@@ -354,7 +306,7 @@ class Client:
 
     def delete_account_info(
         self,
-    ) -> Union[EmoAccountInfo, Coroutine[Any, Any, EmoAccountInfo]]:
+    ) -> EmoAccountInfo:
         """アカウントの削除
 
             紐づくWebhook等の設定も全て削除されます。
@@ -381,7 +333,7 @@ class Client:
         response = self._delete("/v1/me")
         return EmoAccountInfo(**response)
 
-    def get_rooms_list(self) -> Union[EmoRoomInfo, Coroutine[Any, Any, EmoRoomInfo]]:
+    def get_rooms_list(self) -> EmoRoomInfo:
         """ユーザが参加している部屋の一覧の取得
 
             取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
@@ -467,7 +419,7 @@ class Client:
 
     def get_stamps_list(
         self,
-    ) -> Union[EmoStampsInfo, Coroutine[Any, Any, EmoStampsInfo]]:
+    ) -> EmoStampsInfo:
         """利用可能なスタンプ一覧の取得
 
         Returns
@@ -494,7 +446,7 @@ class Client:
 
     def get_motions_list(
         self,
-    ) -> Union[EmoMotionsInfo, Coroutine[Any, Any, EmoMotionsInfo]]:
+    ) -> EmoMotionsInfo:
         """利用可能なプリセットモーション一覧の取得
 
         Returns
@@ -521,7 +473,7 @@ class Client:
 
     def get_webhook_setting(
         self,
-    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
+    ) -> EmoWebhookInfo:
         """現在設定されているWebhookの情報の取得
 
         Returns
@@ -547,9 +499,7 @@ class Client:
         response = self._get("/v1/webhook")
         return EmoWebhookInfo(**response)
 
-    def change_webhook_setting(
-        self, webhook: WebHook
-    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
+    def change_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
         """Webhookの設定の変更
 
         Parameters
@@ -582,9 +532,7 @@ class Client:
         response = self._put("/v1/webhook", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
-    def register_webhook_event(
-        self, events: List[str]
-    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
+    def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
         """Webhook通知するイベントの指定
 
             eventの種類は、
@@ -655,7 +603,7 @@ class Client:
 
     def delete_webhook_setting(
         self,
-    ) -> Union[EmoWebhookInfo, Coroutine[Any, Any, EmoWebhookInfo]]:
+    ) -> EmoWebhookInfo:
         """現在設定されているWebhookの情報の削除
 
         Returns
@@ -847,9 +795,7 @@ class Room:
         self.base_client = base_client
         self.room_id = room_id
 
-    def get_msgs(
-        self, ts: int = None
-    ) -> Union[EmoMsgsInfo, Coroutine[Any, Any, EmoMsgsInfo]]:
+    def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
         """部屋に投稿されたメッセージの取得
 
         Parameters
@@ -887,7 +833,7 @@ class Room:
 
     def get_sensors_list(
         self,
-    ) -> Union[EmoSensorsInfo, Coroutine[Any, Any, EmoSensorsInfo]]:
+    ) -> EmoSensorsInfo:
         """BOCCO emoとペアリングされているセンサの一覧の取得
 
             センサの種類は
@@ -917,9 +863,7 @@ class Room:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
-    def get_sensor_values(
-        self, sensor_id: str
-    ) -> Union[EmoRoomSensorInfo, Coroutine[Any, Any, EmoRoomSensorInfo]]:
+    def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
         """部屋センサの送信値を取得
 
         Parameters
@@ -955,9 +899,7 @@ class Room:
         )
         return EmoRoomSensorInfo(**response)
 
-    def send_audio_msg(
-        self, audio_data_path: str
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_audio_msg(self, audio_data_path: str) -> EmoMessageInfo:
         """音声ファイルの部屋への投稿
 
         Attention
@@ -1001,9 +943,7 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_image(
-        self, image_data_path: str
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_image(self, image_data_path: str) -> EmoMessageInfo:
         """画像ファイルの部屋への投稿
 
         Attention
@@ -1047,9 +987,7 @@ class Room:
             )
             return EmoMessageInfo(**response)
 
-    def send_msg(
-        self, msg: str
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_msg(self, msg: str) -> EmoMessageInfo:
         """テキストメッセージの部屋への投稿
 
         Parameters
@@ -1083,9 +1021,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_stamp(
-        self, stamp_id: str, msg: Optional[str] = None
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
         """スタンプの部屋への投稿
 
         Parameters
@@ -1128,9 +1064,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_original_motion(
-        self, motion_data: Union[str, dict]
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
 
             詳しくは、
@@ -1175,9 +1109,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def change_led_color(
-        self, color: Color
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def change_led_color(self, color: Color) -> EmoMessageInfo:
         """ほっぺたの色の変更
 
             3秒間、ほっぺたの色を指定した色に変更します。
@@ -1213,9 +1145,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def move_to(
-        self, head: Head
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def move_to(self, head: Head) -> EmoMessageInfo:
         """首の角度の変更
 
             首の角度を変更するモーションをBOCCO emoに送信します。
@@ -1251,9 +1181,7 @@ class Room:
         )
         return EmoMessageInfo(**response)
 
-    def send_motion(
-        self, motion_id: str
-    ) -> Union[EmoMessageInfo, Coroutine[Any, Any, EmoMessageInfo]]:
+    def send_motion(self, motion_id: str) -> EmoMessageInfo:
         """プリセットモーションをBOCCO emoに送信
 
         Parameters
@@ -1291,7 +1219,7 @@ class Room:
 
     def get_emo_settings(
         self,
-    ) -> Union[EmoSettingsInfo, Coroutine[Any, Any, EmoSettingsInfo]]:
+    ) -> EmoSettingsInfo:
         """現在のBOCCO emoの設定値を取得
 
         Returns

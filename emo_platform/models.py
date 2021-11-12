@@ -2,6 +2,12 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Tokens:
+    access_token: str = ""
+    refresh_token: str = ""
+
+
+@dataclass
 class Color:
     """BOCCO emoのほっぺの色。
 
