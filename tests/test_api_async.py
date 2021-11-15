@@ -290,7 +290,7 @@ class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 headers={"Authorization": "Bearer " + self.right_access_token},
             )
             self.assertEqual(
-                await client._acheck_http_error(request=request), self.test_account_info
+                await client._check_http_error(request=request), self.test_account_info
             )
 
     async def test_http_request_fail(self):
@@ -305,7 +305,7 @@ class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 headers={"Authorization": ""},
             )
             with self.assertRaises(UnauthorizedError):
-                await client._acheck_http_error(request=request, update_tokens=False)
+                await client._check_http_error(request=request, update_tokens=False)
 
     async def test_http_request_success_with_retry(self):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
@@ -314,10 +314,10 @@ class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         async with ClientSession() as session:
             request = partial(
-                session.get, self.test_endpoint + "/v1/me", headers=client.headers
+                session.get, self.test_endpoint + "/v1/me", headers=client._client.headers
             )
             self.assertEqual(
-                await client._acheck_http_error(request=request), self.test_account_info
+                await client._check_http_error(request=request), self.test_account_info
             )
 
 
@@ -366,7 +366,7 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         async def test_webhook_callback():
             return return_val
 
-        self.assertEqual(await client.webhook_events_cb["test_event"][""](), return_val)
+        self.assertEqual(await client._client.webhook_events_cb["test_event"][""](), return_val)
 
         return_val = "test_webhook_callback_new"
 
@@ -374,7 +374,7 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
         async def test_webhook_callback_new():
             return return_val
 
-        self.assertEqual(await client.webhook_events_cb["test_event"][""](), return_val)
+        self.assertEqual(await client._client.webhook_events_cb["test_event"][""](), return_val)
 
     async def test_register_event_with_room_id(self):
         client = Client(self.test_endpoint)
@@ -395,10 +395,10 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             return return_val_new
 
         self.assertEqual(
-            await client.webhook_events_cb["test_event"][old_room_uuid](), return_val
+            await client._client.webhook_events_cb["test_event"][old_room_uuid](), return_val
         )
         self.assertEqual(
-            await client.webhook_events_cb["test_event"][new_room_uuid](),
+            await client._client.webhook_events_cb["test_event"][new_room_uuid](),
             return_val_new,
         )
 
