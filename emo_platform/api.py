@@ -176,18 +176,16 @@ class Client:
 
         try:
             res_tokens = self.get_access_token(self._tm.tokens.refresh_token)
-        except UnauthorizedError:
-            pass
+        except UnauthorizedError as e:
+            raise TokenError(
+                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+            ) from e
         else:
             self._tm.tokens.access_token = res_tokens.access_token
             self._tm.tokens.refresh_token = res_tokens.refresh_token
             self.headers["Authorization"] = "Bearer " + self._tm.tokens.access_token
             self._tm.save_tokens()
             return
-
-        raise TokenError(
-            "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-        )
 
     def _check_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
         response = request()
