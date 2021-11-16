@@ -144,7 +144,6 @@ class Client:
             "Content-Type": PostContentType.APPLICATION_JSON,
             "Authorization": "Bearer " + self._tm.tokens.access_token,
         }
-        self.room_id_list = [self._DEFAULT_ROOM_ID]
         self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self.request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
 
@@ -381,15 +380,18 @@ class Client:
             1回 + 最大2回(access tokenが切れていた場合)
 
         """
-        result = self._get("/v1/rooms")
+
+        rooms_info = self.get_rooms_list()
+        return self._get_rooms_id(rooms_info)
+
+    def _get_rooms_id(self, rooms_info: EmoRoomInfo) -> List[str]:
         try:
-            room_number = len(result["rooms"])
+            room_number = len(rooms_info.rooms)
         except KeyError:
             raise NoRoomError("Get no room id.")
         if room_number == 0:
             raise NoRoomError("Get no room id.")
-        rooms_id = [result["rooms"][i]["uuid"] for i in range(room_number)]
-        self.room_id_list = rooms_id + [self._DEFAULT_ROOM_ID]
+        rooms_id = [rooms_info.rooms[i].uuid for i in range(room_number)]
         return rooms_id
 
     def create_room_client(self, room_id: str):
@@ -657,22 +659,10 @@ class Client:
 
             引数なしだと、全ての部屋を監視します。
 
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で呼んでいる :func:`get_rooms_id` が例外を出した場合
-            あるいは、存在しない部屋idを引数 :attr:`room_id_list` に含めていた場合。
-
         Note
         ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
-
         API呼び出し回数
-            :func:`get_rooms_id` を一度も実行していない状態で、
-            引数 :attr:`room_id_list` に部屋idを指定して実行した場合: 1回 + 最大2回(access tokenが切れていた場合)
-
-            上記以外の場合: 0回
+            0回
 
         """
 
@@ -681,15 +671,8 @@ class Client:
             if event not in self.webhook_events_cb:
                 self.webhook_events_cb[event] = {}
 
-            if room_id_list != [self._DEFAULT_ROOM_ID]:
-                if self.room_id_list == [self._DEFAULT_ROOM_ID]:
-                    self.get_rooms_id()
-
             for room_id in room_id_list:
-                if room_id in self.room_id_list:
-                    self.webhook_events_cb[event][room_id] = func
-                else:
-                    raise NoRoomError(f"Try to register wrong room id: '{room_id}'")
+                self.webhook_events_cb[event][room_id] = func
 
         return decorator
 

@@ -114,22 +114,30 @@ class TestBaseClass(object):
         }
 
     def init_room_server(self):
+
+        test_room_info = {
+            "uuid":"52b0e129-2512-4696-9d06-8ddb842ba6ce",
+            "name":"test_room",
+            "room_type":"test",
+            "room_members":[]
+        }
         self.test_rooms_info = {
-            "rooms": [{"uuid": "52b0e129-2512-4696-9d06-8ddb842ba6ce"}]
+            "listing" : {"offset":0, "limit":0, "total":0},
+            "rooms" : [test_room_info]
         }
 
-        def rooms_info_callback(request):
+        @self.routes.get("/v1/rooms")
+        async def rooms_info_callback(request):
             if request.headers["Authorization"] == "Bearer " + self.right_access_token:
-                return 200, {}, json.dumps(self.test_rooms_info)
+                return web.Response(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps(self.test_rooms_info),
+                )
             else:
-                return 401, {}, json.dumps({})
-
-        self.responses.add_callback(
-            responses.GET,
-            self.test_endpoint + "/v1/rooms",
-            callback=rooms_info_callback,
-            content_type="application/json",
-        )
+                return web.Response(
+                    status=401, content_type="application/json", body=json.dumps({})
+                )
 
     async def aiohttp_server_start(self):
         self.app = web.Application()
@@ -321,10 +329,11 @@ class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             )
 
 
-class TestGetRoomsId(unittest.TestCase, TestBaseClass):
-    def setUp(self):
+class TestGetRoomsId(unittest.IsolatedAsyncioTestCase, TestBaseClass):
+    async def asyncSetUp(self):
         self.init_server()
         self.init_room_server()
+        await self.aiohttp_server_start()
 
         self.reset_tokens()
         self.set_tokens()
@@ -332,19 +341,20 @@ class TestGetRoomsId(unittest.TestCase, TestBaseClass):
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
-    def test_get_rooms_id(self):
-        client = Client(self.test_endpoint)
-        for room_uuid in range(10):
-            rooms_id = client.get_rooms_id()
-            for room in self.test_rooms_info["rooms"]:
-                self.assertTrue(room["uuid"] in rooms_id)
-            self.test_rooms_info["rooms"].append({"uuid": str(room_uuid)})
+    async def asyncTearDown(self):
+        await self.aiohttp_server_stop()
 
-    def test_get_no_rooms_id(self):
+    async def test_get_rooms_id(self):
         client = Client(self.test_endpoint)
-        self.test_rooms_info = {}
+        rooms_id = await client.get_rooms_id()
+        for room in self.test_rooms_info["rooms"]:
+            self.assertTrue(room["uuid"] in rooms_id)
+
+    async def test_get_no_rooms_id(self):
+        client = Client(self.test_endpoint)
+        self.test_rooms_info["rooms"] = []
         with self.assertRaises(NoRoomError):
-            client.get_rooms_id()
+            await client.get_rooms_id()
 
 
 class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
@@ -401,14 +411,6 @@ class TestWebhookRegister(unittest.IsolatedAsyncioTestCase, TestBaseClass):
             await client._client.webhook_events_cb["test_event"][new_room_uuid](),
             return_val_new,
         )
-
-    async def test_register_event_with_nonexistent_room_id(self):
-        client = Client(self.test_endpoint)
-        with self.assertRaises(NoRoomError):
-
-            @client.event("test_event", ["nonexistent_room_id"])
-            async def test_webhook_callback():
-                pass
 
 
 class TestWebhookReceive(unittest.IsolatedAsyncioTestCase, TestBaseClass):

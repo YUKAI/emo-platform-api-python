@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from emo_platform import Client
 from emo_platform.exceptions import NoRoomError, TokenError, UnauthorizedError
+from emo_platform.response import RoomInfo, EmoRoomInfo, Listing
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
@@ -93,8 +94,15 @@ class TestBaseClass(object):
         )
 
     def room_init(self):
+        test_room_info = {
+            "uuid":"52b0e129-2512-4696-9d06-8ddb842ba6ce",
+            "name":"test_room",
+            "room_type":"test",
+            "room_members":[]
+        }
         self.test_rooms_info = {
-            "rooms": [{"uuid": "52b0e129-2512-4696-9d06-8ddb842ba6ce"}]
+            "listing" : {"offset":0, "limit":0, "total":0},
+            "rooms" : [test_room_info]
         }
 
         def rooms_info_callback(request):
@@ -291,15 +299,13 @@ class TestGetRoomsId(unittest.TestCase, TestBaseClass):
 
     def test_get_rooms_id(self):
         client = Client(self.test_endpoint)
-        for room_uuid in range(10):
-            rooms_id = client.get_rooms_id()
-            for room in self.test_rooms_info["rooms"]:
-                self.assertTrue(room["uuid"] in rooms_id)
-            self.test_rooms_info["rooms"].append({"uuid": str(room_uuid)})
+        rooms_id = client.get_rooms_id()
+        for room in self.test_rooms_info["rooms"]:
+            self.assertTrue(room["uuid"] in rooms_id)
 
     def test_get_no_rooms_id(self):
         client = Client(self.test_endpoint)
-        self.test_rooms_info = {}
+        self.test_rooms_info["rooms"] = []
         with self.assertRaises(NoRoomError):
             client.get_rooms_id()
 
@@ -352,14 +358,6 @@ class TestWebhookRegister(unittest.TestCase, TestBaseClass):
         self.assertEqual(
             client.webhook_events_cb["test_event"][new_room_uuid](), return_val_new
         )
-
-    def test_register_event_with_nonexistent_room_id(self):
-        client = Client(self.test_endpoint)
-        with self.assertRaises(NoRoomError):
-
-            @client.event("test_event", ["nonexistent_room_id"])
-            def test_webhook_callback():
-                pass
 
 
 class TestWebhookReceive(unittest.TestCase, TestBaseClass):

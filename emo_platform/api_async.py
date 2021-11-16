@@ -154,8 +154,9 @@ class AsyncClient:
         response = await self._get("/v1/rooms")
         return EmoRoomInfo(**response)
 
-    def get_rooms_id(self) -> List[str]:
-        return self._client.get_rooms_id()
+    async def get_rooms_id(self) -> List[str]:
+        rooms_info = await self.get_rooms_list()
+        return self._client._get_rooms_id(rooms_info)
 
     def create_room_client(self, room_id: str):
         return AsyncRoom(self, room_id)
@@ -182,6 +183,38 @@ class AsyncClient:
         response = await self._put("/v1/webhook/events", json.dumps(payload))
         return EmoWebhookInfo(**response)
 
+    async def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+        """Webhookの設定の作成
+
+        Parameters
+        ----------
+        webhook : WebHook
+            作成するWebhookの設定。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+            作成したWebhookの設定。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/webhook
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        payload = {"description": webhook.description, "url": webhook.url}
+        response = await self._post("/v1/webhook", json.dumps(payload))
+        return EmoWebhookInfo(**response)
+
     async def delete_webhook_setting(self) -> EmoWebhookInfo:
         response = await self._delete("/v1/webhook")
         return EmoWebhookInfo(**response)
@@ -197,10 +230,10 @@ class AsyncClient:
 
             import emo_platform
 
-            client = emo_platform.Client()
+            client = emo_platform.AsyncClient()
 
             @client.event("message.received")
-            def test_event_callback(body):
+            async def test_event_callback(body):
                 print(body)
 
         Parameters
@@ -215,22 +248,10 @@ class AsyncClient:
 
             引数なしだと、全ての部屋を監視します。
 
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で呼んでいる :func:`get_rooms_id` が例外を出した場合
-            あるいは、存在しない部屋idを引数 :attr:`room_id_list` に含めていた場合。
-
         Note
         ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
-
         API呼び出し回数
-            :func:`get_rooms_id` を一度も実行していない状態で、
-            引数 :attr:`room_id_list` に部屋idを指定して実行した場合: 1回 + 最大2回(access tokenが切れていた場合)
-
-            上記以外の場合: 0回
+            0回
 
         """
 
@@ -239,15 +260,8 @@ class AsyncClient:
             if event not in self._client.webhook_events_cb:
                 self._client.webhook_events_cb[event] = {}
 
-            if room_id_list != [self._DEFAULT_ROOM_ID]:
-                if self._client.room_id_list == [self._DEFAULT_ROOM_ID]:
-                    self._client.get_rooms_id()
-
             for room_id in room_id_list:
-                if room_id in self._client.room_id_list:
-                    self._client.webhook_events_cb[event][room_id] = func
-                else:
-                    raise NoRoomError(f"Try to register wrong room id: '{room_id}'")
+                self._client.webhook_events_cb[event][room_id] = func
 
         return decorator
 
