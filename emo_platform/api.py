@@ -13,6 +13,7 @@ from emo_platform.exceptions import (
     NoRoomError,
     TokenError,
     UnauthorizedError,
+    UnavailableError,
     _http_error_handler,
 )
 from emo_platform.models import Color, Head, Tokens, WebHook
@@ -133,12 +134,12 @@ class Client:
 
     def __init__(
         self,
-        endpoint_url: str = _BASE_URL,
+        endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
         self._tm = TokenManager()
-        self.endpoint_url = endpoint_url
+        self.endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
@@ -758,6 +759,67 @@ class Client:
 
         uvicorn.run(self.app, host=host, port=port)
 
+class bizClient(Client):
+    PLAN = "Business"
+
+    def __init__(
+        self, x_channel_user: str, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+    ):
+        super().__init__(tokens, token_file_path)
+        self.headers["X-Channel-User"] = x_channel_user
+
+    def delete_account_info(self) -> None:
+        raise UnavailableError(self.PLAN)
+
+    # def change_account_info(self) -> EmoAccountInfo:
+    #     # TODO: implement
+    #     pass
+
+    # def get_broadcast_msgs_list(self):
+    #     response = self._get("")
+
+class bizBasicClient(bizClient):
+    PLAN = "Business Basic"
+
+    def create_room_client(self, room_id: str):
+        return bizBasicRoom(self, room_id)
+
+    def get_motions_list(self) -> None:
+        raise UnavailableError(self.PLAN)
+
+    def get_webhook_setting(
+        self,
+    ) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def change_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def delete_webhook_setting(
+        self,
+    ) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def event(
+        self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
+    ) -> Callable:
+        raise UnavailableError(self.PLAN)
+
+    def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+        raise UnavailableError(self.PLAN)
+
+class bizAdvancedClient(bizClient):
+    PLAN = "Business Advanced"
+
+    def create_room_client(self, room_id: str):
+        return bizAdvancedRoom(self, room_id)
+
 
 class Room:
     """部屋固有の各種apiを呼び出すclient
@@ -1225,3 +1287,22 @@ class Room:
 
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)
+
+class bizBasicRoom(Room):
+    def get_sensor_values(self, sensor_id: str) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    def send_original_motion(self, motion_data: Union[str, dict]) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    def change_led_color(self, color: Color) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    def move_to(self, head: Head) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    def send_motion(self, motion_id: str) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+class bizAdvancedRoom(Room):
+    pass

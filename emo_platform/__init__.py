@@ -1,4 +1,4 @@
-from .api import Client
+from .api import Client, bizBasicClient, bizAdvancedClient
 from .api_async import AsyncClient
 from .exceptions import (
     BadRequestError,
@@ -9,5 +9,6 @@ from .exceptions import (
     TokenError,
     UnauthorizedError,
     UnknownError,
+    UnavailableError
 )
 from .models import Tokens, Color, Head, WebHook
