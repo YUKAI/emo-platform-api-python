@@ -10,4 +10,4 @@ from .exceptions import (
     UnauthorizedError,
     UnknownError,
 )
-from .models import Color, Head, WebHook
+from .models import Tokens, Color, Head, WebHook
