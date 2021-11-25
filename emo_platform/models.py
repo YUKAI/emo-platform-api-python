@@ -84,3 +84,18 @@ class WebHook:
 
     url: str
     description: str = ""
+
+@dataclass
+class AccountInfo:
+    name: str
+    name_furigana: str
+    organization_name: str
+    organization_unit_name: str
+    phone_number: str
+
+@dataclass
+class BroadcastMsg:
+    title: str
+    text: str
+    executed_at: int = 0
+    immediate: bool = False

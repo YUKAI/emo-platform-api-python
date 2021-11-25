@@ -16,9 +16,10 @@ from emo_platform.exceptions import (
     UnavailableError,
     _http_error_handler,
 )
-from emo_platform.models import Color, Head, Tokens, WebHook
+from emo_platform.models import Color, Head, Tokens, WebHook, AccountInfo, BroadcastMsg
 from emo_platform.response import (
     EmoAccountInfo,
+    EmoBizAccountInfo,
     EmoMessageInfo,
     EmoMotionsInfo,
     EmoMsgsInfo,
@@ -30,6 +31,11 @@ from emo_platform.response import (
     EmoTokens,
     EmoWebhookBody,
     EmoWebhookInfo,
+    EmoBroadcastInfoList,
+    EmoBroadcastInfo,
+    EmoBroadcastMessage,
+    EmoPaymentsInfo,
+    EmoPaymentInfo,
 )
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -275,6 +281,9 @@ class Client:
         )
         return EmoTokens(**response)
 
+    def _get_account_info(self) -> dict:
+        return self._get("/v1/me")
+
     def get_account_info(
         self,
     ) -> EmoAccountInfo:
@@ -299,7 +308,7 @@ class Client:
 
         """
 
-        response = self._get("/v1/me")
+        response = self._get_account_info()
         return EmoAccountInfo(**response)
 
     def delete_account_info(
@@ -759,7 +768,7 @@ class Client:
 
         uvicorn.run(self.app, host=host, port=port)
 
-class bizClient(Client):
+class BizClient(Client):
     PLAN = "Business"
 
     def __init__(
@@ -768,21 +777,47 @@ class bizClient(Client):
         super().__init__(tokens, token_file_path)
         self.headers["X-Channel-User"] = x_channel_user
 
+    def get_account_info(self) -> EmoBizAccountInfo:
+        response = self._get_account_info()
+        return EmoBizAccountInfo(**response)
+
     def delete_account_info(self) -> None:
         raise UnavailableError(self.PLAN)
 
-    # def change_account_info(self) -> EmoAccountInfo:
-    #     # TODO: implement
-    #     pass
+    def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
+        payload = asdict(acount)
+        response = self._put("/v1/me", json.dumps(payload))
+        return EmoBizAccountInfo(**response)
 
-    # def get_broadcast_msgs_list(self):
-    #     response = self._get("")
+    def get_broadcast_msgs_list(self) -> EmoBroadcastInfoList:
+        response = self._get("/v1/broadcast_messages")
+        return EmoBroadcastInfoList(**response)
 
-class bizBasicClient(bizClient):
+    def get_broadcast_msg_details(self, message_id: int) -> EmoBroadcastInfo:
+        response = self._get("/v1/broadcast_messages/" + str(message_id))
+        return EmoBroadcastInfo(**response)
+
+    def create_broadcast_msg(self, message: BroadcastMsg) -> EmoBroadcastMessage:
+        payload = asdict(message)
+        if message.immediate:
+            payload.pop("executed_at")
+        response = self._post("/v1/broadcast_messages", json.dumps(payload))
+        return EmoBroadcastMessage(**response)
+
+    def get_payments_info(self) -> EmoPaymentsInfo:
+        response = self._get("/v1/payments")
+        return EmoPaymentsInfo(**response)
+
+    def get_payment_info_detail(self, payment_id: int) -> EmoPaymentInfo:
+        response = self._get("/v1/payments/" + str(payment_id))
+        return EmoPaymentInfo(**response)
+
+
+class BizBasicClient(BizClient):
     PLAN = "Business Basic"
 
     def create_room_client(self, room_id: str):
-        return bizBasicRoom(self, room_id)
+        return BizBasicRoom(self, room_id)
 
     def get_motions_list(self) -> None:
         raise UnavailableError(self.PLAN)
@@ -814,11 +849,11 @@ class bizBasicClient(bizClient):
     def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
         raise UnavailableError(self.PLAN)
 
-class bizAdvancedClient(bizClient):
+class BizAdvancedClient(BizClient):
     PLAN = "Business Advanced"
 
     def create_room_client(self, room_id: str):
-        return bizAdvancedRoom(self, room_id)
+        return BizAdvancedRoom(self, room_id)
 
 
 class Room:
@@ -1288,7 +1323,7 @@ class Room:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)
 
-class bizBasicRoom(Room):
+class BizBasicRoom(Room):
     def get_sensor_values(self, sensor_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
 
@@ -1304,5 +1339,5 @@ class bizBasicRoom(Room):
     def send_motion(self, motion_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
 
-class bizAdvancedRoom(Room):
+class BizAdvancedRoom(Room):
     pass
