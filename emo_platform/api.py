@@ -144,7 +144,7 @@ class Client:
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
-        self._tm = TokenManager()
+        self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path)
         self.endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
