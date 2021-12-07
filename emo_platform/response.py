@@ -10,6 +10,7 @@ class EmoAccountInfo(BaseModel):
     uuid: str
     plan: str
 
+
 class EmoBizAccountInfo(BaseModel):
     account_id: int
     name: str
@@ -19,6 +20,7 @@ class EmoBizAccountInfo(BaseModel):
     organization_unit_name: str
     phone_number: str
     plan: str
+
 
 class EmoTokens(BaseModel):
     access_token: str
@@ -136,6 +138,7 @@ class EmoSettingsInfo(BaseModel):
     timezone: str
     zip_code: str
 
+
 class EmoBroadcastMessage(BaseModel):
     id: int
     channel_uuid: str
@@ -146,6 +149,7 @@ class EmoBroadcastMessage(BaseModel):
     success: bool
     failed: bool
 
+
 class EmoBroadcastMessageDetail(BaseModel):
     room_uuid: str
     room_name: str
@@ -154,13 +158,16 @@ class EmoBroadcastMessageDetail(BaseModel):
     description: str
     executed_at: int
 
+
 class EmoBroadcastInfoList(BaseModel):
     listing: Listing
     messages: List[EmoBroadcastMessage]
 
+
 class EmoBroadcastInfo(BaseModel):
     message: EmoBroadcastMessage
     details: List[EmoBroadcastMessageDetail]
+
 
 class EmoPaymentInfo(BaseModel):
     id: int
@@ -176,9 +183,11 @@ class EmoPaymentInfo(BaseModel):
     created_at: int
     updated_at: int
 
+
 class EmoPaymentsInfo(BaseModel):
     listing: Listing
     payments: List[EmoPaymentInfo]
+
 
 class EmoKind(BaseModel):
     kind: str

@@ -85,6 +85,7 @@ class WebHook:
     url: str
     description: str = ""
 
+
 @dataclass
 class AccountInfo:
     name: str
@@ -92,6 +93,7 @@ class AccountInfo:
     organization_name: str
     organization_unit_name: str
     phone_number: str
+
 
 @dataclass
 class BroadcastMsg:

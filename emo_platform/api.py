@@ -16,13 +16,18 @@ from emo_platform.exceptions import (
     UnavailableError,
     _http_error_handler,
 )
-from emo_platform.models import Color, Head, Tokens, WebHook, AccountInfo, BroadcastMsg
+from emo_platform.models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
 from emo_platform.response import (
     EmoAccountInfo,
     EmoBizAccountInfo,
+    EmoBroadcastInfo,
+    EmoBroadcastInfoList,
+    EmoBroadcastMessage,
     EmoMessageInfo,
     EmoMotionsInfo,
     EmoMsgsInfo,
+    EmoPaymentInfo,
+    EmoPaymentsInfo,
     EmoRoomInfo,
     EmoRoomSensorInfo,
     EmoSensorsInfo,
@@ -31,11 +36,6 @@ from emo_platform.response import (
     EmoTokens,
     EmoWebhookBody,
     EmoWebhookInfo,
-    EmoBroadcastInfoList,
-    EmoBroadcastInfo,
-    EmoBroadcastMessage,
-    EmoPaymentsInfo,
-    EmoPaymentInfo,
 )
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -768,11 +768,15 @@ class Client:
 
         uvicorn.run(self.app, host=host, port=port)
 
+
 class BizClient(Client):
     PLAN = "Business"
 
     def __init__(
-        self, x_channel_user: str, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+        self,
+        x_channel_user: str,
+        tokens: Optional[Tokens] = None,
+        token_file_path: Optional[str] = None,
     ):
         super().__init__(tokens, token_file_path)
         self.headers["X-Channel-User"] = x_channel_user
@@ -848,6 +852,7 @@ class BizBasicClient(BizClient):
 
     def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
         raise UnavailableError(self.PLAN)
+
 
 class BizAdvancedClient(BizClient):
     PLAN = "Business Advanced"
@@ -1323,6 +1328,7 @@ class Room:
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)
 
+
 class BizBasicRoom(Room):
     def get_sensor_values(self, sensor_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
@@ -1338,6 +1344,7 @@ class BizBasicRoom(Room):
 
     def send_motion(self, motion_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
+
 
 class BizAdvancedRoom(Room):
     pass

@@ -76,6 +76,7 @@ class TokenError(EmoPlatformError):
 
     pass
 
+
 class UnavailableError(EmoPlatformError):
     """現在のプランでは使用できない場合に出るエラー"""
 

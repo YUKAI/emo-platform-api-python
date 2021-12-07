@@ -10,18 +10,23 @@ from fastapi import BackgroundTasks, FastAPI, Request
 
 from emo_platform.api import Client, PostContentType
 from emo_platform.exceptions import (
-    NoRoomError,
     TokenError,
     UnauthorizedError,
     UnavailableError,
     _aiohttp_error_handler,
 )
-from emo_platform.models import Color, Head, Tokens, WebHook, AccountInfo, BroadcastMsg
+from emo_platform.models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
 from emo_platform.response import (
     EmoAccountInfo,
+    EmoBizAccountInfo,
+    EmoBroadcastInfo,
+    EmoBroadcastInfoList,
+    EmoBroadcastMessage,
     EmoMessageInfo,
     EmoMotionsInfo,
     EmoMsgsInfo,
+    EmoPaymentInfo,
+    EmoPaymentsInfo,
     EmoRoomInfo,
     EmoRoomSensorInfo,
     EmoSensorsInfo,
@@ -30,12 +35,6 @@ from emo_platform.response import (
     EmoTokens,
     EmoWebhookBody,
     EmoWebhookInfo,
-    EmoBizAccountInfo,
-    EmoBroadcastInfoList,
-    EmoBroadcastInfo,
-    EmoBroadcastMessage,
-    EmoPaymentsInfo,
-    EmoPaymentInfo
 )
 
 
@@ -395,11 +394,15 @@ class AsyncClient:
     def stop_webhook_event(self):
         self.server.should_exit = True
 
+
 class BizAsyncClient(AsyncClient):
     PLAN = "Business"
 
     def __init__(
-        self, x_channel_user: str, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+        self,
+        x_channel_user: str,
+        tokens: Optional[Tokens] = None,
+        token_file_path: Optional[str] = None,
     ):
         super().__init__(tokens, token_file_path)
         self._client.headers["X-Channel-User"] = x_channel_user
@@ -439,6 +442,7 @@ class BizAsyncClient(AsyncClient):
         response = await self._get("/v1/payments/" + str(payment_id))
         return EmoPaymentInfo(**response)
 
+
 class BizBasicAsyncClient(BizAsyncClient):
     PLAN = "Business Basic"
 
@@ -472,8 +476,11 @@ class BizBasicAsyncClient(BizAsyncClient):
     ) -> Callable:
         raise UnavailableError(self.PLAN)
 
-    async def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+    async def start_webhook_event(
+        self, host: str = "localhost", port: int = 8000
+    ) -> None:
         raise UnavailableError(self.PLAN)
+
 
 class BizAdvancedAsyncClient(BizAsyncClient):
     PLAN = "Business Advanced"
@@ -584,6 +591,7 @@ class AsyncRoom:
         )
         return EmoSettingsInfo(**response)
 
+
 class BizBasicAsyncRoom(AsyncRoom):
     async def get_sensor_values(self, sensor_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
@@ -599,6 +607,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
     async def send_motion(self, motion_id: str) -> None:
         raise UnavailableError(self.base_client.PLAN)
+
 
 class BizAdvancedAsyncRoom(AsyncRoom):
     pass
