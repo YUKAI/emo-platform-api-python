@@ -3,7 +3,7 @@ import os
 from collections import deque
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, NoReturn, Optional, Union
 
 import requests
 import uvicorn  # type: ignore
@@ -137,6 +137,7 @@ class Client:
     _BASE_URL = "https://platform-api.bocco.me"
     _DEFAULT_ROOM_ID = ""
     _MAX_SAVED_REQUEST_ID = 10
+    PLAN = "Personal"
 
     def __init__(
         self,
@@ -775,17 +776,20 @@ class BizClient(Client):
     def __init__(
         self,
         x_channel_user: str,
+        endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
-        super().__init__(tokens, token_file_path)
+        super().__init__(
+            endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
+        )
         self.headers["X-Channel-User"] = x_channel_user
 
-    def get_account_info(self) -> EmoBizAccountInfo:
+    def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
         response = self._get_account_info()
         return EmoBizAccountInfo(**response)
 
-    def delete_account_info(self) -> None:
+    def delete_account_info(self) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
@@ -823,34 +827,36 @@ class BizBasicClient(BizClient):
     def create_room_client(self, room_id: str):
         return BizBasicRoom(self, room_id)
 
-    def get_motions_list(self) -> None:
+    def get_motions_list(self) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     def get_webhook_setting(
         self,
-    ) -> EmoWebhookInfo:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    def change_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+    def change_webhook_setting(self, webhook: WebHook) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+    def register_webhook_event(self, events: List[str]) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+    def create_webhook_setting(self, webhook: WebHook) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     def delete_webhook_setting(
         self,
-    ) -> EmoWebhookInfo:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     def event(
         self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
-    ) -> Callable:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+    def start_webhook_event(
+        self, host: str = "localhost", port: int = 8000
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
 
@@ -1330,19 +1336,19 @@ class Room:
 
 
 class BizBasicRoom(Room):
-    def get_sensor_values(self, sensor_id: str) -> None:
+    def get_sensor_values(self, sensor_id: str) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    def send_original_motion(self, motion_data: Union[str, dict]) -> None:
+    def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    def change_led_color(self, color: Color) -> None:
+    def change_led_color(self, color: Color) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    def move_to(self, head: Head) -> None:
+    def move_to(self, head: Head) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    def send_motion(self, motion_id: str) -> None:
+    def send_motion(self, motion_id: str) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
 

@@ -2,7 +2,7 @@ import asyncio
 import json
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, NoReturn, Optional, Union
 
 import aiohttp
 import uvicorn  # type: ignore
@@ -39,13 +39,13 @@ from emo_platform.response import (
 
 
 class AsyncClient:
-    _BASE_URL = Client._BASE_URL
     _DEFAULT_ROOM_ID = Client._DEFAULT_ROOM_ID
     _MAX_SAVED_REQUEST_ID = Client._MAX_SAVED_REQUEST_ID
+    PLAN = "Personal"
 
     def __init__(
         self,
-        endpoint_url: str = _BASE_URL,
+        endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
@@ -401,17 +401,20 @@ class BizAsyncClient(AsyncClient):
     def __init__(
         self,
         x_channel_user: str,
+        endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
-        super().__init__(tokens, token_file_path)
+        super().__init__(
+            endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
+        )
         self._client.headers["X-Channel-User"] = x_channel_user
 
-    async def get_account_info(self) -> EmoBizAccountInfo:
+    async def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
         response = await self._get_account_info()
         return EmoBizAccountInfo(**response)
 
-    async def delete_account_info(self) -> None:
+    async def delete_account_info(self) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     async def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
@@ -449,36 +452,36 @@ class BizBasicAsyncClient(BizAsyncClient):
     def create_room_client(self, room_id: str):
         return BizBasicAsyncRoom(self, room_id)
 
-    async def get_motions_list(self) -> None:
+    async def get_motions_list(self) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     async def get_webhook_setting(
         self,
-    ) -> EmoWebhookInfo:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    async def change_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+    async def change_webhook_setting(self, webhook: WebHook) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    async def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+    async def register_webhook_event(self, events: List[str]) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
-    async def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+    async def create_webhook_setting(self, webhook: WebHook) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     async def delete_webhook_setting(
         self,
-    ) -> EmoWebhookInfo:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     def event(
         self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
-    ) -> Callable:
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
     async def start_webhook_event(
-        self, host: str = "localhost", port: int = 8000
-    ) -> None:
+        self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
+    ) -> NoReturn:
         raise UnavailableError(self.PLAN)
 
 
@@ -593,19 +596,19 @@ class AsyncRoom:
 
 
 class BizBasicAsyncRoom(AsyncRoom):
-    async def get_sensor_values(self, sensor_id: str) -> None:
+    async def get_sensor_values(self, sensor_id: str) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    async def send_original_motion(self, motion_data: Union[str, dict]) -> None:
+    async def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    async def change_led_color(self, color: Color) -> None:
+    async def change_led_color(self, color: Color) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    async def move_to(self, head: Head) -> None:
+    async def move_to(self, head: Head) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
-    async def send_motion(self, motion_id: str) -> None:
+    async def send_motion(self, motion_id: str) -> NoReturn:
         raise UnavailableError(self.base_client.PLAN)
 
 
