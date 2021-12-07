@@ -1,5 +1,6 @@
 import asyncio
 import json
+from dataclasses import asdict
 from functools import partial
 from typing import Callable, List, Optional, Union
 
@@ -12,9 +13,10 @@ from emo_platform.exceptions import (
     NoRoomError,
     TokenError,
     UnauthorizedError,
+    UnavailableError,
     _aiohttp_error_handler,
 )
-from emo_platform.models import Color, Head, Tokens, WebHook
+from emo_platform.models import Color, Head, Tokens, WebHook, AccountInfo, BroadcastMsg
 from emo_platform.response import (
     EmoAccountInfo,
     EmoMessageInfo,
@@ -28,6 +30,12 @@ from emo_platform.response import (
     EmoTokens,
     EmoWebhookBody,
     EmoWebhookInfo,
+    EmoBizAccountInfo,
+    EmoBroadcastInfoList,
+    EmoBroadcastInfo,
+    EmoBroadcastMessage,
+    EmoPaymentsInfo,
+    EmoPaymentInfo
 )
 
 
@@ -142,8 +150,11 @@ class AsyncClient:
         )
         return EmoTokens(**response)
 
+    async def _get_account_info(self) -> dict:
+        return await self._get("/v1/me")
+
     async def get_account_info(self) -> EmoAccountInfo:
-        response = await self._get("/v1/me")
+        response = await self._get_account_info()
         return EmoAccountInfo(**response)
 
     async def delete_account_info(self) -> EmoAccountInfo:
@@ -384,6 +395,92 @@ class AsyncClient:
     def stop_webhook_event(self):
         self.server.should_exit = True
 
+class BizAsyncClient(AsyncClient):
+    PLAN = "Business"
+
+    def __init__(
+        self, x_channel_user: str, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+    ):
+        super().__init__(tokens, token_file_path)
+        self._client.headers["X-Channel-User"] = x_channel_user
+
+    async def get_account_info(self) -> EmoBizAccountInfo:
+        response = await self._get_account_info()
+        return EmoBizAccountInfo(**response)
+
+    async def delete_account_info(self) -> None:
+        raise UnavailableError(self.PLAN)
+
+    async def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
+        payload = asdict(acount)
+        response = await self._put("/v1/me", json.dumps(payload))
+        return EmoBizAccountInfo(**response)
+
+    async def get_broadcast_msgs_list(self) -> EmoBroadcastInfoList:
+        response = await self._get("/v1/broadcast_messages")
+        return EmoBroadcastInfoList(**response)
+
+    async def get_broadcast_msg_details(self, message_id: int) -> EmoBroadcastInfo:
+        response = await self._get("/v1/broadcast_messages/" + str(message_id))
+        return EmoBroadcastInfo(**response)
+
+    async def create_broadcast_msg(self, message: BroadcastMsg) -> EmoBroadcastMessage:
+        payload = asdict(message)
+        if message.immediate:
+            payload.pop("executed_at")
+        response = await self._post("/v1/broadcast_messages", json.dumps(payload))
+        return EmoBroadcastMessage(**response)
+
+    async def get_payments_info(self) -> EmoPaymentsInfo:
+        response = await self._get("/v1/payments")
+        return EmoPaymentsInfo(**response)
+
+    async def get_payment_info_detail(self, payment_id: int) -> EmoPaymentInfo:
+        response = await self._get("/v1/payments/" + str(payment_id))
+        return EmoPaymentInfo(**response)
+
+class BizBasicAsyncClient(BizAsyncClient):
+    PLAN = "Business Basic"
+
+    def create_room_client(self, room_id: str):
+        return BizBasicAsyncRoom(self, room_id)
+
+    async def get_motions_list(self) -> None:
+        raise UnavailableError(self.PLAN)
+
+    async def get_webhook_setting(
+        self,
+    ) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    async def change_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    async def register_webhook_event(self, events: List[str]) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    async def create_webhook_setting(self, webhook: WebHook) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    async def delete_webhook_setting(
+        self,
+    ) -> EmoWebhookInfo:
+        raise UnavailableError(self.PLAN)
+
+    def event(
+        self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
+    ) -> Callable:
+        raise UnavailableError(self.PLAN)
+
+    async def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+        raise UnavailableError(self.PLAN)
+
+class BizAdvancedAsyncClient(BizAsyncClient):
+    PLAN = "Business Advanced"
+
+    def create_room_client(self, room_id: str):
+        return BizAdvancedAsyncRoom(self, room_id)
+
 
 class AsyncRoom:
     def __init__(self, base_client: AsyncClient, room_id: str):
@@ -486,3 +583,22 @@ class AsyncRoom:
             "/v1/rooms/" + self.room_id + "/emo/settings"
         )
         return EmoSettingsInfo(**response)
+
+class BizBasicAsyncRoom(AsyncRoom):
+    async def get_sensor_values(self, sensor_id: str) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    async def send_original_motion(self, motion_data: Union[str, dict]) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    async def change_led_color(self, color: Color) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    async def move_to(self, head: Head) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+    async def send_motion(self, motion_id: str) -> None:
+        raise UnavailableError(self.base_client.PLAN)
+
+class BizAdvancedAsyncRoom(AsyncRoom):
+    pass

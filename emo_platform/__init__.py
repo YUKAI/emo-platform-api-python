@@ -1,5 +1,5 @@
 from .api import Client, BizBasicClient, BizAdvancedClient
-from .api_async import AsyncClient
+from .api_async import AsyncClient, BizBasicAsyncClient, BizAdvancedAsyncClient
 from .exceptions import (
     BadRequestError,
     EmoPlatformError,
