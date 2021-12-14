@@ -171,7 +171,7 @@ class Client:
     _BASE_URL = "https://platform-api.bocco.me"
     _DEFAULT_ROOM_ID = ""
     _MAX_SAVED_REQUEST_ID = 10
-    PLAN = "Personal"
+    _PLAN = "Personal"
 
     def __init__(
         self,
@@ -460,6 +460,7 @@ class Client:
             0回
 
         """
+
         return Room(self, room_id)
 
     def get_stamps_list(
@@ -813,7 +814,7 @@ class BizClient(Client):
         このクラスは使用せずに、継承先である :class:`BizBasicClient` あるいは :class:`BizAdvancedClient` をお使いください。
     """
 
-    PLAN = "Business"
+    _PLAN = "Business"
 
     def __init__(
         self,
@@ -872,7 +873,7 @@ class BizClient(Client):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
         """アカウント情報の編集
@@ -1102,7 +1103,7 @@ class BizBasicClient(BizClient):
 
     """
 
-    PLAN = "Business Basic"
+    _PLAN = "Business Basic"
 
     def create_room_client(self, room_id: str):
         """部屋固有の各種apiを呼び出すclientの作成
@@ -1140,7 +1141,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def get_webhook_setting(
         self,
@@ -1156,7 +1157,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def change_webhook_setting(self, webhook: WebHook) -> NoReturn:
         """Webhookの設定の変更
@@ -1170,7 +1171,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def register_webhook_event(self, events: List[str]) -> NoReturn:
         """Webhook通知するイベントの指定
@@ -1184,7 +1185,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def create_webhook_setting(self, webhook: WebHook) -> NoReturn:
         """Webhookの設定の作成
@@ -1198,7 +1199,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def delete_webhook_setting(
         self,
@@ -1214,7 +1215,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def event(
         self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
@@ -1230,7 +1231,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
     def start_webhook_event(
         self, host: str = "localhost", port: int = 8000
@@ -1246,7 +1247,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        raise UnavailableError(self.PLAN)
+        raise UnavailableError(self._PLAN)
 
 
 class BizAdvancedClient(BizClient):
@@ -1294,7 +1295,7 @@ class BizAdvancedClient(BizClient):
 
     """
 
-    PLAN = "Business Advanced"
+    _PLAN = "Business Advanced"
 
     def create_room_client(self, room_id: str):
         """部屋固有の各種apiを呼び出すclientの作成
@@ -1322,7 +1323,7 @@ class BizAdvancedClient(BizClient):
 
 
 class Room:
-    """部屋固有の各種apiを呼び出すclient
+    """部屋固有の各種apiを呼び出す同期版のclient
 
     Parameters
     ----------
@@ -1790,7 +1791,7 @@ class Room:
 
 
 class BizBasicRoom(Room):
-    """部屋固有の各種apiを呼び出すclient(Business Basic版)
+    """部屋固有の各種apiを呼び出す同期版のclient(Business Basic版)
 
     Parameters
     ----------
@@ -1814,7 +1815,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client.PLAN)
+        raise UnavailableError(self.base_client._PLAN)
 
     def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
@@ -1828,7 +1829,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client.PLAN)
+        raise UnavailableError(self.base_client._PLAN)
 
     def change_led_color(self, color: Color) -> NoReturn:
         """ほっぺたの色の変更
@@ -1842,7 +1843,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client.PLAN)
+        raise UnavailableError(self.base_client._PLAN)
 
     def move_to(self, head: Head) -> NoReturn:
         """首の角度の変更
@@ -1856,7 +1857,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client.PLAN)
+        raise UnavailableError(self.base_client._PLAN)
 
     def send_motion(self, motion_id: str) -> NoReturn:
         """プリセットモーションをBOCCO emoに送信
@@ -1870,11 +1871,11 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client.PLAN)
+        raise UnavailableError(self.base_client._PLAN)
 
 
 class BizAdvancedRoom(Room):
-    """部屋固有の各種apiを呼び出すclient(Business Advanced版)
+    """部屋固有の各種apiを呼び出す同期版のclient(Business Advanced版)
 
     Parameters
     ----------
