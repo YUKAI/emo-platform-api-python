@@ -77,6 +77,13 @@ class TokenError(EmoPlatformError):
     pass
 
 
+class UnavailableError(EmoPlatformError):
+    """現在のプランでは使用できない場合に出るエラー"""
+
+    def __str__(self):
+        return "You can't use this method in " + self.message + " plan."
+
+
 def _http_status_to_exception(code):
     if code == 400:
         return BadRequestError

@@ -3,7 +3,7 @@ import os
 from collections import deque
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, NoReturn, Optional, Union
 
 import requests
 import uvicorn  # type: ignore
@@ -13,11 +13,16 @@ from emo_platform.exceptions import (
     NoRoomError,
     TokenError,
     UnauthorizedError,
+    UnavailableError,
     _http_error_handler,
 )
-from emo_platform.models import Color, Head, Tokens, WebHook
+from emo_platform.models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
 from emo_platform.response import (
     EmoAccountInfo,
+    EmoBizAccountInfo,
+    EmoBroadcastInfo,
+    EmoBroadcastInfoList,
+    EmoBroadcastMessage,
     EmoMessageInfo,
     EmoMotionsInfo,
     EmoMsgsInfo,
@@ -35,8 +40,6 @@ EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 class PostContentType:
-    """POSTするデータの種類"""
-
     APPLICATION_JSON = "application/json"
     MULTIPART_FORMDATA = None
 
@@ -127,18 +130,55 @@ class TokenManager:
 
 
 class Client:
+    """各種apiを呼び出す同期版のclient(Personal版)
+
+    Parameters
+    ----------
+    endpoint_url : str, default https://platform-api.bocco.me
+        BOCCO emo platform apiにアクセスするためのendpoint
+    tokens : Tokens, default None
+        refresh token及びaccess tokenを指定します。
+        指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+    token_file_path : Optional[str], default None
+        refresh token及びaccess tokenを保存するファイルのパス。
+        指定しない場合は、このpkg内のディレクトリに保存されます。
+        指定したパスには、以下の2種類のファイルが生成されます。
+            emo-platform-api.json
+                最新のトークンを保存するファイル。
+            emo-platform-api_previous.json
+                現在、環境変数として設定されているトークンが記録されたファイル。
+                前回から更新があったかを確認するために使用されます。
+                更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+    Raises
+    ----------
+    TokenError
+        refresh tokenあるいはaccess tokenが環境変数として設定されていない場合。
+        引数tokensにトークンを指定している時は出ません。
+
+    Note
+    ----
+    各メソッドの実行時にaccess tokenの期限が切れていた場合
+        emo-platform-api.jsonに保存されているrefresh tokenを使用して自動的にaccess tokenが更新されます。
+        その際にAPI呼び出しが1回行われます。
+
+    Business版をお使いの方へ
+        このクラスは使用せずに、継承先である :class:`BizBasicClient` あるいは :class:`BizAdvancedClient` をお使いください。
+
+    """
+
     _BASE_URL = "https://platform-api.bocco.me"
     _DEFAULT_ROOM_ID = ""
     _MAX_SAVED_REQUEST_ID = 10
+    _PLAN = "Personal"
 
     def __init__(
         self,
-        endpoint_url: str = _BASE_URL,
+        endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
     ):
-        self._tm = TokenManager()
-        self.endpoint_url = endpoint_url
+        self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path)
+        self.endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self.headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
@@ -154,15 +194,15 @@ class Client:
     def update_tokens(self) -> None:
         """トークンの更新と保存
 
-            jsonファイルに保存されているもしくは環境変数として設定されているrefresh tokenを用いて、
+            jsonファイルに保存されているrefresh tokenを用いて、
             refresh tokenとaccess tokenを更新、jsonファイルに保存します。
 
             access tokenが切れると自動で呼び出されるため、基本的に外部から使用することはありません。
 
         Raises
         ----------
-        NoRefreshTokenError
-            refresh tokenが設定されていない、もしくは間違っている場合。
+        TokenError
+            refresh tokenが間違っている場合。
 
         Note
         ----
@@ -170,7 +210,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh
 
         API呼び出し回数
-            最大2回
+            1回
         """
 
         try:
@@ -274,6 +314,9 @@ class Client:
         )
         return EmoTokens(**response)
 
+    def _get_account_info(self) -> dict:
+        return self._get("/v1/me")
+
     def get_account_info(
         self,
     ) -> EmoAccountInfo:
@@ -294,11 +337,11 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/me
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
-        response = self._get("/v1/me")
+        response = self._get_account_info()
         return EmoAccountInfo(**response)
 
     def delete_account_info(
@@ -323,7 +366,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/me
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -350,7 +393,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -377,7 +420,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -415,6 +458,7 @@ class Client:
             0回
 
         """
+
         return Room(self, room_id)
 
     def get_stamps_list(
@@ -437,7 +481,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/stamps
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -464,7 +508,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/motions
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -492,7 +536,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/webhook
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -524,7 +568,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -561,7 +605,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -593,7 +637,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/webhook
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -623,7 +667,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -693,7 +737,7 @@ class Client:
 
         Example
         -----
-        この関数は、bloking処理になっている点に注意してください::
+        この関数は、blocking処理になっている点に注意してください::
 
             import emo_platform
 
@@ -726,7 +770,7 @@ class Client:
             https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -759,8 +803,466 @@ class Client:
         uvicorn.run(self.app, host=host, port=port)
 
 
+class BizClient(Client):
+    """各種apiを呼び出す同期版のclient(Business版)
+
+    Note
+    ----
+    使用上の注意
+        このクラスは使用せずに、継承先である :class:`BizBasicClient` あるいは :class:`BizAdvancedClient` をお使いください。
+    """
+
+    _PLAN = "Business"
+
+    def __init__(
+        self,
+        api_key: str,
+        endpoint_url: Optional[str] = None,
+        tokens: Optional[Tokens] = None,
+        token_file_path: Optional[str] = None,
+    ):
+        super().__init__(
+            endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
+        )
+        self.headers["X-Channel-User"] = api_key
+
+    def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
+        """アカウント情報の取得
+
+        Returns
+        -------
+        account_info : EmoBizAccountInfo
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        Personal版とBusiness版での違い
+            返り値の型が異なるので注意してください。
+
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/me
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = self._get_account_info()
+        return EmoBizAccountInfo(**response)
+
+    def delete_account_info(self) -> NoReturn:
+        """アカウント情報の取得
+
+            Business版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        Note
+        ----
+        Personal版とBusiness版での違い
+            Business版では使用できません。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def change_account_info(self, acount: AccountInfo) -> EmoBizAccountInfo:
+        """アカウント情報の編集
+
+        Parameters
+        ----------
+        account : AccountInfo
+            新たなアカウント情報。
+
+        Returns
+        -------
+        account_info : EmoBizAccountInfo
+            編集後のアカウント情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPUTの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/me
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        payload = asdict(acount)
+        response = self._put("/v1/me", json.dumps(payload))
+        return EmoBizAccountInfo(**response)
+
+    def get_broadcast_msgs_list(self) -> EmoBroadcastInfoList:
+        """配信メッセージの一覧の取得
+
+        Returns
+        -------
+        broadcast_info_list : EmoBroadcastInfoList
+            配信メッセージの一覧。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/broadcast_messages
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = self._get("/v1/broadcast_messages")
+        return EmoBroadcastInfoList(**response)
+
+    def get_broadcast_msg_details(self, message_id: int) -> EmoBroadcastInfo:
+        """配信メッセージの詳細の取得
+
+        Parameters
+        ----------
+        message_id : int
+            詳細を取得したい配信メッセージのid
+
+        Returns
+        -------
+        broadcast_info_list : EmoBroadcastInfo
+            配信メッセージの詳細。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/broadcast_messages/-broadcast_message_id-
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = self._get("/v1/broadcast_messages/" + str(message_id))
+        return EmoBroadcastInfo(**response)
+
+    def create_broadcast_msg(self, message: BroadcastMsg) -> EmoBroadcastMessage:
+        """配信メッセージの新規作成
+
+        Parameters
+        ----------
+        message : BroadcastMsg
+            新規に作成する配信メッセージ。
+
+        Returns
+        -------
+        broadcast_msg : EmoBroadcastMessage
+            新規に作成した配信メッセージの内容。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/broadcast_messages
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        payload = asdict(message)
+        if message.immediate:
+            payload.pop("executed_at")
+        response = self._post("/v1/broadcast_messages", json.dumps(payload))
+        return EmoBroadcastMessage(**response)
+
+
+class BizBasicClient(BizClient):
+    """各種apiを呼び出す同期版のclient(Business Basic版)
+
+    Parameters
+    ----------
+    api_key : str, default None
+        法人向けAPIキー。
+
+        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+        から確認することができます。
+
+    endpoint_url : str, default https://platform-api.bocco.me
+        BOCCO emo platform apiにアクセスするためのendpoint
+
+    tokens : Tokens, default None
+        refresh token及びaccess tokenを指定します。
+
+        指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+    token_file_path : Optional[str], default None
+        refresh token及びaccess tokenを保存するファイルのパス。
+
+        指定しない場合は、このpkg内のディレクトリに保存されます。
+        指定したパスには、以下の2種類のファイルが生成されます。
+            emo-platform-api.json
+                最新のトークンを保存するファイル。
+            emo-platform-api_previous.json
+                現在、環境変数として設定されているトークンが記録されたファイル。
+
+                前回から更新があったかを確認するために使用されます。
+
+                更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+    Raises
+    ----------
+    TokenError
+        refresh tokenあるいはaccess tokenが環境変数として設定されていない場合。
+        引数tokensにトークンを指定している時は出ません。
+
+    Note
+    ----
+    各メソッドの実行時にaccess tokenの期限が切れていた場合
+        emo-platform-api.jsonに保存されているrefresh tokenを使用して自動的にaccess tokenが更新されます。
+        その際にAPI呼び出しが1回行われます。
+
+    """
+
+    _PLAN = "Business Basic"
+
+    def create_room_client(self, room_id: str):
+        """部屋固有の各種apiを呼び出すclientの作成
+
+            部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
+
+        Parameters
+        ----------
+        room_id : str
+            部屋のid
+
+        Returns
+        -------
+        room_client : BizBasicRoom
+            部屋のclient
+
+        Note
+        ----
+        API呼び出し回数
+            0回
+
+        """
+
+        return BizBasicRoom(self, room_id)
+
+    def get_motions_list(self) -> NoReturn:
+        """利用可能なプリセットモーション一覧の取得
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def get_webhook_setting(
+        self,
+    ) -> NoReturn:
+        """現在設定されているWebhookの情報の取得
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def change_webhook_setting(self, webhook: WebHook) -> NoReturn:
+        """Webhookの設定の変更
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def register_webhook_event(self, events: List[str]) -> NoReturn:
+        """Webhook通知するイベントの指定
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def create_webhook_setting(self, webhook: WebHook) -> NoReturn:
+        """Webhookの設定の作成
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def delete_webhook_setting(
+        self,
+    ) -> NoReturn:
+        """現在設定されているWebhookの情報の削除
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def event(
+        self, event: str, room_id_list: List[str] = [Client._DEFAULT_ROOM_ID]
+    ) -> NoReturn:
+        """Webhookの指定のeventが通知されたときに呼び出す関数の登録
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def start_webhook_event(
+        self, host: str = "localhost", port: int = 8000
+    ) -> NoReturn:
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+
+class BizAdvancedClient(BizClient):
+    """各種apiを呼び出す同期版のclient(Business Advanced版)
+
+    Parameters
+    ----------
+    api_key : str, default None
+        法人向けAPIキー。
+
+        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+        から確認することができます。
+
+    endpoint_url : str, default https://platform-api.bocco.me
+        BOCCO emo platform apiにアクセスするためのendpoint
+
+    tokens : Tokens, default None
+        refresh token及びaccess tokenを指定します。
+
+        指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+    token_file_path : Optional[str], default None
+        refresh token及びaccess tokenを保存するファイルのパス。
+
+        指定しない場合は、このpkg内のディレクトリに保存されます。
+        指定したパスには、以下の2種類のファイルが生成されます。
+            emo-platform-api.json
+                最新のトークンを保存するファイル。
+            emo-platform-api_previous.json
+                現在、環境変数として設定されているトークンが記録されたファイル。
+
+                前回から更新があったかを確認するために使用されます。
+
+                更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+    Raises
+    ----------
+    TokenError
+        refresh tokenあるいはaccess tokenが環境変数として設定されていない場合。
+        引数tokensにトークンを指定している時は出ません。
+
+    Note
+    ----
+    各メソッドの実行時にaccess tokenの期限が切れていた場合
+        emo-platform-api.jsonに保存されているrefresh tokenを使用して自動的にaccess tokenが更新されます。
+        その際にAPI呼び出しが1回行われます。
+
+    """
+
+    _PLAN = "Business Advanced"
+
+    def create_room_client(self, room_id: str):
+        """部屋固有の各種apiを呼び出すclientの作成
+
+            部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
+
+        Parameters
+        ----------
+        room_id : str
+            部屋のid
+
+        Returns
+        -------
+        room_client : BizAdvancedRoom
+            部屋のclient
+
+        Note
+        ----
+        API呼び出し回数
+            0回
+
+        """
+
+        return BizAdvancedRoom(self, room_id)
+
+
 class Room:
-    """部屋固有の各種apiを呼び出すclient
+    """部屋固有の各種apiを呼び出す同期版のclient
 
     Parameters
     ----------
@@ -802,7 +1304,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/messages
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -837,7 +1339,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/sensors
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -871,7 +1373,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/sensors/-sensor_uuid-/values
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -911,7 +1413,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/audio
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -955,7 +1457,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/image
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -992,7 +1494,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/text
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1033,7 +1535,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/messages/stamp
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1076,7 +1578,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1116,7 +1618,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/led_color
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1152,7 +1654,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/move_to
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1188,7 +1690,7 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#post-/v1/rooms/-room_uuid-/motions/preset
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
@@ -1219,9 +1721,109 @@ class Room:
             https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/emo/settings
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
         response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)
+
+
+class BizBasicRoom(Room):
+    """部屋固有の各種apiを呼び出す同期版のclient(Business Basic版)
+
+    Parameters
+    ----------
+    base_client : BizBasicClient
+        このclientを作成しているclient。
+
+    room_id : str
+        部屋のuuid。
+
+    """
+
+    def get_sensor_values(self, sensor_id: str) -> NoReturn:
+        """部屋センサの送信値を取得
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self.base_client._PLAN)
+
+    def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
+        """独自定義した、オリジナルのモーションをBOCCO emoに送信
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self.base_client._PLAN)
+
+    def change_led_color(self, color: Color) -> NoReturn:
+        """ほっぺたの色の変更
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self.base_client._PLAN)
+
+    def move_to(self, head: Head) -> NoReturn:
+        """首の角度の変更
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self.base_client._PLAN)
+
+    def send_motion(self, motion_id: str) -> NoReturn:
+        """プリセットモーションをBOCCO emoに送信
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self.base_client._PLAN)
+
+
+class BizAdvancedRoom(Room):
+    """部屋固有の各種apiを呼び出す同期版のclient(Business Advanced版)
+
+    Parameters
+    ----------
+    base_client : BizAdvancedClient
+        このclientを作成しているclient。
+
+    room_id : str
+        部屋のuuid。
+
+    """
+
+    pass
