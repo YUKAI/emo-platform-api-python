@@ -31,8 +31,6 @@ from emo_platform.response import (
     EmoMessageInfo,
     EmoMotionsInfo,
     EmoMsgsInfo,
-    EmoPaymentInfo,
-    EmoPaymentsInfo,
     EmoRoomInfo,
     EmoRoomSensorInfo,
     EmoSensorsInfo,
@@ -934,65 +932,6 @@ class BizAsyncClient(AsyncClient):
             payload.pop("executed_at")
         response = await self._post("/v1/broadcast_messages", json.dumps(payload))
         return EmoBroadcastMessage(**response)
-
-    async def get_payments_info(self) -> EmoPaymentsInfo:
-        """支払い情報の取得
-
-            請求情報の一覧を取得します。
-
-        Returns
-        -------
-        payments_info : EmoPaymentsInfo
-            請求情報の一覧。
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
-
-        Note
-        ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/payments
-
-        API呼び出し回数
-            1回 + 1回(access tokenが切れていた場合)
-
-        """
-
-        response = await self._get("/v1/payments")
-        return EmoPaymentsInfo(**response)
-
-    async def get_payment_info_detail(self, payment_id: int) -> EmoPaymentInfo:
-        """支払い情報の詳細の取得
-
-        Parameters
-        ----------
-        payment_id : int
-            詳細を取得したい支払い情報のid。
-
-        Returns
-        -------
-        payments_info : EmoPaymentInfo
-            請求情報の詳細。
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
-
-        Note
-        ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/payments/-payment_id-
-
-        API呼び出し回数
-            1回 + 1回(access tokenが切れていた場合)
-
-        """
-
-        response = await self._get("/v1/payments/" + str(payment_id))
-        return EmoPaymentInfo(**response)
 
 
 class BizBasicAsyncClient(BizAsyncClient):

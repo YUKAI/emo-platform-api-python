@@ -470,67 +470,6 @@ class EmoBroadcastInfo(BaseModel):
     """
 
 
-class EmoPaymentInfo(BaseModel):
-    """請求情報の詳細"""
-
-    id: int
-    """請求情報のid
-    """
-
-    account_id: int
-    """BOCCOアカウントid
-    """
-
-    year: int
-    """請求年
-    """
-
-    month: int
-    """請求月
-    """
-
-    plan: str
-    """アカウントのプラン
-    """
-
-    payment_method: str
-    """支払い方法
-    """
-
-    amount: int
-    """請求金額
-    """
-
-    currency: str
-    """請求金額の単位
-    """
-
-    due_date: int
-    """支払い期限
-    """
-
-    paid: bool
-    """支払い済みか
-    """
-
-    created_at: int
-    """請求情報の作成時期
-    """
-
-    updated_at: int
-    """請求情報の更新時期
-    """
-
-
-class EmoPaymentsInfo(BaseModel):
-    """請求情報の一覧"""
-
-    listing: Listing
-    payments: List[EmoPaymentInfo]
-    """請求情報の詳細の一覧
-    """
-
-
 class EmoKind(BaseModel):
     """様々な種別に関する情報"""
 
