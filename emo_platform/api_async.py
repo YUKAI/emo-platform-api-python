@@ -8,7 +8,13 @@ import aiohttp
 import uvicorn  # type: ignore
 from fastapi import BackgroundTasks, FastAPI, Request
 
-from emo_platform.api import Client, BizClient, BizBasicClient, BizAdvancedClient, PostContentType
+from emo_platform.api import (
+    BizAdvancedClient,
+    BizBasicClient,
+    BizClient,
+    Client,
+    PostContentType,
+)
 from emo_platform.exceptions import (
     TokenError,
     UnauthorizedError,
@@ -1541,7 +1547,9 @@ class AsyncRoom:
         )
         return EmoMessageInfo(**response)
 
-    async def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+    async def send_original_motion(
+        self, motion_data: Union[str, dict]
+    ) -> EmoMessageInfo:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
 
             詳しくは、

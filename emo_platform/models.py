@@ -77,7 +77,6 @@ class Head:
     上下方向の首の角度(-20~20)
     """
 
-
     def __post_init__(self):
         self.angle = self._check_constraints(self.angle, -45, 45)
         self.vertical_angle = self._check_constraints(self.vertical_angle, -20, 20)
@@ -88,8 +87,7 @@ class Head:
 
 @dataclass
 class WebHook:
-    """BOCCO emoに設定するWebhook。
-    """
+    """BOCCO emoに設定するWebhook。"""
 
     url: str
     """

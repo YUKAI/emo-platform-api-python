@@ -4,8 +4,7 @@ from pydantic import BaseModel
 
 
 class EmoAccountInfo(BaseModel):
-    """BOCCOアカウント情報(Personal版)。
-    """
+    """BOCCOアカウント情報(Personal版)。"""
 
     name: str
     """アカウント名
@@ -29,8 +28,7 @@ class EmoAccountInfo(BaseModel):
 
 
 class EmoBizAccountInfo(BaseModel):
-    """BOCCOアカウント情報(Business版)。
-    """
+    """BOCCOアカウント情報(Business版)。"""
 
     account_id: int
     """アカウントのid
@@ -66,8 +64,7 @@ class EmoBizAccountInfo(BaseModel):
 
 
 class EmoTokens(BaseModel):
-    """API利用に必要なトークンの情報。
-    """
+    """API利用に必要なトークンの情報。"""
 
     access_token: str
     """アクセストークン
@@ -85,8 +82,7 @@ class Listing(BaseModel):
 
 
 class EmoRoomMember(BaseModel):
-    """部屋に参加しているメンバーの情報
-    """
+    """部屋に参加しているメンバーの情報"""
 
     uuid: str
     """メンバーのid
@@ -106,8 +102,7 @@ class EmoRoomMember(BaseModel):
 
 
 class RoomInfo(BaseModel):
-    """部屋の情報
-    """
+    """部屋の情報"""
 
     uuid: str
     """部屋のid
@@ -127,8 +122,7 @@ class RoomInfo(BaseModel):
 
 
 class EmoRoomInfo(BaseModel):
-    """ユーザーが参加している部屋の一覧情報
-    """
+    """ユーザーが参加している部屋の一覧情報"""
 
     listing: Listing
 
@@ -138,15 +132,13 @@ class EmoRoomInfo(BaseModel):
 
 
 class EmoMessage(BaseModel):
-    """部屋に投稿されたテキストメッセージの内容
-    """
+    """部屋に投稿されたテキストメッセージの内容"""
 
     ja: str
 
 
 class EmoMessageInfo(BaseModel):
-    """部屋に投稿されたメッセージの情報
-    """
+    """部屋に投稿されたメッセージの情報"""
 
     sequence: int
     """メッセージの順序関係を示すシーケンス値
@@ -196,8 +188,7 @@ class EmoMessageInfo(BaseModel):
 
 
 class EmoMsgsInfo(BaseModel):
-    """部屋に投稿されたメッセージの一覧情報
-    """
+    """部屋に投稿されたメッセージの一覧情報"""
 
     messages: List[EmoMessageInfo]
     """部屋に投稿されたメッセージの一覧
@@ -205,8 +196,7 @@ class EmoMsgsInfo(BaseModel):
 
 
 class EmoStamp(BaseModel):
-    """スタンプの情報
-    """
+    """スタンプの情報"""
 
     uuid: str
     """スタンプのid
@@ -226,8 +216,7 @@ class EmoStamp(BaseModel):
 
 
 class EmoStampsInfo(BaseModel):
-    """利用可能なスタンプの一覧情報
-    """
+    """利用可能なスタンプの一覧情報"""
 
     listing: Listing
 
@@ -237,8 +226,7 @@ class EmoStampsInfo(BaseModel):
 
 
 class EmoMotion(BaseModel):
-    """モーションの情報
-    """
+    """モーションの情報"""
 
     uuid: str
     """モーションのid
@@ -254,8 +242,7 @@ class EmoMotion(BaseModel):
 
 
 class EmoMotionsInfo(BaseModel):
-    """利用可能なモーションの一覧情報
-    """
+    """利用可能なモーションの一覧情報"""
 
     listing: Listing
     motions: List[EmoMotion]
@@ -264,8 +251,7 @@ class EmoMotionsInfo(BaseModel):
 
 
 class EmoWebhookInfo(BaseModel):
-    """現在設定されているWebhookの情報
-    """
+    """現在設定されているWebhookの情報"""
 
     description: str
     """Webhookの設定に関する説明書き
@@ -291,8 +277,7 @@ class EmoWebhookInfo(BaseModel):
 
 
 class EmoSensor(BaseModel):
-    """BOCCO emoとペアリングされているセンサ情報
-    """
+    """BOCCO emoとペアリングされているセンサ情報"""
 
     uuid: str
     """センサのid
@@ -316,16 +301,15 @@ class EmoSensor(BaseModel):
 
 
 class EmoSensorsInfo(BaseModel):
-    """BOCCO emoとペアリングされているセンサ情報の一覧
-    """
+    """BOCCO emoとペアリングされているセンサ情報の一覧"""
 
     sensors: List[EmoSensor]
     """ベアリングされているセンサの一覧
     """
 
+
 class EmoRoomSensorEvent(BaseModel):
-    """部屋センサの送信値
-    """
+    """部屋センサの送信値"""
 
     temperature: Union[int, float]
     """温度
@@ -341,8 +325,7 @@ class EmoRoomSensorEvent(BaseModel):
 
 
 class EmoRoomSensorInfo(BaseModel):
-    """部屋センサの送信値の一覧
-    """
+    """部屋センサの送信値の一覧"""
 
     sensor_type: str
     """センサの種類
@@ -362,8 +345,7 @@ class EmoRoomSensorInfo(BaseModel):
 
 
 class EmoSettingsInfo(BaseModel):
-    """現在のBOCCO emoの設定値
-    """
+    """現在のBOCCO emoの設定値"""
 
     nickname: str
     """ニックネーム
@@ -403,8 +385,7 @@ class EmoSettingsInfo(BaseModel):
 
 
 class EmoBroadcastMessage(BaseModel):
-    """配信メッセージの情報
-    """
+    """配信メッセージの情報"""
 
     id: int
     """配信メッセージのid
@@ -440,8 +421,7 @@ class EmoBroadcastMessage(BaseModel):
 
 
 class EmoBroadcastInfoList(BaseModel):
-    """配信メッセージの一覧情報
-    """
+    """配信メッセージの一覧情報"""
 
     listing: Listing
 
@@ -451,8 +431,7 @@ class EmoBroadcastInfoList(BaseModel):
 
 
 class EmoBroadcastMessageDetail(BaseModel):
-    """配信メッセージの詳細
-    """
+    """配信メッセージの詳細"""
 
     room_uuid: str
     """配信された部屋のid
@@ -480,8 +459,7 @@ class EmoBroadcastMessageDetail(BaseModel):
 
 
 class EmoBroadcastInfo(BaseModel):
-    """配信メッセージの詳細情報
-    """
+    """配信メッセージの詳細情報"""
 
     message: EmoBroadcastMessage
     """配信メッセージの情報
@@ -493,8 +471,7 @@ class EmoBroadcastInfo(BaseModel):
 
 
 class EmoPaymentInfo(BaseModel):
-    """請求情報の詳細
-    """
+    """請求情報の詳細"""
 
     id: int
     """請求情報のid
@@ -546,24 +523,22 @@ class EmoPaymentInfo(BaseModel):
 
 
 class EmoPaymentsInfo(BaseModel):
-    """請求情報の一覧
-    """
+    """請求情報の一覧"""
 
     listing: Listing
     payments: List[EmoPaymentInfo]
     """請求情報の詳細の一覧
     """
 
+
 class EmoKind(BaseModel):
-    """様々な種別に関する情報
-    """
+    """様々な種別に関する情報"""
 
     kind: str
 
 
 class EmoWebhookTriggerWord(BaseModel):
-    """Webhookで受信したトリガーワードイベントに関する情報
-    """
+    """Webhookで受信したトリガーワードイベントに関する情報"""
 
     trigger_word: EmoKind
     """トリガーワードの種別の情報
@@ -578,8 +553,7 @@ class EmoWebhookTriggerWord(BaseModel):
 
 
 class EmoPerformedBy(BaseModel):
-    """録音が実行されたきっかけに関する情報
-    """
+    """録音が実行されたきっかけに関する情報"""
 
     performed_by: str
     """録音が実行されたきっかけのアクションを示す値
@@ -590,9 +564,9 @@ class EmoPerformedBy(BaseModel):
             音声コマンドでの録音命令が実施された場合の値
     """
 
+
 class EmoWebhookRecording(BaseModel):
-    """Webhookで受信した録音イベントに関する情報
-    """
+    """Webhookで受信した録音イベントに関する情報"""
 
     recording: EmoPerformedBy
     """録音が実行されたきっかけに関する情報
@@ -600,36 +574,31 @@ class EmoWebhookRecording(BaseModel):
 
 
 class EmoMinutes(BaseModel):
-    """Webhookで受信した音声イベントコマンドのタイマーでセットした時間(分)に関する情報
-    """
+    """Webhookで受信した音声イベントコマンドのタイマーでセットした時間(分)に関する情報"""
 
     minutes: str
 
 
 class EmoTime(BaseModel):
-    """Webhookで受信した音声イベントコマンドのアラームのセット時刻に関する情報
-    """
+    """Webhookで受信した音声イベントコマンドのアラームのセット時刻に関する情報"""
 
     time: str
 
 
 class EmoArea(BaseModel):
-    """Webhookで受信した音声イベントコマンドの天気の場所に関する情報
-    """
+    """Webhookで受信した音声イベントコマンドの天気の場所に関する情報"""
 
     area: str
 
 
 class EmoVolume(BaseModel):
-    """Webhookで受信した音声イベントコマンドの音量の値に関する情報
-    """
+    """Webhookで受信した音声イベントコマンドの音量の値に関する情報"""
 
     volume: str
 
 
 class EmoVuiCommand(BaseModel):
-    """音声コマンドに関する情報
-    """
+    """音声コマンドに関する情報"""
 
     kind: str
     """音声コマンドの種別を示す値
@@ -643,8 +612,7 @@ class EmoVuiCommand(BaseModel):
 
 
 class EmoWebhookVuiCommand(BaseModel):
-    """Webhookで受信した音声コマンドイベントに関する情報
-    """
+    """Webhookで受信した音声コマンドイベントに関する情報"""
 
     vui_command: Union[EmoVuiCommand, EmoKind]
     """音声コマンドとトリガワードの種類に関する情報
@@ -652,8 +620,7 @@ class EmoWebhookVuiCommand(BaseModel):
 
 
 class EmoWebhookMotion(BaseModel):
-    """Webhookで受信したモーション実行完了イベントに関する情報
-    """
+    """Webhookで受信したモーション実行完了イベントに関する情報"""
 
     motion: EmoKind
     """実行されたモーションの種別を示す値
@@ -661,8 +628,7 @@ class EmoWebhookMotion(BaseModel):
 
 
 class EmoTalk(BaseModel):
-    """BOCCO emoが発話した内容に関する情報
-    """
+    """BOCCO emoが発話した内容に関する情報"""
 
     talk: str
     """発話した内容を示すテキスト
@@ -670,8 +636,7 @@ class EmoTalk(BaseModel):
 
 
 class EmoWebhookEmoTalk(BaseModel):
-    """Webhookで受信した発話完了イベントに関する情報
-    """
+    """Webhookで受信した発話完了イベントに関する情報"""
 
     emo_talk: EmoTalk
     """BOCCO emoが発話した内容に関する情報
@@ -679,8 +644,7 @@ class EmoWebhookEmoTalk(BaseModel):
 
 
 class EmoWebhookAccel(BaseModel):
-    """Webhookで受信した内蔵加速度センサイベントに関する情報
-    """
+    """Webhookで受信した内蔵加速度センサイベントに関する情報"""
 
     accel: EmoKind
     """レーダセンサが検知したイベントを示す値
@@ -703,8 +667,7 @@ class EmoWebhookAccel(BaseModel):
 
 
 class EmoWebhookIlluminance(BaseModel):
-    """Webhookで受信した内蔵照度センサイベントに関する情報
-    """
+    """Webhookで受信した内蔵照度センサイベントに関する情報"""
 
     illuminance: EmoKind
     """照度センサが検知したイベントを示す値
@@ -717,8 +680,7 @@ class EmoWebhookIlluminance(BaseModel):
 
 
 class EmoRadar(BaseModel):
-    """レーダセンサが検知したイベントの情報
-    """
+    """レーダセンサが検知したイベントの情報"""
 
     begin: bool
     """BOCCO emoの近くに人がいる時に、true が設定されます。
@@ -738,8 +700,7 @@ class EmoRadar(BaseModel):
 
 
 class EmoWebhookRadar(BaseModel):
-    """Webhookで受信した内蔵レーダーセンサイベントに関する情報
-    """
+    """Webhookで受信した内蔵レーダーセンサイベントに関する情報"""
 
     radar: EmoRadar
     """レーダセンサが検知したイベントの情報
@@ -747,8 +708,7 @@ class EmoWebhookRadar(BaseModel):
 
 
 class EmoWebhookMessage(BaseModel):
-    """Webhookで受信した新規メッセージ受信イベントに関する情報
-    """
+    """Webhookで受信した新規メッセージ受信イベントに関する情報"""
 
     message: EmoMessageInfo
     """BOCCO emoが受信したメッセージを示す値
@@ -756,8 +716,7 @@ class EmoWebhookMessage(BaseModel):
 
 
 class EmoWebhookSensorMessage(BaseModel):
-    """センサの通知内容
-    """
+    """センサの通知内容"""
 
     sequence: int
     """通知された時間を示す値
@@ -789,8 +748,7 @@ class EmoWebhookSensorMessage(BaseModel):
 
 
 class EmoWebhookMovementSensor(BaseModel):
-    """Webhookで受信した振動センサ反応イベントに関する情報
-    """
+    """Webhookで受信した振動センサ反応イベントに関する情報"""
 
     movement_sensor: EmoWebhookSensorMessage
     """振動センサの通知内容
@@ -798,8 +756,7 @@ class EmoWebhookMovementSensor(BaseModel):
 
 
 class EmoWebhookLockSensor(BaseModel):
-    """Webhookで受信した鍵センサ反応イベントに関する情報
-    """
+    """Webhookで受信した鍵センサ反応イベントに関する情報"""
 
     lock_sensor: EmoWebhookSensorMessage
     """鍵センサの通知内容
@@ -807,8 +764,7 @@ class EmoWebhookLockSensor(BaseModel):
 
 
 class EmoWebhookHumanSensor(BaseModel):
-    """Webhookで受信した人感センサ反応イベントに関する情報
-    """
+    """Webhookで受信した人感センサ反応イベントに関する情報"""
 
     human_sensor: EmoWebhookSensorMessage
     """人感センサの通知内容
@@ -816,8 +772,7 @@ class EmoWebhookHumanSensor(BaseModel):
 
 
 class EmoWebhookRoomSensor(BaseModel):
-    """Webhookで受信した部屋センサ反応イベントに関する情報
-    """
+    """Webhookで受信した部屋センサ反応イベントに関する情報"""
 
     room_sensor: EmoWebhookSensorMessage
     """部屋センサの通知内容
@@ -825,8 +780,7 @@ class EmoWebhookRoomSensor(BaseModel):
 
 
 class EmoWebhookBody(BaseModel):
-    """受信したWebhookの内容
-    """
+    """受信したWebhookの内容"""
 
     request_id: str
     """リクエストの同一性を示す、一意の文字列
