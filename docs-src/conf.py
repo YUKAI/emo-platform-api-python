@@ -55,3 +55,5 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 html_style = "css/custom_theme.css"
+
+autodoc_member_order = 'bysource'

@@ -5,3 +5,4 @@ emo-platform-api-python
    :maxdepth: 4
 
    emo_platform
+   memo
