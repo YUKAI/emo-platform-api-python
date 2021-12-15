@@ -777,3 +777,11 @@ class EmoWebhookBody(BaseModel):
     """
 
     receiver: str
+    """Webhook受信者を示すid
+
+        Personal版の場合
+            :func:`get_account_info` から確認できるBOCCOアカウントのuuid
+        Business版の場合
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認できる法人向けAPIキーと同じ文字列
+    """
