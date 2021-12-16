@@ -115,19 +115,19 @@ class AsyncClient:
 
         try:
             res_tokens = await self.get_access_token(
-                self._client.tm.tokens.refresh_token
+                self._client._tm.tokens.refresh_token
             )
         except UnauthorizedError as e:
             raise TokenError(
                 "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
             ) from e
         else:
-            self._client.tm.tokens.access_token = res_tokens.access_token
-            self._client.tm.tokens.refresh_token = res_tokens.refresh_token
-            self._client.headers["Authorization"] = (
-                "Bearer " + self._client.tm.tokens.access_token
+            self._client._tm.tokens.access_token = res_tokens.access_token
+            self._client._tm.tokens.refresh_token = res_tokens.refresh_token
+            self._client._headers["Authorization"] = (
+                "Bearer " + self._client._tm.tokens.access_token
             )
-            self._client.tm.save_tokens()
+            self._client._tm.save_tokens()
             return
 
     async def _check_http_error(
@@ -155,9 +155,9 @@ class AsyncClient:
         async with aiohttp.ClientSession() as session:
             request = partial(
                 session.get,
-                self._client.endpoint_url + path,
+                self._client._endpoint_url + path,
                 params=params,
-                headers=self._client.headers,
+                headers=self._client._headers,
             )
             return await self._check_http_error(request)
 
@@ -170,16 +170,16 @@ class AsyncClient:
         update_tokens: bool = True,
     ) -> dict:
         if content_type is None:
-            if "Content-Type" in self._client.headers:
-                self._client.headers.pop("Content-Type")
+            if "Content-Type" in self._client._headers:
+                self._client._headers.pop("Content-Type")
         else:
-            self._client.headers["Content-Type"] = content_type
+            self._client._headers["Content-Type"] = content_type
         async with aiohttp.ClientSession() as session:
             request = partial(
                 session.post,
-                self._client.endpoint_url + path,
+                self._client._endpoint_url + path,
                 data=data,
-                headers=self._client.headers,
+                headers=self._client._headers,
             )
             return await self._check_http_error(request, update_tokens=update_tokens)
 
@@ -187,9 +187,9 @@ class AsyncClient:
         async with aiohttp.ClientSession() as session:
             request = partial(
                 session.put,
-                self._client.endpoint_url + path,
+                self._client._endpoint_url + path,
                 data=data,
-                headers=self._client.headers,
+                headers=self._client._headers,
             )
             return await self._check_http_error(request)
 
@@ -197,8 +197,8 @@ class AsyncClient:
         async with aiohttp.ClientSession() as session:
             request = partial(
                 session.delete,
-                self._client.endpoint_url + path,
-                headers=self._client.headers,
+                self._client._endpoint_url + path,
+                headers=self._client._headers,
             )
             return await self._check_http_error(request)
 
@@ -762,7 +762,7 @@ class BizAsyncClient(AsyncClient):
         super().__init__(
             endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
         )
-        self._client.headers["X-Channel-User"] = api_key
+        self._client._headers["X-Channel-User"] = api_key
 
     async def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
         """アカウント情報の取得

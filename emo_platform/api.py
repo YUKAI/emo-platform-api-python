@@ -178,18 +178,14 @@ class Client:
         token_file_path: Optional[str] = None,
     ):
         self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path)
-        self.endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
-        self.headers: Dict[str, Optional[str]] = {
+        self._endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
+        self._headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
             "Content-Type": PostContentType.APPLICATION_JSON,
             "Authorization": "Bearer " + self._tm.tokens.access_token,
         }
-        self.webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
-        self.request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
-
-    @property
-    def tm(self):
-        return self._tm
+        self._webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
+        self._request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
 
     def update_tokens(self) -> None:
         """トークンの更新と保存
@@ -222,7 +218,7 @@ class Client:
         else:
             self._tm.tokens.access_token = res_tokens.access_token
             self._tm.tokens.refresh_token = res_tokens.refresh_token
-            self.headers["Authorization"] = "Bearer " + self._tm.tokens.access_token
+            self._headers["Authorization"] = "Bearer " + self._tm.tokens.access_token
             self._tm.save_tokens()
             return
 
@@ -245,7 +241,7 @@ class Client:
 
     def _get(self, path: str, params: dict = {}) -> dict:
         request = partial(
-            requests.get, self.endpoint_url + path, params=params, headers=self.headers
+            requests.get, self._endpoint_url + path, params=params, headers=self._headers
         )
         return self._check_http_error(request)
 
@@ -257,25 +253,25 @@ class Client:
         content_type: Optional[str] = PostContentType.APPLICATION_JSON,
         update_tokens: bool = True,
     ) -> dict:
-        self.headers["Content-Type"] = content_type
+        self._headers["Content-Type"] = content_type
         request = partial(
             requests.post,
-            self.endpoint_url + path,
+            self._endpoint_url + path,
             data=data,
             files=files,
-            headers=self.headers,
+            headers=self._headers,
         )
         return self._check_http_error(request, update_tokens=update_tokens)
 
     def _put(self, path: str, data: str = "{}") -> dict:
         request = partial(
-            requests.put, self.endpoint_url + path, data=data, headers=self.headers
+            requests.put, self._endpoint_url + path, data=data, headers=self._headers
         )
         return self._check_http_error(request)
 
     def _delete(self, path: str) -> dict:
         request = partial(
-            requests.delete, self.endpoint_url + path, headers=self.headers
+            requests.delete, self._endpoint_url + path, headers=self._headers
         )
         return self._check_http_error(request)
 
@@ -712,11 +708,11 @@ class Client:
 
         def decorator(func):
 
-            if event not in self.webhook_events_cb:
-                self.webhook_events_cb[event] = {}
+            if event not in self._webhook_events_cb:
+                self._webhook_events_cb[event] = {}
 
             for room_id in room_id_list:
-                self.webhook_events_cb[event][room_id] = func
+                self._webhook_events_cb[event][room_id] = func
 
         return decorator
 
@@ -774,7 +770,7 @@ class Client:
 
         """
 
-        response = self.register_webhook_event(list(self.webhook_events_cb.keys()))
+        response = self.register_webhook_event(list(self._webhook_events_cb.keys()))
         secret_key = response.secret
 
         self.app = FastAPI()
@@ -784,9 +780,9 @@ class Client:
             request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
         ):
             if request.headers.get("x-platform-api-secret") == secret_key:
-                if body.request_id not in self.request_id_deque:
+                if body.request_id not in self._request_id_deque:
                     try:
-                        event_cb = self.webhook_events_cb[body.event]
+                        event_cb = self._webhook_events_cb[body.event]
                     except KeyError:
                         return "fail. no callback associated with the event.", 500
                     room_id = body.uuid
@@ -797,7 +793,7 @@ class Client:
                     else:
                         return "fail. no callback associated with the room.", 500
                     background_tasks.add_task(cb_func, body)
-                    self.request_id_deque.append(body.request_id)
+                    self._request_id_deque.append(body.request_id)
                     return "success", 200
 
         uvicorn.run(self.app, host=host, port=port)
@@ -824,7 +820,7 @@ class BizClient(Client):
         super().__init__(
             endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
         )
-        self.headers["X-Channel-User"] = api_key
+        self._headers["X-Channel-User"] = api_key
 
     def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
         """アカウント情報の取得
