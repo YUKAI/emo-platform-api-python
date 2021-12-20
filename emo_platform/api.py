@@ -48,14 +48,15 @@ class TokenManager:
     _TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
     _PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
     _INITIAL_TOKENS = {"access_token": "", "refresh_token": ""}
+    _INITIAL_SET_TOKENS = {"os": _INITIAL_TOKENS, "args": _INITIAL_TOKENS}
 
     def __init__(
         self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
     ):
         self._set_token_file_path(token_file_path)
-        self._prevoius_set_tokens = self._load_previous_set_tokens()
-        self._current_set_tokens = self._get_currnet_set_tokens(tokens)
-        self._save_current_set_tokens()
+        self._current_set_tokens = self._get_current_set_tokens(tokens)
+        self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
+        self._update_previous_set_tokens_file(tokens)
         self.tokens = self._get_latest_tokens()
 
     def _set_token_file_path(self, token_file_path) -> None:
@@ -65,20 +66,13 @@ class TokenManager:
                 f"{token_file_path}/emo-platform-api_previous.json"
             )
 
-    def _load_previous_set_tokens(self) -> Tokens:
-        try:
-            with open(self._PREVOIUS_TOKEN_FILE) as f:
-                return Tokens(**json.load(f))
-        except FileNotFoundError:
-            return Tokens(**self._INITIAL_TOKENS)
-
-    def _get_currnet_set_tokens(self, tokens: Optional[Tokens]) -> Tokens:
+    def _get_current_set_tokens(self, tokens: Optional[Tokens]) -> Tokens:
         if tokens:
             return tokens
         else:
-            return self._get_currnet_os_env_tokens()
+            return self._get_current_os_env_tokens()
 
-    def _get_currnet_os_env_tokens(self) -> Tokens:
+    def _get_current_os_env_tokens(self) -> Tokens:
         access_token = self._get_currnet_os_env_access_token()
         refresh_token = self._get_currnet_os_env_refresh_token()
         return Tokens(**{"refresh_token": refresh_token, "access_token": access_token})
@@ -86,42 +80,39 @@ class TokenManager:
     def _get_currnet_os_env_access_token(self) -> str:
         try:
             return os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
-        except KeyError as e:
-            # try to use old prevoius os env access token when current one doesn't exsist
-            if (self._prevoius_set_tokens.access_token) == "":
-                raise TokenError("set tokens as 'EMO_PLATFORM_API_ACCESS_TOKEN'") from e
-            else:
-                return self._prevoius_set_tokens.access_token
+        except KeyError:
+            return ""
 
     def _get_currnet_os_env_refresh_token(self) -> str:
         try:
             return os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
-        except KeyError as e:
-            # try to use old prevoius os env refresh token when current one doesn't exsist
-            if (self._prevoius_set_tokens.refresh_token) == "":
-                raise TokenError(
-                    "set tokens as 'EMO_PLATFORM_API_REFRESH_TOKEN'"
-                ) from e
-            else:
-                return self._prevoius_set_tokens.refresh_token
+        except KeyError:
+            return ""
 
-    def _save_current_set_tokens(self) -> None:
+    def _load_previous_set_tokens_file(self) -> dict:
+        try:
+            with open(self._PREVOIUS_TOKEN_FILE) as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return self._INITIAL_SET_TOKENS
+
+    def _update_previous_set_tokens_file(self, tokens) -> None:
+        how2set = "os" if tokens is None else "args"
+        self._previous_set_tokens = Tokens(**self._previous_set_tokens_dict[how2set])
+        self._previous_set_tokens_dict[how2set] = asdict(self._current_set_tokens)
+
         with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
-            json.dump(asdict(self._current_set_tokens), f)
+            json.dump(self._previous_set_tokens_dict, f)
 
     def _get_latest_tokens(self) -> Tokens:
-        # compare new os env tokens with old ones
-        if self._current_set_tokens == self._prevoius_set_tokens:
+        # compare new set tokens with old ones
+        if self._current_set_tokens == self._previous_set_tokens:
             try:
                 with open(self._TOKEN_FILE) as f:
                     return Tokens(**json.load(f))
             except FileNotFoundError:
-                with open(self._TOKEN_FILE, "w") as f:
-                    json.dump(asdict(self._current_set_tokens), f)
                 return self._current_set_tokens
-        else:  # reset json file when os env token updated
-            with open(self._TOKEN_FILE, "w") as f:
-                json.dump(asdict(self._current_set_tokens), f)
+        else:  # reset json file when set tokens updated
             return self._current_set_tokens
 
     def save_tokens(self) -> None:
@@ -186,6 +177,7 @@ class Client:
         }
         self._webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self._request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
+        self._is_first_http_request = True
 
     def update_tokens(self) -> None:
         """トークンの更新と保存
@@ -231,6 +223,9 @@ class Client:
             if not update_tokens:
                 raise
         else:
+            if self._is_first_http_request:
+                self._is_first_http_request = False
+                self._tm.save_tokens()
             return response.json()
 
         self.update_tokens()
