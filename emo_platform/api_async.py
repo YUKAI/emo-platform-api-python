@@ -59,8 +59,10 @@ class AsyncClient:
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
-                現在、環境変数として設定されているトークンが記録されたファイル。
-                前回から更新があったかを確認するために使用されます。
+                前回、引数として指定されたトークンと環境変数として設定されていたトークンが記録されたファイル。
+
+                BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
+
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
     Raises
     ----------
@@ -119,7 +121,7 @@ class AsyncClient:
             )
         except UnauthorizedError as e:
             raise TokenError(
-                "Please set new refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN'"
+                "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN' or give args to client using emo_platform.Tokens"
             ) from e
         else:
             self._client._tm.tokens.access_token = res_tokens.access_token
@@ -963,9 +965,9 @@ class BizBasicAsyncClient(BizAsyncClient):
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
-                現在、環境変数として設定されているトークンが記録されたファイル。
+                前回、引数として指定されたトークンと環境変数として設定されていたトークンが記録されたファイル。
 
-                前回から更新があったかを確認するために使用されます。
+                BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
     Raises
@@ -1155,9 +1157,9 @@ class BizAdvancedAsyncClient(BizAsyncClient):
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
-                現在、環境変数として設定されているトークンが記録されたファイル。
+                前回、引数として指定されたトークンと環境変数として設定されていたトークンが記録されたファイル。
 
-                前回から更新があったかを確認するために使用されます。
+                BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
     Raises
