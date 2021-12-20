@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from emo_platform import Client
 from emo_platform.exceptions import NoRoomError, TokenError, UnauthorizedError
 from emo_platform.response import RoomInfo, EmoRoomInfo, Listing
+from emo_platform.models import Tokens
 
 EMO_PLATFORM_TEST_PATH = os.path.abspath(os.path.dirname(__file__))
 TOKEN_FILE = f"{EMO_PLATFORM_TEST_PATH}/../emo_platform/tokens/emo-platform-api.json"
@@ -245,6 +246,20 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
+    def test_set_reset_args(self):
+        tokens = Tokens(refresh_token=self.right_refresh_token)
+        client = Client(self.test_endpoint, tokens=tokens)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
+
+        client = Client(self.test_endpoint)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
+
+        tokens = Tokens(access_token=self.right_access_token)
+        client = Client(self.test_endpoint, tokens=tokens)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
+
+        client = Client(self.test_endpoint)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
 
 class TestCheckHttpError(unittest.TestCase, TestBaseClass):
     def setUp(self):
