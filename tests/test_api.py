@@ -131,13 +131,13 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
 
     def test_no_access_env_token_set(self):  # access -
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
+        client = Client(self.test_endpoint)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
 
     def test_no_refresh_env_token_set(self):  # refresh -
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.right_access_token
-        with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint)
+        client = Client(self.test_endpoint)
+        self.assertEqual(client.get_account_info(), self.test_account_info)
 
     def test_wr_wa_env_token_set(self):  # access x, refresh x
         os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"] = self.wrong_access_token
@@ -281,7 +281,7 @@ class TestCheckHttpError(unittest.TestCase, TestBaseClass):
 
         client = Client(self.test_endpoint)
         request = partial(
-            requests.get, self.test_endpoint + "/v1/me", headers=client.headers
+            requests.get, self.test_endpoint + "/v1/me", headers=client._headers
         )
         self.assertEqual(
             client._check_http_error(request=request), self.test_account_info
@@ -324,7 +324,7 @@ class TestWebhookRegister(unittest.TestCase, TestBaseClass):
         def test_webhook_callback():
             return return_val
 
-        self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+        self.assertEqual(client._webhook_events_cb["test_event"][""](), return_val)
 
         return_val = "test_webhook_callback_new"
 
@@ -332,7 +332,7 @@ class TestWebhookRegister(unittest.TestCase, TestBaseClass):
         def test_webhook_callback_new():
             return return_val
 
-        self.assertEqual(client.webhook_events_cb["test_event"][""](), return_val)
+        self.assertEqual(client._webhook_events_cb["test_event"][""](), return_val)
 
     def test_register_event_with_room_id(self):
         client = Client(self.test_endpoint)
@@ -353,10 +353,10 @@ class TestWebhookRegister(unittest.TestCase, TestBaseClass):
             return return_val_new
 
         self.assertEqual(
-            client.webhook_events_cb["test_event"][old_room_uuid](), return_val
+            client._webhook_events_cb["test_event"][old_room_uuid](), return_val
         )
         self.assertEqual(
-            client.webhook_events_cb["test_event"][new_room_uuid](), return_val_new
+            client._webhook_events_cb["test_event"][new_room_uuid](), return_val_new
         )
 
 

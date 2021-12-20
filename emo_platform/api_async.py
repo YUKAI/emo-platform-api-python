@@ -616,11 +616,11 @@ class AsyncClient:
 
         def decorator(func):
 
-            if event not in self._client.webhook_events_cb:
-                self._client.webhook_events_cb[event] = {}
+            if event not in self._client._webhook_events_cb:
+                self._client._webhook_events_cb[event] = {}
 
             for room_id in room_id_list:
-                self._client.webhook_events_cb[event][room_id] = func
+                self._client._webhook_events_cb[event][room_id] = func
 
         return decorator
 
@@ -704,7 +704,7 @@ class AsyncClient:
         """
 
         response = await self.register_webhook_event(
-            list(self._client.webhook_events_cb.keys())
+            list(self._client._webhook_events_cb.keys())
         )
         secret_key = response.secret
 
@@ -715,9 +715,9 @@ class AsyncClient:
             request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
         ):
             if request.headers.get("x-platform-api-secret") == secret_key:
-                if body.request_id not in self._client.request_id_deque:
+                if body.request_id not in self._client._request_id_deque:
                     try:
-                        event_cb = self._client.webhook_events_cb[body.event]
+                        event_cb = self._client._webhook_events_cb[body.event]
                     except KeyError:
                         return "fail. no callback associated with the event.", 500
                     room_id = body.uuid
@@ -728,7 +728,7 @@ class AsyncClient:
                     else:
                         return "fail. no callback associated with the room.", 500
                     background_tasks.add_task(cb_func, body)
-                    self._client.request_id_deque.append(body.request_id)
+                    self._client._request_id_deque.append(body.request_id)
                     return "success", 200
 
         loop = asyncio.get_event_loop()

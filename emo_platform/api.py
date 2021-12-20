@@ -54,8 +54,8 @@ class TokenManager:
         self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
     ):
         self._set_token_file_path(token_file_path)
-        self._current_set_tokens = self._get_current_set_tokens(tokens)
         self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
+        self._current_set_tokens = self._get_current_set_tokens(tokens)
         self._update_previous_set_tokens_file(tokens)
         self.tokens = self._get_latest_tokens()
 
@@ -81,13 +81,13 @@ class TokenManager:
         try:
             return os.environ["EMO_PLATFORM_API_ACCESS_TOKEN"]
         except KeyError:
-            return ""
+            return self._previous_set_tokens_dict["os"]["access_token"]
 
     def _get_currnet_os_env_refresh_token(self) -> str:
         try:
             return os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"]
         except KeyError:
-            return ""
+            return self._previous_set_tokens_dict["os"]["refresh_token"]
 
     def _load_previous_set_tokens_file(self) -> dict:
         try:
