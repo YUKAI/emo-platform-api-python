@@ -1547,7 +1547,7 @@ class Room:
 
         Parameters
         ----------
-        file_path : str or dict
+        motion_data : str or dict
             モーションファイルを置いている絶対パス。
 
             あるいは、モーションを記述した辞書オブジェクト。
