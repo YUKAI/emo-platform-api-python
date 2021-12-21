@@ -41,6 +41,10 @@ from emo_platform import Client, Tokens
 client = Client(Tokens(access_token="***", refresh_token="***"))
 ```
 
+### Note
+- Once you set tokens as arguments or environment variables, the tokens are saved in the sdk and you don't need to specify any arguments or set any environment variables next time.
+- If you want to overwrite the tokens with the other tokens, for example if you want to change your account, set the new tokens again with arguments or environment variables.
+
 ## For business user
 When you use business version, you need to give api_key as argument when initializing client.
 
@@ -113,9 +117,11 @@ def illuminance_callback(data):
 	print(data)
 
 client.start_webhook_event()
+```
 
 ## Cli Tool
 You can use command line interface when you install this sdk with poetry.
+
 ```bash
 $ poetry run python cli.py personal --refresh_token *** get_account_info
 
