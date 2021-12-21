@@ -1,5 +1,6 @@
 from pydantic.dataclasses import dataclass
 
+
 @dataclass
 class Tokens:
     """API利用に必要なトークンの情報。

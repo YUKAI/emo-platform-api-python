@@ -238,7 +238,10 @@ class Client:
 
     def _get(self, path: str, params: dict = {}) -> dict:
         request = partial(
-            requests.get, self._endpoint_url + path, params=params, headers=self._headers
+            requests.get,
+            self._endpoint_url + path,
+            params=params,
+            headers=self._headers,
         )
         return self._check_http_error(request)
 

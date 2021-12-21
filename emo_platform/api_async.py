@@ -1287,7 +1287,9 @@ class AsyncRoom:
 
         """
 
-        response = await self._base_client._get("/v1/rooms/" + self.room_id + "/sensors")
+        response = await self._base_client._get(
+            "/v1/rooms/" + self.room_id + "/sensors"
+        )
         return EmoSensorsInfo(**response)
 
     async def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
