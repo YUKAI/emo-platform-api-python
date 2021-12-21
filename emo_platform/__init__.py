@@ -1,5 +1,5 @@
-from .api import Client
-from .api_async import AsyncClient
+from .api import BizAdvancedClient, BizBasicClient, Client
+from .api_async import AsyncClient, BizAdvancedAsyncClient, BizBasicAsyncClient
 from .exceptions import (
     BadRequestError,
     EmoPlatformError,
@@ -8,6 +8,7 @@ from .exceptions import (
     RateLimitError,
     TokenError,
     UnauthorizedError,
+    UnavailableError,
     UnknownError,
 )
-from .models import Color, Head, WebHook
+from .models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook

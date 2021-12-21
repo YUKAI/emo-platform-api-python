@@ -26,11 +26,19 @@ $ pip3 install emo-platform-api-sdk
 
 You can see access token & refresh token from dashboard in [this page](https://platform-api.bocco.me/dashboard/login) after login.
 
-Then, set those tokens as environment variables.
+Then, set those tokens as environment variables in terminal.
 
 ```bash
 export EMO_PLATFORM_API_ACCESS_TOKEN="***"
 export EMO_PLATFORM_API_REFRESH_TOKEN="***"
+```
+
+Or, you can give as argument when initializing client in python code.
+
+```python
+from emo_platform import Client, Tokens
+
+client = Client(Tokens(access_token="***", refresh_token="***"))
 ```
 
 ## Usage Example

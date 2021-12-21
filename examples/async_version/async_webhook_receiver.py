@@ -6,9 +6,6 @@ import asyncio
 from emo_platform import AsyncClient, WebHook
 
 client = AsyncClient()
-# Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
-client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
-
 
 async def print_queue(queue):
     while True:
@@ -19,6 +16,8 @@ async def print_queue(queue):
 
 async def main():
     queue = asyncio.Queue()
+    # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
+    await client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
 
     @client.event("message.received")
     async def message_callback(body):
