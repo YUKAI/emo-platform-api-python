@@ -17,6 +17,7 @@ requests = "^2.26.0"
 fastapi = "^0.68.1"
 uvicorn = "^0.15.0"
 aiohttp = "^3.7.4"
+fire = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 black = "*"
