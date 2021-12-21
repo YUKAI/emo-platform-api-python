@@ -236,6 +236,10 @@ class AsyncClient:
 
         """
 
+        if refresh_token == "":
+            raise TokenError(
+                "Please set refresh_token as environment variable 'EMO_PLATFORM_API_REFRESH_TOKEN' or give args to client using emo_platform.Tokens"
+            )
         payload = {"refresh_token": refresh_token}
         response = await self._post(
             "/oauth/token/refresh", json.dumps(payload), update_tokens=False
