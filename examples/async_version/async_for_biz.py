@@ -3,10 +3,13 @@ import asyncio
 from emo_platform import BizBasicAsyncClient, BizAdvancedAsyncClient
 from emo_platform.models import AccountInfo, BroadcastMsg
 
-# Your api key to use biz version
-api_key = ""
+# Please replace "YOUR API KEY" with your api key to use biz version
+api_key = "YOUR API KEY"
 
+# business basic version
 client = BizBasicAsyncClient(api_key=api_key)
+
+# business advanced version
 # client = BizAdvancedAsyncClient(api_key=api_key)
 
 async def main():

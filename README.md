@@ -41,6 +41,24 @@ from emo_platform import Client, Tokens
 client = Client(Tokens(access_token="***", refresh_token="***"))
 ```
 
+### Note
+- Once you set tokens as arguments or environment variables, the tokens are saved in the sdk and you don't need to specify any arguments or set any environment variables next time.
+- If you want to overwrite the tokens with the other tokens, for example if you want to change your account, set the new tokens again with arguments or environment variables.
+
+## For business user
+When you use business version, you need to give api_key as argument when initializing client.
+
+You can find the API key in [this page](https://platform-api.bocco.me/dashboard/login) after login with business account.
+```python
+from emo_platform import BizBasicClient, BizAdvancedClient
+
+# business basic version
+client = BizBasicClient(api_key="***")
+
+# business advanced version
+client = BizAdvancedClient(api_key="***")
+```
+
 ## Usage Example
 
 You can also see other examples in "examples" directory.
@@ -99,5 +117,27 @@ def illuminance_callback(data):
 	print(data)
 
 client.start_webhook_event()
+```
 
+## Cli Tool
+You can use command line interface when you install this sdk with poetry.
+
+### Example1 : Use client
+Initially, you need to specify your account refresh token.
+```bash
+$ poetry run python cli.py personal --refresh_token *** get_account_info
+```
+Once you set refresh_token, you don't need to set again.
+```bash
+$ poetry run python cli.py personal get_account_info
+```
+
+### Example2 : Use room client
+Please replace ROOM_ID with room id which you want to use.
+```
+$ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
+```
+or
+```
+$ poetry run python cli.py personal room change_led_color 10 10 200
 ```

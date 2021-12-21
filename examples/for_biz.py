@@ -1,10 +1,16 @@
+"""Emo Platform API python example Executing method unique to buisness version.
+"""
+
 from emo_platform import BizBasicClient, BizAdvancedClient
 from emo_platform.models import AccountInfo, BroadcastMsg
 
-# Your api key to use biz version
-api_key = ""
+# Please replace "YOUR API KEY" with your api key to use biz version
+api_key = "YOUR API KEY"
 
+# business basic version
 client = BizBasicClient(api_key=api_key)
+
+# business advanced version
 # client = BizAdvancedClient(api_key=api_key)
 
 def main():

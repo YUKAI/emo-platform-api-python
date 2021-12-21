@@ -4,11 +4,17 @@
 import os
 import time
 
-from emo_platform import Client, Color, Head
+from emo_platform import Client, Color, Head, BizBasicClient, BizAdvancedClient
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 
+# personal version
 client = Client()
+
+# business advanced version
+# api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
+# client = BizAdvancedClient(api_key=api_key)
+
 rooms_id_list = client.get_rooms_id()
 # create room client
 room = client.create_room_client(rooms_id_list[0])
