@@ -41,6 +41,20 @@ from emo_platform import Client, Tokens
 client = Client(Tokens(access_token="***", refresh_token="***"))
 ```
 
+## For business user
+When you use business version, you need to give api_key as argument when initializing client.
+
+You can find the API key in [this page](https://platform-api.bocco.me/dashboard/login) after login with business account.
+```python
+from emo_platform import BizBasicClient, BizAdvancedClient
+
+# business basic version
+client = BizBasicClient(api_key="***")
+
+# business advanced version
+client = BizAdvancedClient(api_key="***")
+```
+
 ## Usage Example
 
 You can also see other examples in "examples" directory.

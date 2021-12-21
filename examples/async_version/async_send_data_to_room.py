@@ -4,11 +4,17 @@
 import asyncio
 import os
 
-from emo_platform import AsyncClient, Color, Head
+from emo_platform import AsyncClient, Color, Head, BizBasicAsyncClient, BizAdvancedAsyncClient
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 
+# personal version
 client = AsyncClient()
+
+# business advanced version
+# api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
+# client = BizAdvancedAsyncClient(api_key=api_key)
+
 room = []
 
 async def main():
@@ -33,8 +39,8 @@ async def main():
 
     # await send_all_stamp_motions()
 
-    # motion_data_path = f"{THIS_FILE_PATH}/../../assets/sample_motion.json"
-    # await send_original_motion(motion_data_path)
+    motion_data_path = f"{THIS_FILE_PATH}/../../assets/sample_motion.json"
+    await send_original_motion(motion_data_path)
 
     # motion_data = {
     #     "head": [
