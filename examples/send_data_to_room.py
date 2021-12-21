@@ -4,7 +4,7 @@
 import os
 import time
 
-from emo_platform import Client, Color, Head, BizBasicClient, BizAdvancedClient
+from emo_platform import BizAdvancedClient, BizBasicClient, Client, Color, Head
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 

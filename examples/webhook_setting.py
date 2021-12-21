@@ -1,7 +1,7 @@
 """Emo Platform API python example Setting webhook.
 """
 
-from emo_platform import Client, WebHook, BizAdvancedClient
+from emo_platform import BizAdvancedClient, Client, WebHook
 
 # personal version
 client = Client()
@@ -9,6 +9,7 @@ client = Client()
 # business advanced version
 # api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
 # client = BizAdvancedClient(api_key=api_key)
+
 
 def main():
     webhook = WebHook("http://localhost:8000", "test")

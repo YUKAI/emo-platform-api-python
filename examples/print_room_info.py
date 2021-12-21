@@ -1,7 +1,7 @@
 """Emo Platform API python example Getting information specific to room.
 """
 
-from emo_platform import Client, BizBasicClient, BizAdvancedClient
+from emo_platform import BizAdvancedClient, BizBasicClient, Client
 
 # personal version
 client = Client()

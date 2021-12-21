@@ -4,7 +4,13 @@
 import asyncio
 import os
 
-from emo_platform import AsyncClient, Color, Head, BizBasicAsyncClient, BizAdvancedAsyncClient
+from emo_platform import (
+    AsyncClient,
+    BizAdvancedAsyncClient,
+    BizBasicAsyncClient,
+    Color,
+    Head,
+)
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -16,6 +22,7 @@ client = AsyncClient()
 # client = BizAdvancedAsyncClient(api_key=api_key)
 
 room = []
+
 
 async def main():
     global room

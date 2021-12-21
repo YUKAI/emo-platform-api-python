@@ -1,7 +1,7 @@
 """Emo Platform API python example Receiving webhook data.
 """
 
-from emo_platform import Client, WebHook, BizAdvancedClient
+from emo_platform import BizAdvancedClient, Client, WebHook
 
 # personal version
 client = Client()

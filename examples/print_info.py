@@ -1,7 +1,7 @@
 """Emo Platform API python example Getting information not specific to room.
 """
 
-from emo_platform import Client, BizBasicClient, BizAdvancedClient
+from emo_platform import BizAdvancedClient, BizBasicClient, Client
 
 # personal version
 client = Client()
@@ -9,6 +9,7 @@ client = Client()
 # business advanced version
 # api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
 # client = BizAdvancedClient(api_key=api_key)
+
 
 def main():
     get_account_info()

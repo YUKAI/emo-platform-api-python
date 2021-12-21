@@ -1,7 +1,13 @@
 """Emo Platform API python example Catching exception.
 """
 
-from emo_platform import BadRequestError, Client, NotFoundError, RateLimitError, BizAdvancedClient
+from emo_platform import (
+    BadRequestError,
+    BizAdvancedClient,
+    Client,
+    NotFoundError,
+    RateLimitError,
+)
 
 # personal version
 client = Client()
