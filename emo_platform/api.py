@@ -1272,7 +1272,7 @@ class Room:
     """
 
     def __init__(self, base_client: Client, room_id: str):
-        self.base_client = base_client
+        self._base_client = base_client
         self.room_id = room_id
 
     def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
@@ -1306,7 +1306,7 @@ class Room:
         """
 
         params = {"before": ts} if ts else {}
-        response = self.base_client._get(
+        response = self._base_client._get(
             "/v1/rooms/" + self.room_id + "/messages", params=params
         )
         return EmoMsgsInfo(**response)
@@ -1340,7 +1340,7 @@ class Room:
 
         """
 
-        response = self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
+        response = self._base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
     def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
@@ -1374,7 +1374,7 @@ class Room:
 
         """
 
-        response = self.base_client._get(
+        response = self._base_client._get(
             "/v1/rooms/" + self.room_id + "/sensors/" + sensor_id + "/values"
         )
         return EmoRoomSensorInfo(**response)
@@ -1416,7 +1416,7 @@ class Room:
 
         with open(audio_data_path, "rb") as audio_data:
             files = {"audio": audio_data}
-            response = self.base_client._post(
+            response = self._base_client._post(
                 "/v1/rooms/" + self.room_id + "/messages/audio",
                 files=files,
                 content_type=PostContentType.MULTIPART_FORMDATA,
@@ -1460,7 +1460,7 @@ class Room:
 
         with open(image_data_path, "rb") as image_data:
             files = {"image": image_data}
-            response = self.base_client._post(
+            response = self._base_client._post(
                 "/v1/rooms/" + self.room_id + "/messages/image",
                 files=files,
                 content_type=PostContentType.MULTIPART_FORMDATA,
@@ -1496,7 +1496,7 @@ class Room:
         """
 
         payload = {"text": msg}
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/text", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1539,7 +1539,7 @@ class Room:
         payload = {"uuid": stamp_id}
         if msg:
             payload["text"] = msg
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/stamp", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1584,7 +1584,7 @@ class Room:
                 payload = json.load(f)
         else:
             payload = motion_data
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1620,7 +1620,7 @@ class Room:
         """
 
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/led_color", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1656,7 +1656,7 @@ class Room:
         """
 
         payload = {"angle": head.angle, "vertical_angle": head.vertical_angle}
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/move_to", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1692,7 +1692,7 @@ class Room:
         """
 
         payload = {"uuid": motion_id}
-        response = self.base_client._post(
+        response = self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/preset", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1722,7 +1722,7 @@ class Room:
 
         """
 
-        response = self.base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
+        response = self._base_client._get("/v1/rooms/" + self.room_id + "/emo/settings")
         return EmoSettingsInfo(**response)
 
 
@@ -1751,7 +1751,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
@@ -1765,7 +1765,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     def change_led_color(self, color: Color) -> NoReturn:
         """ほっぺたの色の変更
@@ -1779,7 +1779,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     def move_to(self, head: Head) -> NoReturn:
         """首の角度の変更
@@ -1793,7 +1793,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     def send_motion(self, motion_id: str) -> NoReturn:
         """プリセットモーションをBOCCO emoに送信
@@ -1807,7 +1807,7 @@ class BizBasicRoom(Room):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
 
 class BizAdvancedRoom(Room):

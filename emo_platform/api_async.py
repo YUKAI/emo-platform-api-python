@@ -1221,7 +1221,7 @@ class AsyncRoom:
     """
 
     def __init__(self, base_client: AsyncClient, room_id: str):
-        self.base_client = base_client
+        self._base_client = base_client
         self.room_id = room_id
 
     async def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
@@ -1255,7 +1255,7 @@ class AsyncRoom:
         """
 
         params = {"before": ts} if ts else {}
-        response = await self.base_client._get(
+        response = await self._base_client._get(
             "/v1/rooms/" + self.room_id + "/messages", params=params
         )
         return EmoMsgsInfo(**response)
@@ -1287,7 +1287,7 @@ class AsyncRoom:
 
         """
 
-        response = await self.base_client._get("/v1/rooms/" + self.room_id + "/sensors")
+        response = await self._base_client._get("/v1/rooms/" + self.room_id + "/sensors")
         return EmoSensorsInfo(**response)
 
     async def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
@@ -1321,7 +1321,7 @@ class AsyncRoom:
 
         """
 
-        response = await self.base_client._get(
+        response = await self._base_client._get(
             "/v1/rooms/" + self.room_id + "/sensors/" + sensor_id + "/values"
         )
         return EmoRoomSensorInfo(**response)
@@ -1364,7 +1364,7 @@ class AsyncRoom:
         with open(audio_data_path, "rb") as audio_data:
             data = aiohttp.FormData()
             data.add_field("audio", audio_data, content_type="multipart/form-data")
-            response = await self.base_client._post(
+            response = await self._base_client._post(
                 "/v1/rooms/" + self.room_id + "/messages/audio",
                 data=data,
                 content_type=PostContentType.MULTIPART_FORMDATA,
@@ -1409,7 +1409,7 @@ class AsyncRoom:
         with open(image_data_path, "rb") as image_data:
             data = aiohttp.FormData()
             data.add_field("image", image_data, content_type="multipart/form-data")
-            response = await self.base_client._post(
+            response = await self._base_client._post(
                 "/v1/rooms/" + self.room_id + "/messages/image",
                 data=data,
                 content_type=PostContentType.MULTIPART_FORMDATA,
@@ -1445,7 +1445,7 @@ class AsyncRoom:
         """
 
         payload = {"text": msg}
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/text", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1490,7 +1490,7 @@ class AsyncRoom:
         payload = {"uuid": stamp_id}
         if msg:
             payload["text"] = msg
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/messages/stamp", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1537,7 +1537,7 @@ class AsyncRoom:
                 payload = json.load(f)
         else:
             payload = motion_data
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1573,7 +1573,7 @@ class AsyncRoom:
         """
 
         payload = {"red": color.red, "green": color.green, "blue": color.blue}
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/led_color", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1609,7 +1609,7 @@ class AsyncRoom:
         """
 
         payload = {"angle": head.angle, "vertical_angle": head.vertical_angle}
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/move_to", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1645,7 +1645,7 @@ class AsyncRoom:
         """
 
         payload = {"uuid": motion_id}
-        response = await self.base_client._post(
+        response = await self._base_client._post(
             "/v1/rooms/" + self.room_id + "/motions/preset", json.dumps(payload)
         )
         return EmoMessageInfo(**response)
@@ -1673,7 +1673,7 @@ class AsyncRoom:
 
         """
 
-        response = await self.base_client._get(
+        response = await self._base_client._get(
             "/v1/rooms/" + self.room_id + "/emo/settings"
         )
         return EmoSettingsInfo(**response)
@@ -1704,7 +1704,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     async def send_original_motion(self, motion_data: Union[str, dict]) -> NoReturn:
         """独自定義した、オリジナルのモーションをBOCCO emoに送信
@@ -1718,7 +1718,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     async def change_led_color(self, color: Color) -> NoReturn:
         """ほっぺたの色の変更
@@ -1732,7 +1732,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     async def move_to(self, head: Head) -> NoReturn:
         """首の角度の変更
@@ -1746,7 +1746,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
     async def send_motion(self, motion_id: str) -> NoReturn:
         """プリセットモーションをBOCCO emoに送信
@@ -1760,7 +1760,7 @@ class BizBasicAsyncRoom(AsyncRoom):
 
         """
 
-        raise UnavailableError(self.base_client._PLAN)
+        raise UnavailableError(self._base_client._PLAN)
 
 
 class BizAdvancedAsyncRoom(AsyncRoom):
