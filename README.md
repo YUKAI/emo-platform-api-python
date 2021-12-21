@@ -122,8 +122,22 @@ client.start_webhook_event()
 ## Cli Tool
 You can use command line interface when you install this sdk with poetry.
 
+### Example1 : Use client
+Initially, you need to specify your account refresh token.
 ```bash
 $ poetry run python cli.py personal --refresh_token *** get_account_info
+```
+Once you set refresh_token, you don't need to set again.
+```bash
+$ poetry run python cli.py personal get_account_info
+```
 
+### Example2 : Use room client
+Please replace ROOM_ID with room id which you want to use.
+```
+$ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
+```
+or
+```
 $ poetry run python cli.py personal room change_led_color 10 10 200
 ```
