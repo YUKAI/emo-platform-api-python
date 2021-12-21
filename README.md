@@ -114,4 +114,10 @@ def illuminance_callback(data):
 
 client.start_webhook_event()
 
+## Cli Tool
+You can use command line interface when you install this sdk with poetry.
+```bash
+$ poetry run python cli.py personal --refresh_token *** get_account_info
+
+$ poetry run python cli.py personal room change_led_color 10 10 200
 ```
