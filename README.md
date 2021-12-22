@@ -137,7 +137,13 @@ Please replace ROOM_ID with room id which you want to use.
 ```
 $ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
 ```
-or
+You can get room id as shown below.
+```
+$ poetry run python cli.py personal get_rooms_id
+```
+
+Or, you can use "room" command which does not require the room id to be specified.
+This is because it calls get_rooms_id() internally and specifies the first room id.
 ```
 $ poetry run python cli.py personal room change_led_color 10 10 200
 ```
