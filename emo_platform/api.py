@@ -46,7 +46,7 @@ class PostContentType:
 
 class TokenManager:
     _TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api.json"
-    _PREVOIUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
+    _PREVIOUS_TOKEN_FILE = f"{EMO_PLATFORM_PATH}/tokens/emo-platform-api_previous.json"
     _INITIAL_TOKENS = {"access_token": "", "refresh_token": ""}
     _INITIAL_SET_TOKENS = {"os": _INITIAL_TOKENS, "args": _INITIAL_TOKENS}
 
@@ -62,7 +62,7 @@ class TokenManager:
     def _set_token_file_path(self, token_file_path) -> None:
         if token_file_path:
             self._TOKEN_FILE = f"{token_file_path}/emo-platform-api.json"
-            self._PREVOIUS_TOKEN_FILE = (
+            self._PREVIOUS_TOKEN_FILE = (
                 f"{token_file_path}/emo-platform-api_previous.json"
             )
 
@@ -91,7 +91,7 @@ class TokenManager:
 
     def _load_previous_set_tokens_file(self) -> dict:
         try:
-            with open(self._PREVOIUS_TOKEN_FILE) as f:
+            with open(self._PREVIOUS_TOKEN_FILE) as f:
                 return json.load(f)
         except FileNotFoundError:
             return self._INITIAL_SET_TOKENS
@@ -101,7 +101,7 @@ class TokenManager:
         self._previous_set_tokens = Tokens(**self._previous_set_tokens_dict[how2set])
         self._previous_set_tokens_dict[how2set] = asdict(self._current_set_tokens)
 
-        with open(self._PREVOIUS_TOKEN_FILE, "w") as f:
+        with open(self._PREVIOUS_TOKEN_FILE, "w") as f:
             json.dump(self._previous_set_tokens_dict, f)
 
     def _get_latest_tokens(self) -> Tokens:
