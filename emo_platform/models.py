@@ -7,7 +7,7 @@ class Tokens:
 
     Note
     ----------
-    トークンは `ダッシュボード <https://staging-platform-api.bocco.me/dashboard/login>`_ にログイン後に確認できます。
+    トークンは `ダッシュボード <https://platform-api.bocco.me/dashboard/login>`_ にログイン後に確認できます。
 
     """
 
