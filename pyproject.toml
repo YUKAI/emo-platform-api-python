@@ -33,3 +33,6 @@ regex = "^2021.11.10"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+emo_platform_cli = 'emo_platform.cli:main'

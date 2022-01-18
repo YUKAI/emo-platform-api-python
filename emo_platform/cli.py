@@ -166,5 +166,5 @@ class Command:
     biz_basic = BizBasicClient
     biz_advanced = BizAdvancedClient
 
-
-Fire(Command)
+def main():
+    Fire(Command)
