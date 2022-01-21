@@ -1,6 +1,7 @@
 import json
 import os
 from collections import deque
+from contextlib import contextmanager
 from dataclasses import asdict
 from functools import partial
 from typing import Callable, Dict, List, NoReturn, Optional, Union
@@ -180,6 +181,12 @@ class Client:
         self._webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self._request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
         self._is_first_http_request = True
+
+    @contextmanager
+    def _add_apikey2header(self, api_key: str):
+        self._headers["X-Channel-User"] = api_key
+        yield
+        self._headers.pop("X-Channel-User")
 
     def update_tokens(self) -> None:
         """トークンの更新と保存
@@ -814,18 +821,6 @@ class BizClient(Client):
 
     _PLAN = "Business"
 
-    def __init__(
-        self,
-        api_key: str,
-        endpoint_url: Optional[str] = None,
-        tokens: Optional[Tokens] = None,
-        token_file_path: Optional[str] = None,
-    ):
-        super().__init__(
-            endpoint_url=endpoint_url, tokens=tokens, token_file_path=token_file_path
-        )
-        self._headers["X-Channel-User"] = api_key
-
     def get_account_info(self) -> EmoBizAccountInfo:  # type: ignore[override]
         """アカウント情報の取得
 
@@ -905,6 +900,109 @@ class BizClient(Client):
         response = self._put("/v1/me", json.dumps(payload))
         return EmoBizAccountInfo(**response)
 
+    def get_rooms_list(self, api_key: str) -> EmoRoomInfo:
+        """ユーザが参加している部屋の一覧の取得
+
+            取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        rooms_list : EmoRoomInfo
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().get_rooms_list()
+
+    def get_rooms_id(self, api_key: str) -> List[str]:
+        """ユーザーが参加している全ての部屋のidの取得
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        rooms_id : List[str]
+            取得した部屋のidのリスト
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合
+            あるいは、ユーザーが参加している部屋が1つもなかった場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        rooms_info = self.get_rooms_list(api_key)
+        return self._get_rooms_id(rooms_info)
+
+    def get_stamps_list(self, api_key: str) -> EmoStampsInfo:
+        """利用可能なスタンプ一覧の取得
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        stamps_info : EmoStampsInfo
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/stamps
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().get_stamps_list()
+
     def get_broadcast_msgs_list(self) -> EmoBroadcastInfoList:
         """配信メッセージの一覧の取得
 
@@ -962,11 +1060,19 @@ class BizClient(Client):
         response = self._get("/v1/broadcast_messages/" + str(message_id))
         return EmoBroadcastInfo(**response)
 
-    def create_broadcast_msg(self, message: BroadcastMsg) -> EmoBroadcastMessage:
+    def create_broadcast_msg(
+        self, api_key: str, message: BroadcastMsg
+    ) -> EmoBroadcastMessage:
         """配信メッセージの新規作成
 
         Parameters
         ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
         message : BroadcastMsg
             新規に作成する配信メッセージ。
 
@@ -993,7 +1099,8 @@ class BizClient(Client):
         payload = asdict(message)
         if message.immediate:
             payload.pop("executed_at")
-        response = self._post("/v1/broadcast_messages", json.dumps(payload))
+        with self._add_apikey2header(api_key):
+            response = self._post("/v1/broadcast_messages", json.dumps(payload))
         return EmoBroadcastMessage(**response)
 
 
@@ -1002,12 +1109,6 @@ class BizBasicClient(BizClient):
 
     Parameters
     ----------
-    api_key : str, default None
-        法人向けAPIキー。
-
-        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
-        から確認することができます。
-
     endpoint_url : str, default https://platform-api.bocco.me
         BOCCO emo platform apiにアクセスするためのendpoint
 
@@ -1044,13 +1145,19 @@ class BizBasicClient(BizClient):
 
     _PLAN = "Business Basic"
 
-    def create_room_client(self, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str):
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
 
         Parameters
         ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
         room_id : str
             部屋のid
 
@@ -1066,7 +1173,7 @@ class BizBasicClient(BizClient):
 
         """
 
-        return BizBasicRoom(self, room_id)
+        return BizBasicRoom(self, room_id, api_key)
 
     def get_motions_list(self) -> NoReturn:
         """利用可能なプリセットモーション一覧の取得
@@ -1082,9 +1189,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def get_webhook_setting(
-        self,
-    ) -> NoReturn:
+    def get_webhook_setting(self, api_key: str) -> NoReturn:
         """現在設定されているWebhookの情報の取得
 
             Business Basic版では使用できないメソッドです。
@@ -1098,7 +1203,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def change_webhook_setting(self, webhook: WebHook) -> NoReturn:
+    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
         """Webhookの設定の変更
 
             Business Basic版では使用できないメソッドです。
@@ -1112,7 +1217,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def register_webhook_event(self, events: List[str]) -> NoReturn:
+    def register_webhook_event(self, api_key: str, events: List[str]) -> NoReturn:
         """Webhook通知するイベントの指定
 
             Business Basic版では使用できないメソッドです。
@@ -1126,7 +1231,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def create_webhook_setting(self, webhook: WebHook) -> NoReturn:
+    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
         """Webhookの設定の作成
 
             Business Basic版では使用できないメソッドです。
@@ -1140,9 +1245,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def delete_webhook_setting(
-        self,
-    ) -> NoReturn:
+    def delete_webhook_setting(self, api_key: str) -> NoReturn:
         """現在設定されているWebhookの情報の削除
 
             Business Basic版では使用できないメソッドです。
@@ -1194,12 +1297,6 @@ class BizAdvancedClient(BizClient):
 
     Parameters
     ----------
-    api_key : str, default None
-        法人向けAPIキー。
-
-        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
-        から確認することができます。
-
     endpoint_url : str, default https://platform-api.bocco.me
         BOCCO emo platform apiにアクセスするためのendpoint
 
@@ -1236,13 +1333,19 @@ class BizAdvancedClient(BizClient):
 
     _PLAN = "Business Advanced"
 
-    def create_room_client(self, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str):
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
 
         Parameters
         ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
         room_id : str
             部屋のid
 
@@ -1258,7 +1361,196 @@ class BizAdvancedClient(BizClient):
 
         """
 
-        return BizAdvancedRoom(self, room_id)
+        return BizAdvancedRoom(self, room_id, api_key)
+
+    def get_webhook_setting(
+        self,
+        api_key: str,
+    ) -> EmoWebhookInfo:
+        """現在設定されているWebhookの情報の取得
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているGETの処理が失敗した場合。
+            (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/webhook
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().get_webhook_setting()
+
+    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+        """Webhookの設定の変更
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        webhook : WebHook
+            適用するWebhookの設定。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+            変更後のWebhookの設定
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPUTの処理が失敗した場合。
+            (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().change_webhook_setting(webhook)
+
+    def register_webhook_event(self, api_key: str, events: List[str]) -> EmoWebhookInfo:
+        """Webhook通知するイベントの指定
+
+            eventの種類は、
+            `こちらのページ <https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events>`_
+            から確認できます。
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        events : List[str]
+            指定するWebhook event。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+            設定したWebhookの情報
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPUTの処理が失敗した場合。
+            (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().register_webhook_event(events)
+
+    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+        """Webhookの設定の作成
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        webhook : WebHook
+            作成するWebhookの設定。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+            作成したWebhookの設定。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているPOSTの処理が失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#post-/v1/webhook
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().create_webhook_setting(webhook)
+
+    def delete_webhook_setting(self, api_key: str) -> EmoWebhookInfo:
+        """現在設定されているWebhookの情報の削除
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        webhook_info : EmoWebhookInfo
+            削除したWebhookの情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているDELETEの処理が失敗した場合
+            (BOCCO emoにWebhookの設定がされていない場合を含む)
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._add_apikey2header(api_key):
+            return super().delete_webhook_setting()
 
 
 class Room:
@@ -1729,7 +2021,63 @@ class Room:
         return EmoSettingsInfo(**response)
 
 
-class BizBasicRoom(Room):
+class BizRoom(Room):
+    """部屋固有の各種apiを呼び出す同期版のclient(Business版)
+
+    Parameters
+    ----------
+    base_client : BizClient
+        このclientを作成しているclient。
+
+    room_id : str
+        部屋のuuid。
+
+    api_key : str
+        法人向けAPIキー
+
+        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+        から確認することができます。
+
+    """
+
+    def __init__(self, base_client: Client, room_id: str, api_key: str):
+        super().__init__(base_client=base_client, room_id=room_id)
+        self.api_key = api_key
+
+    def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().get_msgs(ts)
+
+    def get_sensors_list(
+        self,
+    ) -> EmoSensorsInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().get_sensors_list()
+
+    def send_audio_msg(self, audio_data_path: str) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_audio_msg(audio_data_path)
+
+    def send_image(self, image_data_path: str) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_image(image_data_path)
+
+    def send_msg(self, msg: str) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_msg(msg)
+
+    def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_stamp(stamp_id, msg)
+
+    def get_emo_settings(
+        self,
+    ) -> EmoSettingsInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().get_emo_settings()
+
+
+class BizBasicRoom(BizRoom):
     """部屋固有の各種apiを呼び出す同期版のclient(Business Basic版)
 
     Parameters
@@ -1739,6 +2087,12 @@ class BizBasicRoom(Room):
 
     room_id : str
         部屋のuuid。
+
+    api_key : str
+        法人向けAPIキー
+
+        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+        から確認することができます。
 
     """
 
@@ -1813,7 +2167,7 @@ class BizBasicRoom(Room):
         raise UnavailableError(self._base_client._PLAN)
 
 
-class BizAdvancedRoom(Room):
+class BizAdvancedRoom(BizRoom):
     """部屋固有の各種apiを呼び出す同期版のclient(Business Advanced版)
 
     Parameters
@@ -1824,6 +2178,30 @@ class BizAdvancedRoom(Room):
     room_id : str
         部屋のuuid。
 
+    api_key : str
+        法人向けAPIキー
+
+        法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+        から確認することができます。
+
     """
 
-    pass
+    def get_sensor_values(self, sensor_id: str) -> EmoRoomSensorInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().get_sensor_values(sensor_id)
+
+    def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_original_motion(motion_data)
+
+    def change_led_color(self, color: Color) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().change_led_color(color)
+
+    def move_to(self, head: Head) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().move_to(head)
+
+    def send_motion(self, motion_id: str) -> EmoMessageInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().send_motion(motion_id)
