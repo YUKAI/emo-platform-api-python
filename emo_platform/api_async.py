@@ -49,13 +49,15 @@ class AsyncClient:
     ----------
     endpoint_url : str, default https://platform-api.bocco.me
         BOCCO emo platform apiにアクセスするためのendpoint
+
     tokens : Tokens, default None
         refresh token及びaccess tokenを指定します。
+
         指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+
     token_file_path : Optional[str], default None
         refresh token及びaccess tokenを保存するファイルのパス。
-        指定しない場合は、このpkg内のディレクトリに保存されます。
-        指定したパスには、以下の2種類のファイルが生成されます。
+        指定した場合には指定したパスに、指定しない場合はこのpkg内のディレクトリに、以下の2種類のファイルが生成されます。
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
@@ -64,6 +66,14 @@ class AsyncClient:
                 BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+
+    is_server : bool, default False
+        Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。
+
+        この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)
+
+        この引数をTrueにするのは、サーバーサイドのwebアプリにこのライブラリを使用する際などを想定しています。
+
     Raises
     ----------
     TokenError
@@ -90,8 +100,9 @@ class AsyncClient:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
+        is_server: bool = False
     ):
-        self._client = Client(endpoint_url, tokens, token_file_path)
+        self._client = Client(endpoint_url, tokens, token_file_path, is_server)
 
     async def update_tokens(self) -> None:
         """トークンの更新と保存

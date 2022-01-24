@@ -52,13 +52,22 @@ class TokenManager:
     _INITIAL_SET_TOKENS = {"os": _INITIAL_TOKENS, "args": _INITIAL_TOKENS}
 
     def __init__(
-        self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+        self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None, is_server = False
     ):
-        self._set_token_file_path(token_file_path)
-        self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
-        self._current_set_tokens = self._get_current_set_tokens(tokens)
-        self._update_previous_set_tokens_file(tokens)
-        self.tokens = self._get_latest_tokens()
+        self._is_server = is_server
+        if not self._is_server:
+            self._set_token_file_path(token_file_path)
+            self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
+            self._current_set_tokens = self._get_current_set_tokens(tokens)
+            self._update_previous_set_tokens_file(tokens)
+            self.tokens = self._get_latest_tokens()
+        else:
+            if tokens:
+                self.tokens = tokens
+            else:
+                raise TokenError(
+                    "Please give tokens as an argument using 'emo_platform.Tokens'"
+                )
 
     def _set_token_file_path(self, token_file_path) -> None:
         if token_file_path:
@@ -117,8 +126,9 @@ class TokenManager:
             return self._current_set_tokens
 
     def save_tokens(self) -> None:
-        with open(self._TOKEN_FILE, "w") as f:
-            json.dump(asdict(self.tokens), f)
+        if not self._is_server:
+            with open(self._TOKEN_FILE, "w") as f:
+                json.dump(asdict(self.tokens), f)
 
 
 class Client:
@@ -128,13 +138,15 @@ class Client:
     ----------
     endpoint_url : str, default https://platform-api.bocco.me
         BOCCO emo platform apiにアクセスするためのendpoint
+
     tokens : Tokens, default None
         refresh token及びaccess tokenを指定します。
+
         指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+
     token_file_path : Optional[str], default None
         refresh token及びaccess tokenを保存するファイルのパス。
-        指定しない場合は、このpkg内のディレクトリに保存されます。
-        指定したパスには、以下の2種類のファイルが生成されます。
+        指定した場合には指定したパスに、指定しない場合はこのpkg内のディレクトリに、以下の2種類のファイルが生成されます。
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
@@ -143,6 +155,14 @@ class Client:
                 BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+
+    is_server : bool, default False
+        Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。
+
+        この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)
+
+        この引数をTrueにするのは、サーバーサイドのwebアプリにこのライブラリを使用する際などを想定しています。
+
     Raises
     ----------
     TokenError
@@ -170,8 +190,9 @@ class Client:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
+        is_server: bool = False
     ):
-        self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path)
+        self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path, is_server=is_server)
         self._endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self._headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
