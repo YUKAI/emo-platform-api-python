@@ -1349,10 +1349,22 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def start_webhook_event(
-        self, host: str = "localhost", port: int = 8000
-    ) -> NoReturn:
+    def start_webhook_event(self) -> str:
         """BOCCO emoのWebhookのイベント通知の開始
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def get_cb_func(self, body: dict) -> Tuple[Callable, EmoWebhookBody]:
+        """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
             Business Basic版では使用できないメソッドです。
 
@@ -1625,6 +1637,56 @@ class BizAdvancedClient(BizClient):
 
         with self._add_apikey2header(api_key):
             return super().delete_webhook_setting()
+
+    def start_webhook_event(self, api_key: str) -> str:
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            :func: `event` で指定したイベントの通知が開始されます。
+
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行
+
+            5. ローカルサーバーを起動し、 :func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        secret_key : str
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+
+            第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼び出している :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = self.register_webhook_event(api_key, list(self._webhook_events_cb.keys()))
+        return response.secret
 
 
 class Room:
