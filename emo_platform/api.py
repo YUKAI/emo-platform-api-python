@@ -1349,7 +1349,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def start_webhook_event(self) -> str:
+    def start_webhook_event(self) -> NoReturn:
         """BOCCO emoのWebhookのイベント通知の開始
 
             Business Basic版では使用できないメソッドです。
@@ -1363,7 +1363,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def get_cb_func(self, body: dict) -> Tuple[Callable, EmoWebhookBody]:
+    def get_cb_func(self, body: dict) -> NoReturn:
         """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
             Business Basic版では使用できないメソッドです。
