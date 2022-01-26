@@ -556,21 +556,60 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 
 <dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api.Client.start_webhook_event">
-<span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">8000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#emo_platform.api.Client.start_webhook_event" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#emo_platform.api.Client.start_webhook_event" title="Permalink to this definition"></a></dt>
 <dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
 <blockquote>
-<div><p>イベント通知時に、登録していた関数が呼び出されるようになります。</p>
+<div><p><a class="reference internal" href="#emo_platform.api.Client.event" title="emo_platform.api.Client.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で指定したイベントの通知が開始されます。</p>
 <p>使用する際は、以下の手順を踏んでください。</p>
 <ol class="arabic simple">
 <li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
 <li><p><a class="reference internal" href="#emo_platform.api.Client.create_webhook_setting" title="emo_platform.api.Client.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
 <li><p><a class="reference internal" href="#emo_platform.api.Client.event" title="emo_platform.api.Client.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で通知したいeventとそれに対応するcallback関数を設定</p></li>
-<li><p>この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)</p></li>
+<li><p>この関数を実行</p></li>
+<li><p>ローカルサーバーを起動し、<a class="reference internal" href="#emo_platform.api.Client.get_cb_func" title="emo_platform.api.Client.get_cb_func"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_cb_func()</span></code></a> を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p><strong>secret_key</strong> – BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。</p>
+<p>第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。</p>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼び出している <a class="reference internal" href="#emo_platform.api.Client.register_webhook_event" title="emo_platform.api.Client.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
+</dd>
+<dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api.Client.get_cb_func">
+<span class="sig-name descname"><span class="pre">get_cb_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody"><span class="pre">emo_platform.response.EmoWebhookBody</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#emo_platform.api.Client.get_cb_func" title="Permalink to this definition"></a></dt>
+<dd><p>受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得</p>
+<blockquote>
+<div><p>使用する際は、以下の手順を踏んでください。</p>
+<ol class="arabic simple">
+<li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api.Client.create_webhook_setting" title="emo_platform.api.Client.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api.Client.event" title="emo_platform.api.Client.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で通知したいeventとそれに対応するcallback関数を設定</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api.Client.start_webhook_event" title="emo_platform.api.Client.start_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">start_webhook_event()</span></code></a> でwebhook通知を開始</p></li>
+<li><p>ローカルサーバーを起動し、この関数を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
 </ol>
 </div></blockquote>
 <p class="rubric">Example</p>
-<p>この関数は、blocking処理になっている点に注意してください:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">emo_platform</span>
+<p>python標準ライブラリを使用してローカルサーバーを立てた例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">emo_platform</span><span class="o">,</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">http.server</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">emo_platform</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
 
@@ -580,26 +619,47 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <span class="k">def</span> <span class="nf">test_event_callback</span><span class="p">(</span><span class="n">body</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
 
-<span class="n">client</span><span class="o">.</span><span class="n">start_webhook_event</span><span class="p">()</span>
+<span class="n">secret_key</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">start_webhook_event</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">Handler</span><span class="p">(</span><span class="n">http</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">BaseHTTPRequestHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">do_POST</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># check secret_key</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">secret_key</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-Platform-Api-Secret&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">401</span><span class="p">)</span>
+
+        <span class="n">content_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">])</span>
+        <span class="n">request_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rfile</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">content_len</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cb_func</span><span class="p">,</span> <span class="n">emo_webhook_body</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_cb_func</span><span class="p">(</span><span class="n">request_body</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">emo_platform</span><span class="o">.</span><span class="n">EmoPlatformError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">501</span><span class="p">)</span>
+        <span class="n">cb_func</span><span class="p">(</span><span class="n">emo_webhook_body</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">http</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">HTTPServer</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">),</span> <span class="n">Handler</span><span class="p">)</span> <span class="k">as</span> <span class="n">httpd</span><span class="p">:</span>
+    <span class="n">httpd</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default localhost</em>) – Webhookの通知を受けるローカルサーバーのホスト名。</p></li>
-<li><p><strong>port</strong> (<em>int</em><em>, </em><em>default 8000</em>) – Webhookの通知を受けるローカルサーバーのポート番号。</p></li>
-</ul>
+<dd class="field-odd"><p><strong>body</strong> (<em>dict</em>) – 受信したwebhookリクエストのボディのJSONペイロード</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>cb_func, emo_webhook_body</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[Callable, <a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody">EmoWebhookBody</a>]</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼んでいる <a class="reference internal" href="#emo_platform.api.Client.register_webhook_event" title="emo_platform.api.Client.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 受信したwebhookイベントに対応するcallback関数が登録されていない場合。</p>
 </dd>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <dl class="simple">
-<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
-</dd>
-<dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
+<dt>API呼び出し回数</dt><dd><p>0回</p>
 </dd>
 </dl>
 </div>
@@ -1063,8 +1123,22 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 
 <dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api.BizBasicClient.start_webhook_event">
-<span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">8000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api.BizBasicClient.start_webhook_event" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api.BizBasicClient.start_webhook_event" title="Permalink to this definition"></a></dt>
 <dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
+<blockquote>
+<div><p>Business Basic版では使用できないメソッドです。</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.UnavailableError" title="emo_platform.exceptions.UnavailableError"><strong>UnavailableError</strong></a> – この関数を呼び出した場合。</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api.BizBasicClient.get_cb_func">
+<span class="sig-name descname"><span class="pre">get_cb_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api.BizBasicClient.get_cb_func" title="Permalink to this definition"></a></dt>
+<dd><p>受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得</p>
 <blockquote>
 <div><p>Business Basic版では使用できないメソッドです。</p>
 </div></blockquote>
@@ -1322,6 +1396,51 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <p class="admonition-title">Note</p>
 <dl class="simple">
 <dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook">https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook</a></p>
+</dd>
+<dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api.BizAdvancedClient.start_webhook_event">
+<span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#emo_platform.api.BizAdvancedClient.start_webhook_event" title="Permalink to this definition"></a></dt>
+<dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
+<blockquote>
+<div><p><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code> で指定したイベントの通知が開始されます。</p>
+<p>使用する際は、以下の手順を踏んでください。</p>
+<ol class="arabic simple">
+<li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api.BizAdvancedClient.create_webhook_setting" title="emo_platform.api.BizAdvancedClient.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code> で通知したいeventとそれに対応するcallback関数を設定</p></li>
+<li><p>この関数を実行</p></li>
+<li><p>ローカルサーバーを起動し、 <code class="xref py py-func docutils literal notranslate"><span class="pre">get_cb_func()</span></code> を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>api_key</strong> (<em>str</em>) – <p>法人向けAPIキー</p>
+<p>法人アカウントでログインした時の <a class="reference external" href="https://platform-api.bocco.me/dashboard/">ダッシュボード</a>
+から確認することができます。</p>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p><strong>secret_key</strong> – BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。</p>
+<p>第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼び出している <a class="reference internal" href="#emo_platform.api.BizAdvancedClient.register_webhook_event" title="emo_platform.api.BizAdvancedClient.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
 </dd>
 <dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
 </dd>
@@ -2271,11 +2390,11 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>endpoint_url</strong> (str, default <a class="reference external" href="https://platform-api.bocco.me">https://platform-api.bocco.me</a>) – BOCCO emo platform apiにアクセスするためのendpoint</p></li>
-<li><p><strong>tokens</strong> (<a class="reference internal" href="#emo_platform.models.Tokens" title="emo_platform.models.Tokens"><em>Tokens</em></a><em>, </em><em>default None</em>) – refresh token及びaccess tokenを指定します。
-指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。</p></li>
+<li><p><strong>tokens</strong> (<a class="reference internal" href="#emo_platform.models.Tokens" title="emo_platform.models.Tokens"><em>Tokens</em></a><em>, </em><em>default None</em>) – <p>refresh token及びaccess tokenを指定します。</p>
+<p>指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。</p>
+</p></li>
 <li><p><strong>token_file_path</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default None</em>) – <p>refresh token及びaccess tokenを保存するファイルのパス。
-指定しない場合は、このpkg内のディレクトリに保存されます。
-指定したパスには、以下の2種類のファイルが生成されます。</p>
+指定した場合には指定したパスに、指定しない場合はこのpkg内のディレクトリに、以下の2種類のファイルが生成されます。</p>
 <blockquote>
 <div><dl>
 <dt>emo-platform-api.json</dt><dd><p>最新のトークンを保存するファイル。</p>
@@ -2286,6 +2405,10 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 </dd>
 </dl>
 </div></blockquote>
+</p></li>
+<li><p><strong>is_server</strong> (<em>bool</em><em>, </em><em>default False</em>) – <p>Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。</p>
+<p>この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)</p>
+<p>この引数をTrueにするのは、サーバーサイドのwebアプリにこのライブラリを使用する際などを想定しています。</p>
 </p></li>
 </ul>
 </dd>
@@ -2737,25 +2860,64 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 
 <dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api_async.AsyncClient.start_webhook_event">
-<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">8000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">_asyncio.Task</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.start_webhook_event" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.start_webhook_event" title="Permalink to this definition"></a></dt>
 <dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
 <blockquote>
-<div><p>イベント通知時に、登録していた関数が呼び出されるようになります。</p>
+<div><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.event" title="emo_platform.api_async.AsyncClient.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で指定したイベントの通知が開始されます。</p>
 <p>使用する際は、以下の手順を踏んでください。</p>
 <ol class="arabic simple">
 <li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
 <li><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.create_webhook_setting" title="emo_platform.api_async.AsyncClient.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
 <li><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.event" title="emo_platform.api_async.AsyncClient.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で通知したいeventとそれに対応するcallback関数を設定</p></li>
-<li><p>この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)</p></li>
+<li><p>この関数を実行</p></li>
+<li><p>ローカルサーバーを起動し、<a class="reference internal" href="#emo_platform.api_async.AsyncClient.get_cb_func" title="emo_platform.api_async.AsyncClient.get_cb_func"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_cb_func()</span></code></a> を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p><strong>secret_key</strong> – BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。</p>
+<p>第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。</p>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼んでいる <a class="reference internal" href="#emo_platform.api_async.AsyncClient.register_webhook_event" title="emo_platform.api_async.AsyncClient.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
+</dd>
+<dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api_async.AsyncClient.get_cb_func">
+<span class="sig-name descname"><span class="pre">get_cb_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody"><span class="pre">emo_platform.response.EmoWebhookBody</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.get_cb_func" title="Permalink to this definition"></a></dt>
+<dd><p>受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得</p>
+<blockquote>
+<div><p>使用する際は、以下の手順を踏んでください。</p>
+<ol class="arabic simple">
+<li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.create_webhook_setting" title="emo_platform.api_async.AsyncClient.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.event" title="emo_platform.api_async.AsyncClient.event"><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code></a> で通知したいeventとそれに対応するcallback関数を設定</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api_async.AsyncClient.start_webhook_event" title="emo_platform.api_async.AsyncClient.start_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">start_webhook_event()</span></code></a> でwebhook通知を開始</p></li>
+<li><p>ローカルサーバーを起動し、この関数を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
 </ol>
 </div></blockquote>
 <p class="rubric">Example</p>
-<p>webhook通知が来たらそのデータをqueueに渡し、<code class="xref py py-func docutils literal notranslate"><span class="pre">print_queue()</span></code> で表示する例です:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">emo_platform</span>
+<p>aiohttpライブラリを使用してローカルサーバーを立てた例:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">from</span> <span class="nn">aiohttp</span> <span class="kn">import</span> <span class="n">web</span>
+<span class="kn">from</span> <span class="nn">emo_platform</span> <span class="kn">import</span> <span class="n">AsyncClient</span><span class="p">,</span> <span class="n">WebHook</span><span class="p">,</span> <span class="n">EmoPlatformError</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">emo_platform</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">()</span>
-
-<span class="n">client</span><span class="o">.</span><span class="n">create_webhook_setting</span><span class="p">(</span><span class="n">emo_platform</span><span class="o">.</span><span class="n">WebHook</span><span class="p">(</span><span class="s2">&quot;WEBHOOK URL&quot;</span><span class="p">))</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">AsyncClient</span><span class="p">()</span>
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">print_queue</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -2764,52 +2926,69 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;data:&quot;</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Please replace &quot;YOUR WEBHOOK URL&quot; with the URL forwarded to http://localhost:8000</span>
+    <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">create_webhook_setting</span><span class="p">(</span><span class="n">WebHook</span><span class="p">(</span><span class="s2">&quot;YOUR WEBHOOK URL&quot;</span><span class="p">))</span>
+
     <span class="n">queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
 
     <span class="nd">@client</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s2">&quot;message.received&quot;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">message_callback</span><span class="p">(</span><span class="n">body</span><span class="p">):</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Do not use time.sleep in async def</span>
         <span class="k">await</span> <span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
 
-    <span class="c1"># Create task you want to execute in parallel</span>
-    <span class="n">task_queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">print_queue</span><span class="p">(</span><span class="n">queue</span><span class="p">))</span>
+    <span class="n">secret_key</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">start_webhook_event</span><span class="p">()</span>
 
-    <span class="c1"># Await start_webhook_event last.</span>
-    <span class="c1"># Give task list to be executed in parallel as the argument.</span>
-    <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">start_webhook_event</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="p">[</span><span class="n">task_queue</span><span class="p">])</span>
+    <span class="n">routes</span> <span class="o">=</span> <span class="n">web</span><span class="o">.</span><span class="n">RouteTableDef</span><span class="p">()</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+    <span class="nd">@routes</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">emo_webhook</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="c1"># check secret key</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-Platform-Api-Secret&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">secret_key</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">emo_webhook_body</span> <span class="o">=</span> <span class="n">parse_webhook_body</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cb_func</span><span class="p">,</span> <span class="n">emo_webhook_body</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_cb_func</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">EmoPlatformError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">web</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">501</span><span class="p">)</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">cb_func</span><span class="p">(</span><span class="n">emo_webhook_body</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">web</span><span class="o">.</span><span class="n">Response</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">web</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">401</span><span class="p">)</span>
+
+    <span class="n">app</span> <span class="o">=</span> <span class="n">web</span><span class="o">.</span><span class="n">Application</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_routes</span><span class="p">(</span><span class="n">routes</span><span class="p">)</span>
+    <span class="n">runner</span> <span class="o">=</span> <span class="n">web</span><span class="o">.</span><span class="n">AppRunner</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">runner</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">site</span> <span class="o">=</span> <span class="n">web</span><span class="o">.</span><span class="n">TCPSite</span><span class="p">(</span><span class="n">runner</span><span class="p">,</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">site</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">await</span> <span class="n">print_queue</span><span class="p">(</span><span class="n">queue</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>host</strong> (<em>str</em><em>, </em><em>default localhost</em>) – Webhookの通知を受けるローカルサーバーのホスト名。</p></li>
-<li><p><strong>port</strong> (<em>int</em><em>, </em><em>default 8000</em>) – Webhookの通知を受けるローカルサーバーのポート番号。</p></li>
-<li><p><strong>tasks</strong> (<em>List</em><em>[</em><em>asyncio.Task</em><em>]</em><em>, </em><em>default</em><em> [</em><em>]</em>) – <p>並列で実行したいタスクオブジェクトのリスト。</p>
-<p>サーバー終了時にキャンセルされます。</p>
-</p></li>
-</ul>
+<dd class="field-odd"><p><strong>body</strong> (<em>dict</em>) – 受信したwebhookリクエストのボディのJSONペイロード</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>cb_func, emo_webhook_body</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[Callable, <a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody">EmoWebhookBody</a>]</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼んでいる <a class="reference internal" href="#emo_platform.api_async.AsyncClient.register_webhook_event" title="emo_platform.api_async.AsyncClient.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 受信したwebhookイベントに対応するcallback関数が登録されていない場合。</p>
 </dd>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <dl class="simple">
-<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
-</dd>
-<dt>API呼び出し回数</dt><dd><p>1回 + 最大2回(access tokenが切れていた場合)</p>
+<dt>API呼び出し回数</dt><dd><p>0回</p>
 </dd>
 </dl>
 </div>
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="emo_platform.api_async.AsyncClient.stop_webhook_event">
-<span class="sig-name descname"><span class="pre">stop_webhook_event</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.stop_webhook_event" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -3269,8 +3448,22 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 
 <dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api_async.BizBasicAsyncClient.start_webhook_event">
-<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">8000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">_asyncio.Task</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api_async.BizBasicAsyncClient.start_webhook_event" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api_async.BizBasicAsyncClient.start_webhook_event" title="Permalink to this definition"></a></dt>
 <dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
+<blockquote>
+<div><p>Business Basic版では使用できないメソッドです。</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.UnavailableError" title="emo_platform.exceptions.UnavailableError"><strong>UnavailableError</strong></a> – この関数を呼び出した場合。</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api_async.BizBasicAsyncClient.get_cb_func">
+<span class="sig-name descname"><span class="pre">get_cb_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="headerlink" href="#emo_platform.api_async.BizBasicAsyncClient.get_cb_func" title="Permalink to this definition"></a></dt>
+<dd><p>受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得</p>
 <blockquote>
 <div><p>Business Basic版では使用できないメソッドです。</p>
 </div></blockquote>
@@ -3528,6 +3721,51 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <p class="admonition-title">Note</p>
 <dl class="simple">
 <dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook">https://platform-api.bocco.me/dashboard/api-docs#delete-/v1/webhook</a></p>
+</dd>
+<dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emo_platform.api_async.BizAdvancedAsyncClient.start_webhook_event">
+<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">start_webhook_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#emo_platform.api_async.BizAdvancedAsyncClient.start_webhook_event" title="Permalink to this definition"></a></dt>
+<dd><p>BOCCO emoのWebhookのイベント通知の開始</p>
+<blockquote>
+<div><p><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code> で指定したイベントの通知が開始されます。</p>
+<p>使用する際は、以下の手順を踏んでください。</p>
+<ol class="arabic simple">
+<li><p>ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行</p></li>
+<li><p><a class="reference internal" href="#emo_platform.api_async.BizAdvancedAsyncClient.create_webhook_setting" title="emo_platform.api_async.BizAdvancedAsyncClient.create_webhook_setting"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_webhook_setting()</span></code></a> で、1で発行したURLをBOCCO emoに設定</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">event()</span></code> で通知したいeventとそれに対応するcallback関数を設定</p></li>
+<li><p>この関数を実行</p></li>
+<li><p>ローカルサーバーを起動し、<code class="xref py py-func docutils literal notranslate"><span class="pre">get_cb_func()</span></code> を利用して、webhook通知があった際に対応するcallback関数を実行</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>api_key</strong> (<em>str</em>) – <p>法人向けAPIキー</p>
+<p>法人アカウントでログインした時の <a class="reference external" href="https://platform-api.bocco.me/dashboard/">ダッシュボード</a>
+から確認することができます。</p>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p><strong>secret_key</strong> – BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。</p>
+<p>第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><strong>EmoPlatformError</strong></a> – 関数内部で呼び出している <a class="reference internal" href="#emo_platform.api_async.BizAdvancedAsyncClient.register_webhook_event" title="emo_platform.api_async.BizAdvancedAsyncClient.register_webhook_event"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_webhook_event()</span></code></a> が例外を出した場合。</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events">https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events</a></p>
 </dd>
 <dt>API呼び出し回数</dt><dd><p>1回 + 1回(access tokenが切れていた場合)</p>
 </dd>
@@ -4558,6 +4796,13 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">emo_platform.exceptions.</span></span><span class="sig-name descname"><span class="pre">UnavailableError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emo_platform.exceptions.UnavailableError" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><code class="xref py py-class docutils literal notranslate"><span class="pre">emo_platform.exceptions.EmoPlatformError</span></code></a></p>
 <p>現在のプランでは使用できない場合に出るエラー</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="emo_platform.exceptions.WebhookCallbackError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">emo_platform.exceptions.</span></span><span class="sig-name descname"><span class="pre">WebhookCallbackError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#emo_platform.exceptions.WebhookCallbackError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#emo_platform.exceptions.EmoPlatformError" title="emo_platform.exceptions.EmoPlatformError"><code class="xref py py-class docutils literal notranslate"><span class="pre">emo_platform.exceptions.EmoPlatformError</span></code></a></p>
+<p>webhookイベントに紐づいたcallback関数の呼び出しに失敗した時に出るエラー</p>
 </dd></dl>
 
 </section>
@@ -5926,6 +6171,23 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="emo_platform.response.parse_webhook_body">
+<span class="sig-prename descclassname"><span class="pre">emo_platform.response.</span></span><span class="sig-name descname"><span class="pre">parse_webhook_body</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody"><span class="pre">emo_platform.response.EmoWebhookBody</span></a></span></span><a class="headerlink" href="#emo_platform.response.parse_webhook_body" title="Permalink to this definition"></a></dt>
+<dd><p>受信したwebhookリクエストのボディのJSONペイロードのパース</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>body</strong> (<em>dict</em>) – 受信したwebhookリクエストのボディのJSONペイロード</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>emo_webhook_body</strong> – パースされたボディ</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.response.EmoWebhookBody" title="emo_platform.response.EmoWebhookBody">EmoWebhookBody</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

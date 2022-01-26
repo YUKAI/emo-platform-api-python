@@ -754,7 +754,7 @@ class Client:
     def start_webhook_event(self) -> str:
         """BOCCO emoのWebhookのイベント通知の開始
 
-            :func: `event` で指定したイベントの通知が開始されます。
+            :func:`event` で指定したイベントの通知が開始されます。
 
             使用する際は、以下の手順を踏んでください。
 
@@ -766,7 +766,7 @@ class Client:
 
             4. この関数を実行
 
-            5. ローカルサーバーを起動し、 :func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
+            5. ローカルサーバーを起動し、:func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
 
         Returns
         -------
@@ -1639,7 +1639,7 @@ class BizAdvancedClient(BizClient):
     def start_webhook_event(self, api_key: str) -> str:
         """BOCCO emoのWebhookのイベント通知の開始
 
-            :func: `event` で指定したイベントの通知が開始されます。
+            :func:`event` で指定したイベントの通知が開始されます。
 
             使用する際は、以下の手順を踏んでください。
 
