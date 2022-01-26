@@ -102,9 +102,9 @@ ngrok http 8000
 ```
 
 #### Case1 : Using function `start_webhook_event()` (**Recommended**)
-You can use the decorator `event` to register functions as callback functions.
+You can use the decorator `event()` to register functions as callback functions.
 
-And, you can get the corresponding callback function and the parsed body by giving the webhook request body as the argument of the function `get_cb_func`.
+And, you can get the corresponding callback function and the parsed body by giving the webhook request body as the argument of the function `get_cb_func()`.
 
 Please check if the `X-Platform-Api-Secret` in the header of the webhook request is the same as the return value of `start_webhook_event()` to avoid unexpected requests from third parties.
 ```python
@@ -153,9 +153,9 @@ with http.server.HTTPServer(('', 8000), Handler) as httpd:
 ```
 
 #### Case2 : Using function `register_webhook_event()` (**Not recommended**)
-You can't use the decorator `event` to register functions as callback functions.
+You can't use the decorator `event()` to register functions as callback functions.
 
-So, you need to call the callback functions yourself after webhook request body is parsed using `parse_webhook_body`.
+So, you need to call the callback functions yourself after webhook request body is parsed using `parse_webhook_body()`.
 
 Please check if the `X-Platform-Api-Secret` in the header of the webhook request is correct using the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
 
@@ -220,7 +220,7 @@ $ poetry run python cli.py personal get_account_info
 ```
 
 ### Example2 : Use room client
-Please replace ROOM_ID with room id which you want to use.
+Please replace `ROOM_ID` with room id which you want to use.
 ```
 $ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
 ```
@@ -230,7 +230,7 @@ $ poetry run python cli.py personal get_rooms_id
 ```
 
 Or, you can use "room" command which does not require the room id to be specified.
-This is because it calls get_rooms_id() internally and specifies the first room id.
+This is because it calls `get_rooms_id()` internally and specifies the first room id.
 ```
 $ poetry run python cli.py personal room change_led_color 10 10 200
 ```
