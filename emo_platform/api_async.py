@@ -1,12 +1,9 @@
-import asyncio
 import json
 from dataclasses import asdict
 from functools import partial
 from typing import Callable, List, NoReturn, Optional, Union, Tuple
 
 import aiohttp
-import uvicorn  # type: ignore
-from fastapi import BackgroundTasks, FastAPI, Request
 
 from emo_platform.api import (
     BizAdvancedClient,

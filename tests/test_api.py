@@ -7,7 +7,6 @@ from threading import Thread
 
 import requests
 import responses
-from fastapi.testclient import TestClient
 
 from emo_platform import Client
 from emo_platform.exceptions import NoRoomError, TokenError, UnauthorizedError
