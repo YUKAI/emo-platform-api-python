@@ -785,3 +785,21 @@ class EmoWebhookBody(BaseModel):
             法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
             から確認できる法人向けAPIキーと同じ文字列
     """
+
+
+def parse_webhook_body(body: dict) -> EmoWebhookBody:
+    """受信したwebhookリクエストのボディのJSONペイロードのパース
+
+    Parameters
+    ----------
+    body : dict
+        受信したwebhookリクエストのボディのJSONペイロード
+
+    Returns
+    -------
+    emo_webhook_body : EmoWebhookBody
+        パースされたボディ
+
+    """
+
+    return EmoWebhookBody(**body)
