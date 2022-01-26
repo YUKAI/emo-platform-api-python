@@ -4,17 +4,15 @@ from collections import deque
 from contextlib import contextmanager
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, Dict, List, NoReturn, Optional, Union
-
+from typing import Callable, Dict, List, NoReturn, Optional, Tuple, Union
 import requests
-import uvicorn  # type: ignore
-from fastapi import BackgroundTasks, FastAPI, Request
 
 from emo_platform.exceptions import (
     NoRoomError,
     TokenError,
     UnauthorizedError,
     UnavailableError,
+    WebhookCallbackError,
     _http_error_handler,
 )
 from emo_platform.models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
@@ -52,13 +50,25 @@ class TokenManager:
     _INITIAL_SET_TOKENS = {"os": _INITIAL_TOKENS, "args": _INITIAL_TOKENS}
 
     def __init__(
-        self, tokens: Optional[Tokens] = None, token_file_path: Optional[str] = None
+        self,
+        tokens: Optional[Tokens] = None,
+        token_file_path: Optional[str] = None,
+        is_server=False,
     ):
-        self._set_token_file_path(token_file_path)
-        self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
-        self._current_set_tokens = self._get_current_set_tokens(tokens)
-        self._update_previous_set_tokens_file(tokens)
-        self.tokens = self._get_latest_tokens()
+        self._is_server = is_server
+        if not self._is_server:
+            self._set_token_file_path(token_file_path)
+            self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
+            self._current_set_tokens = self._get_current_set_tokens(tokens)
+            self._update_previous_set_tokens_file(tokens)
+            self.tokens = self._get_latest_tokens()
+        else:
+            if tokens:
+                self.tokens = tokens
+            else:
+                raise TokenError(
+                    "Please give tokens as an argument using 'emo_platform.Tokens'"
+                )
 
     def _set_token_file_path(self, token_file_path) -> None:
         if token_file_path:
@@ -117,8 +127,9 @@ class TokenManager:
             return self._current_set_tokens
 
     def save_tokens(self) -> None:
-        with open(self._TOKEN_FILE, "w") as f:
-            json.dump(asdict(self.tokens), f)
+        if not self._is_server:
+            with open(self._TOKEN_FILE, "w") as f:
+                json.dump(asdict(self.tokens), f)
 
 
 class Client:
@@ -128,13 +139,15 @@ class Client:
     ----------
     endpoint_url : str, default https://platform-api.bocco.me
         BOCCO emo platform apiにアクセスするためのendpoint
+
     tokens : Tokens, default None
         refresh token及びaccess tokenを指定します。
+
         指定しない場合は、環境変数に設定されているあるいはこのpkg内のファイル(emo-platform-api.json)に保存されているトークンが使用されます。
+
     token_file_path : Optional[str], default None
         refresh token及びaccess tokenを保存するファイルのパス。
-        指定しない場合は、このpkg内のディレクトリに保存されます。
-        指定したパスには、以下の2種類のファイルが生成されます。
+        指定した場合には指定したパスに、指定しない場合はこのpkg内のディレクトリに、以下の2種類のファイルが生成されます。
             emo-platform-api.json
                 最新のトークンを保存するファイル。
             emo-platform-api_previous.json
@@ -143,6 +156,14 @@ class Client:
                 BOCCOアカウントの切り替えが行えるように前回から更新があったかを確認するのに使用されます。
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
+
+    is_server : bool, default False
+        Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。
+
+        この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)
+
+        この引数をTrueにするのは、サーバーサイドのwebアプリにこのライブラリを使用する際などを想定しています。
+
     Raises
     ----------
     TokenError
@@ -170,8 +191,11 @@ class Client:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
+        is_server: bool = False,
     ):
-        self._tm = TokenManager(tokens=tokens, token_file_path=token_file_path)
+        self._tm = TokenManager(
+            tokens=tokens, token_file_path=token_file_path, is_server=is_server
+        )
         self._endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self._headers: Dict[str, Optional[str]] = {
             "accept": "*/*",
@@ -727,10 +751,10 @@ class Client:
 
         return decorator
 
-    def start_webhook_event(self, host: str = "localhost", port: int = 8000) -> None:
+    def start_webhook_event(self) -> str:
         """BOCCO emoのWebhookのイベント通知の開始
 
-            イベント通知時に、登録していた関数が呼び出されるようになります。
+            :func:`event` で指定したイベントの通知が開始されます。
 
             使用する際は、以下の手順を踏んでください。
 
@@ -740,36 +764,21 @@ class Client:
 
             3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
 
-            4. この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)
+            4. この関数を実行
 
-        Example
-        -----
-        この関数は、blocking処理になっている点に注意してください::
+            5. ローカルサーバーを起動し、:func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
 
-            import emo_platform
+        Returns
+        -------
+        secret_key : str
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
 
-            client = emo_platform.Client()
-
-            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
-
-            @client.event("message.received")
-            def test_event_callback(body):
-                print(body)
-
-            client.start_webhook_event()
-
-        Parameters
-        ----------
-        host : str, default localhost
-            Webhookの通知を受けるローカルサーバーのホスト名。
-
-        port : int, default 8000
-            Webhookの通知を受けるローカルサーバーのポート番号。
+            第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 
         Raises
         ----------
         EmoPlatformError
-            関数内部で呼んでいる :func:`register_webhook_event` が例外を出した場合。
+            関数内部で呼び出している :func:`register_webhook_event` が例外を出した場合。
 
         Note
         ----
@@ -782,32 +791,100 @@ class Client:
         """
 
         response = self.register_webhook_event(list(self._webhook_events_cb.keys()))
-        secret_key = response.secret
+        return response.secret
 
-        self.app = FastAPI()
+    def get_cb_func(self, body: dict) -> Tuple[Callable, EmoWebhookBody]:
+        """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
-        @self.app.post("/")
-        def emo_callback(
-            request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
-        ):
-            if request.headers.get("x-platform-api-secret") == secret_key:
-                if body.request_id not in self._request_id_deque:
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. :func:`start_webhook_event` でwebhook通知を開始
+
+            5. ローカルサーバーを起動し、この関数を利用して、webhook通知があった際に対応するcallback関数を実行
+
+        Example
+        -----
+        python標準ライブラリを使用してローカルサーバーを立てた例::
+
+            import emo_platform, json, http.server
+
+            client = emo_platform.Client()
+
+            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
+
+            @client.event("message.received")
+            def test_event_callback(body):
+                print(body)
+
+            secret_key = client.start_webhook_event()
+
+            class Handler(http.server.BaseHTTPRequestHandler):
+                def _send_status(self, status):
+                    self.send_response(status)
+                    self.send_header('Content-type', 'text/plain; charset=utf-8')
+                    self.end_headers()
+
+                def do_POST(self):
+                    # check secret_key
+                    if not secret_key == self.headers["X-Platform-Api-Secret"]:
+                        self._send_status(401)
+
+                    content_len = int(self.headers['content-length'])
+                    request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
+
                     try:
-                        event_cb = self._webhook_events_cb[body.event]
-                    except KeyError:
-                        return "fail. no callback associated with the event.", 500
-                    room_id = body.uuid
-                    if room_id in event_cb:
-                        cb_func = event_cb[room_id]
-                    elif self._DEFAULT_ROOM_ID in event_cb:
-                        cb_func = event_cb[self._DEFAULT_ROOM_ID]
-                    else:
-                        return "fail. no callback associated with the room.", 500
-                    background_tasks.add_task(cb_func, body)
-                    self._request_id_deque.append(body.request_id)
-                    return "success", 200
+                        cb_func, emo_webhook_body = client.get_cb_func(request_body)
+                    except emo_platform.EmoPlatformError:
+                        self._send_status(501)
+                    cb_func(emo_webhook_body)
 
-        uvicorn.run(self.app, host=host, port=port)
+                    self._send_status(200)
+
+            with http.server.HTTPServer(('', 8000), Handler) as httpd:
+                httpd.serve_forever()
+
+        Parameters
+        ----------
+        body : dict
+            受信したwebhookリクエストのボディのJSONペイロード
+
+        Returns
+        -------
+        cb_func, emo_webhook_body : Tuple[Callable, EmoWebhookBody]
+
+        Raises
+        ----------
+        EmoPlatformError
+            受信したwebhookイベントに対応するcallback関数が登録されていない場合。
+
+        Note
+        ----
+        API呼び出し回数
+            0回
+
+        """
+
+        body = EmoWebhookBody(**body)
+        if body.request_id not in self._request_id_deque:
+            try:
+                event_cb = self._webhook_events_cb[body.event]
+            except KeyError as e:
+                raise WebhookCallbackError("event") from e
+            room_id = body.uuid
+            if room_id in event_cb:
+                cb_func = event_cb[room_id]
+            elif self._DEFAULT_ROOM_ID in event_cb:
+                cb_func = event_cb[self._DEFAULT_ROOM_ID]
+            else:
+                raise WebhookCallbackError("room")
+            self._request_id_deque.append(body.request_id)
+            return cb_func, body
 
 
 class BizClient(Client):
@@ -1275,10 +1352,22 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def start_webhook_event(
-        self, host: str = "localhost", port: int = 8000
-    ) -> NoReturn:
+    def start_webhook_event(self) -> NoReturn:
         """BOCCO emoのWebhookのイベント通知の開始
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def get_cb_func(self, body: dict) -> NoReturn:
+        """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
             Business Basic版では使用できないメソッドです。
 
@@ -1551,6 +1640,56 @@ class BizAdvancedClient(BizClient):
 
         with self._add_apikey2header(api_key):
             return super().delete_webhook_setting()
+
+    def start_webhook_event(self, api_key: str) -> str:
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            :func:`event` で指定したイベントの通知が開始されます。
+
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行
+
+            5. ローカルサーバーを起動し、 :func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        secret_key : str
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
+
+            第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼び出している :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = self.register_webhook_event(api_key, list(self._webhook_events_cb.keys()))
+        return response.secret
 
 
 class Room:

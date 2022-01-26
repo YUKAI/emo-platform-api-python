@@ -64,7 +64,7 @@ client = BizAdvancedClient(api_key="***")
 You can also see other examples in "examples" directory.
 
 ### Note
-- When you initialize emo_platform.Client, two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path where emo_platform module was installed.
+- When you initialize emo_platform.Client, without the argument `is_server` given as `True` , two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path where emo_platform module was installed.
 	- These files are used to store the tokens information.
 	- See the documentation for details.
 - You can change the path where these json files are created, as shown below.
@@ -101,8 +101,15 @@ In another terminal, execute ngrok and copy URL forwarded to http://localhost:80
 ngrok http 8000
 ```
 
+#### Case1 : Using function `start_webhook_event()` (**Recommended**)
+You can use the decorator `event()` to register functions as callback functions.
+
+And, you can get the corresponding callback function and the parsed body by giving the webhook request body as the argument of the function `get_cb_func()`.
+
+Please check if the `X-Platform-Api-Secret` in the header of the webhook request is the same as the return value of `start_webhook_event()` to avoid unexpected requests from third parties.
 ```python
-from emo_platform import Client, WebHook
+import json, http.server
+from emo_platform import Client, WebHook, EmoPlatformError
 
 client = Client()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -110,13 +117,103 @@ client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
 
 @client.event('message.received')
 def message_callback(data):
+	print("message received")
 	print(data)
 
 @client.event('illuminance.changed')
 def illuminance_callback(data):
+	print("illuminance changed")
 	print(data)
 
-client.start_webhook_event()
+secret_key = client.start_webhook_event()
+
+
+# localserver
+class Handler(http.server.BaseHTTPRequestHandler):
+	def _send_status(self, status):
+		self.send_response(status)
+		self.send_header('Content-type', 'text/plain; charset=utf-8')
+		self.end_headers()
+
+	def do_POST(self):
+		# check secret_key
+		if not secret_key == self.headers["X-Platform-Api-Secret"]:
+			self._send_status(401)
+			return
+
+		content_len = int(self.headers['content-length'])
+		request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
+
+		try:
+			cb_func, emo_webhook_body = client.get_cb_func(request_body)
+		except EmoPlatformError:
+			self._send_status(501)
+		cb_func(emo_webhook_body)
+
+		self._send_status(200)
+
+with http.server.HTTPServer(('', 8000), Handler) as httpd:
+	httpd.serve_forever()
+
+```
+
+#### Case2 : Using function `register_webhook_event()` (**Not recommended**)
+You can't use the decorator `event()` to register functions as callback functions.
+
+So, you need to call the callback functions yourself after webhook request body is parsed using `parse_webhook_body()`.
+
+Please check if the `X-Platform-Api-Secret` in the header of the webhook request is correct using the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
+
+```python
+import json, http.server
+from emo_platform import Client, WebHook, parse_webhook_body
+
+client = Client()
+# Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
+client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
+
+def message_callback(data):
+	print("message received")
+	print(data)
+
+def illuminance_callback(data):
+	print("illuminance changed")
+	print(data)
+
+response = client.register_webhook_event(
+	['message.received','illuminance.changed' ]
+)
+secret_key = response.secret
+
+# localserver
+class Handler(http.server.BaseHTTPRequestHandler):
+	def _send_status(self, status):
+		self.send_response(status)
+		self.send_header('Content-type', 'text/plain; charset=utf-8')
+		self.end_headers()
+
+	def do_POST(self):
+		# check secret_key
+		if not secret_key == self.headers["X-Platform-Api-Secret"]:
+			self._send_status(401)
+			return
+
+		content_len = int(self.headers['content-length'])
+		request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
+
+		emo_webhook_body = parse_webhook_body(request_body)
+		if emo_webhook_body.event == "message.received":
+			message_callback(emo_webhook_body)
+		elif emo_webhook_body.event == "illuminance.changed":
+			illuminance_callback(emo_webhook_body)
+		else:
+			pass
+
+		self._send_status(200)
+
+with http.server.HTTPServer(('', 8000), Handler) as httpd:
+	httpd.serve_forever()
+
 ```
 
 ## Cli Tool
@@ -133,7 +230,7 @@ $ poetry run python cli.py personal get_account_info
 ```
 
 ### Example2 : Use room client
-Please replace ROOM_ID with room id which you want to use.
+Please replace `ROOM_ID` with room id which you want to use.
 ```
 $ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
 ```
@@ -143,7 +240,7 @@ $ poetry run python cli.py personal get_rooms_id
 ```
 
 Or, you can use "room" command which does not require the room id to be specified.
-This is because it calls get_rooms_id() internally and specifies the first room id.
+This is because it calls `get_rooms_id()` internally and specifies the first room id.
 ```
 $ poetry run python cli.py personal room change_led_color 10 10 200
 ```
