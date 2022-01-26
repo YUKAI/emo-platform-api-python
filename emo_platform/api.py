@@ -37,8 +37,6 @@ from emo_platform.response import (
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
 
-SECRET_KEY_ID = "x-platform-api-secret"
-
 
 class PostContentType:
     APPLICATION_JSON = "application/json"
@@ -773,7 +771,7 @@ class Client:
         Returns
         -------
         secret_key : str
-            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
 
             第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 
@@ -829,7 +827,7 @@ class Client:
             class Handler(http.server.BaseHTTPRequestHandler):
                 def do_POST(self):
                     # check secret_key
-                    if not secret_key == self.headers[emo_platform.SECRET_KEY_ID]:
+                    if not secret_key == self.headers["X-Platform-Api-Secret"]:
                         self.send_response(401)
 
                     content_len = int(self.headers['content-length'])
@@ -1666,7 +1664,7 @@ class BizAdvancedClient(BizClient):
         Returns
         -------
         secret_key : str
-            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
 
             第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 

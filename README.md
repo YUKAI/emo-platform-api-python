@@ -106,11 +106,10 @@ You can use the decorator `event` to register functions as callback functions.
 
 And, you can get the corresponding callback function and the parsed body by giving the webhook request body as the argument of the function `get_cb_func`.
 
-Please check if the SECRET_KEY_ID in the header of the webhook request is the same as the return value of `start_webhook_event()` to avoid unexpected requests from third parties.
+Please check if the `X-Platform-Api-Secret` in the header of the webhook request is the same as the return value of `start_webhook_event()` to avoid unexpected requests from third parties.
 ```python
 import json, http.server
-from emo_platform import Client, WebHook, SECRET_KEY_ID
-
+from emo_platform import Client, WebHook
 
 client = Client()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -133,7 +132,7 @@ secret_key = client.start_webhook_event()
 class Handler(http.server.BaseHTTPRequestHandler):
 	def do_POST(self):
 		# check secret_key
-		if not secret_key == self.headers[SECRET_KEY_ID]:
+		if not secret_key == self.headers["X-Platform-Api-Secret"]:
 			self.send_response(401)
 			return
 
@@ -158,14 +157,11 @@ You can't use the decorator `event` to register functions as callback functions.
 
 So, you need to call the callback functions yourself after webhook request body is parsed using `parse_webhook_body`.
 
-Please check if the SECRET_KEY_ID in the header of the webhook request is correct using the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
+Please check if the `X-Platform-Api-Secret` in the header of the webhook request is correct using the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
 
 ```python
 import json, http.server
-from emo_platform import (
-	Client, WebHook, SECRET_KEY_ID, parse_webhook_body
-)
-
+from emo_platform import Client, WebHook, parse_webhook_body
 
 client = Client()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -188,7 +184,7 @@ secret_key = response.secret
 class Handler(http.server.BaseHTTPRequestHandler):
 	def do_POST(self):
 		# check secret_key
-		if not secret_key == self.headers[SECRET_KEY_ID]:
+		if not secret_key == self.headers["X-Platform-Api-Secret"]:
 			self.send_response(401)
 			return
 

@@ -1,4 +1,4 @@
-from .api import SECRET_KEY_ID, BizAdvancedClient, BizBasicClient, Client
+from .api import BizAdvancedClient, BizBasicClient, Client
 from .api_async import AsyncClient, BizAdvancedAsyncClient, BizBasicAsyncClient
 from .exceptions import (
     BadRequestError,

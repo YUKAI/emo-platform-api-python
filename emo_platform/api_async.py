@@ -661,7 +661,7 @@ class AsyncClient:
         Returns
         -------
         secret_key : str
-            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
 
             第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 
@@ -733,6 +733,7 @@ class AsyncClient:
 
                 @routes.post('/')
                 async def emo_webhook(request):
+                    # check secret key
                     if request.headers["X-Platform-Api-Secret"] == secret_key:
                         body = await request.json()
                         emo_webhook_body = parse_webhook_body(body)
@@ -1564,7 +1565,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         Returns
         -------
         secret_key : str
-            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるX-Platform-Api-Secretの値と一致する文字列です。
 
             第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 
