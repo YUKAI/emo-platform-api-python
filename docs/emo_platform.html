@@ -622,10 +622,15 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 <span class="n">secret_key</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">start_webhook_event</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">Handler</span><span class="p">(</span><span class="n">http</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">BaseHTTPRequestHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_send_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_header</span><span class="p">(</span><span class="s1">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain; charset=utf-8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_headers</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">do_POST</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># check secret_key</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">secret_key</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;X-Platform-Api-Secret&quot;</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">401</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_send_status</span><span class="p">(</span><span class="mi">401</span><span class="p">)</span>
 
         <span class="n">content_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;content-length&#39;</span><span class="p">])</span>
         <span class="n">request_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rfile</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">content_len</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
@@ -633,10 +638,10 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
         <span class="k">try</span><span class="p">:</span>
             <span class="n">cb_func</span><span class="p">,</span> <span class="n">emo_webhook_body</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_cb_func</span><span class="p">(</span><span class="n">request_body</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">emo_platform</span><span class="o">.</span><span class="n">EmoPlatformError</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">501</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_send_status</span><span class="p">(</span><span class="mi">501</span><span class="p">)</span>
         <span class="n">cb_func</span><span class="p">(</span><span class="n">emo_webhook_body</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_status</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="n">http</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">HTTPServer</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">),</span> <span class="n">Handler</span><span class="p">)</span> <span class="k">as</span> <span class="n">httpd</span><span class="p">:</span>
     <span class="n">httpd</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>

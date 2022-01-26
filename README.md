@@ -109,7 +109,7 @@ And, you can get the corresponding callback function and the parsed body by givi
 Please check if the `X-Platform-Api-Secret` in the header of the webhook request is the same as the return value of `start_webhook_event()` to avoid unexpected requests from third parties.
 ```python
 import json, http.server
-from emo_platform import Client, WebHook
+from emo_platform import Client, WebHook, EmoPlatformError
 
 client = Client()
 # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -130,10 +130,15 @@ secret_key = client.start_webhook_event()
 
 # localserver
 class Handler(http.server.BaseHTTPRequestHandler):
+	def _send_status(self, status):
+		self.send_response(status)
+		self.send_header('Content-type', 'text/plain; charset=utf-8')
+		self.end_headers()
+
 	def do_POST(self):
 		# check secret_key
 		if not secret_key == self.headers["X-Platform-Api-Secret"]:
-			self.send_response(401)
+			self._send_status(401)
 			return
 
 		content_len = int(self.headers['content-length'])
@@ -141,11 +146,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 		try:
 			cb_func, emo_webhook_body = client.get_cb_func(request_body)
-		except emo_platform.EmoPlatformError:
-			self.send_response(501)
+		except EmoPlatformError:
+			self._send_status(501)
 		cb_func(emo_webhook_body)
 
-		self.send_response(200)
+		self._send_status(200)
 
 with http.server.HTTPServer(('', 8000), Handler) as httpd:
 	httpd.serve_forever()
@@ -182,10 +187,15 @@ secret_key = response.secret
 
 # localserver
 class Handler(http.server.BaseHTTPRequestHandler):
+	def _send_status(self, status):
+		self.send_response(status)
+		self.send_header('Content-type', 'text/plain; charset=utf-8')
+		self.end_headers()
+
 	def do_POST(self):
 		# check secret_key
 		if not secret_key == self.headers["X-Platform-Api-Secret"]:
-			self.send_response(401)
+			self._send_status(401)
 			return
 
 		content_len = int(self.headers['content-length'])
@@ -199,7 +209,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 		else:
 			pass
 
-		self.send_response(200)
+		self._send_status(200)
 
 with http.server.HTTPServer(('', 8000), Handler) as httpd:
 	httpd.serve_forever()

@@ -825,10 +825,15 @@ class Client:
             secret_key = client.start_webhook_event()
 
             class Handler(http.server.BaseHTTPRequestHandler):
+                def _send_status(self, status):
+                    self.send_response(status)
+                    self.send_header('Content-type', 'text/plain; charset=utf-8')
+                    self.end_headers()
+
                 def do_POST(self):
                     # check secret_key
                     if not secret_key == self.headers["X-Platform-Api-Secret"]:
-                        self.send_response(401)
+                        self._send_status(401)
 
                     content_len = int(self.headers['content-length'])
                     request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
@@ -836,10 +841,10 @@ class Client:
                     try:
                         cb_func, emo_webhook_body = client.get_cb_func(request_body)
                     except emo_platform.EmoPlatformError:
-                        self.send_response(501)
+                        self._send_status(501)
                     cb_func(emo_webhook_body)
 
-                    self.send_response(200)
+                    self._send_status(200)
 
             with http.server.HTTPServer(('', 8000), Handler) as httpd:
                 httpd.serve_forever()
