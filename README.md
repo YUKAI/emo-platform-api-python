@@ -217,30 +217,122 @@ with http.server.HTTPServer(('', 8000), Handler) as httpd:
 ```
 
 ## Cli Tool
-You can use command line interface when you install this sdk with poetry.
+You can use the command `emo_platform_cli` after installing this package.
 
 ### Example1 : Use client
 Initially, you need to specify your account refresh token.
 ```bash
-$ poetry run python cli.py personal --refresh_token *** get_account_info
+$ emo_platform_cli personal --refresh_token *** get_account_info
 ```
 Once you set refresh_token, you don't need to set again.
 ```bash
-$ poetry run python cli.py personal get_account_info
+$ emo_platform_cli personal get_account_info
 ```
 
 ### Example2 : Use room client
 Please replace `ROOM_ID` with room id which you want to use.
 ```
-$ poetry run python cli.py personal create_room_client ROOM_ID change_led_color 10 10 200
+$ emo_platform_cli personal create_room_client ROOM_ID change_led_color 10 10 200
 ```
 You can get room id as shown below.
 ```
-$ poetry run python cli.py personal get_rooms_id
+$ emo_platform_cli personal get_rooms_id
 ```
 
 Or, you can use "room" command which does not require the room id to be specified.
 This is because it calls `get_rooms_id()` internally and specifies the first room id.
 ```
-$ poetry run python cli.py personal room change_led_color 10 10 200
+$ emo_platform_cli personal room change_led_color 10 10 200
+```
+
+### Help
+If you run a command without giving any arguments, a list of available commands(functions) or required arguments will be displayed with explanations.
+
+#### Example1 : Show available clients
+```bash
+$ emo_platform_cli
+
+NAME
+    emo_platform_cli
+
+SYNOPSIS
+    emo_platform_cli COMMAND
+
+COMMANDS
+    COMMAND is one of the following:
+
+     biz_advanced
+       各種apiを呼び出す同期版のclient(Business Advanced版)
+
+     biz_basic
+       各種apiを呼び出す同期版のclient(Business Basic版)
+
+     personal
+       各種apiを呼び出す同期版のclient(Personal版)
+
+```
+
+#### Example2 : Show available functions in personal version
+```bash
+$ emo_platform_cli personal
+NAME
+    emo_platform_cli personal
+
+SYNOPSIS
+    emo_platform_cli personal - COMMAND
+
+COMMANDS
+    COMMAND is one of the following:
+
+     change_webhook_setting
+       Webhookの設定の変更
+
+     create_room_client
+       部屋固有の各種apiを呼び出すclientの作成
+
+     create_webhook_setting
+       Webhookの設定の作成
+
+     delete_account_info
+       アカウントの削除
+
+: ...
+```
+
+#### Example3 : Show available functions unique to room in personal version
+```bash
+$ emo_platform_cli personal room
+NAME
+    emo_platform_cli personal room
+
+SYNOPSIS
+    emo_platform_cli personal room COMMAND | VALUE
+
+COMMANDS
+    COMMAND is one of the following:
+
+     change_led_color
+       ほっぺたの色の変更
+
+     get_emo_settings
+       現在のBOCCO emoの設定値を取得
+
+     get_msgs
+       部屋に投稿されたメッセージの取得
+
+     get_sensor_values
+       部屋センサの送信値を取得
+
+: ...
+```
+
+#### Example4 : Show the required argument of `change_webhook_setting()`
+```bash
+$ emo_platform_cli personal change_webhook_setting
+ERROR: The function received no value for the required argument: url
+Usage: emo_platform_cli personal change_webhook_setting URL <flags>
+  optional flags:        --description
+
+For detailed information on this command, run:
+  emo_platform_cli personal change_webhook_setting --help
 ```
