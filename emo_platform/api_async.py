@@ -2,7 +2,7 @@ import asyncio
 import json
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, List, NoReturn, Optional, Union
+from typing import Callable, List, NoReturn, Optional, Union, Tuple
 
 import aiohttp
 import uvicorn  # type: ignore
@@ -641,12 +641,10 @@ class AsyncClient:
 
         return decorator
 
-    async def start_webhook_event(
-        self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
-    ) -> None:
+    async def start_webhook_event(self) -> str:
         """BOCCO emoのWebhookのイベント通知の開始
 
-            イベント通知時に、登録していた関数が呼び出されるようになります。
+            :func: `event` で指定したイベントの通知が開始されます。
 
             使用する際は、以下の手順を踏んでください。
 
@@ -656,54 +654,16 @@ class AsyncClient:
 
             3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
 
-            4. この関数を実行 (uvicornを使用して、ローカルサーバーを起動します。)
+            4. この関数を実行
 
-        Example
-        -----
-        webhook通知が来たらそのデータをqueueに渡し、:func:`print_queue` で表示する例です::
+            5. ローカルサーバーを起動し、 :func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
 
-            import emo_platform
+        Returns
+        -------
+        secret_key : str
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
 
-            client = emo_platform.AsyncClient()
-
-            client.create_webhook_setting(emo_platform.WebHook("WEBHOOK URL"))
-
-            async def print_queue(queue):
-                while True:
-                    item = await queue.get()
-                    print("body:", item)
-                    print("data:", item.data)
-
-            async def main():
-                queue = asyncio.Queue()
-
-                @client.event("message.received")
-                async def message_callback(body):
-                    await queue.put(body)
-
-                # Create task you want to execute in parallel
-                task_queue = asyncio.create_task(print_queue(queue))
-
-                # Await start_webhook_event last.
-                # Give task list to be executed in parallel as the argument.
-                await client.start_webhook_event(port=8000, tasks=[task_queue])
-
-            if __name__ == "__main__":
-                asyncio.run(main())
-
-
-        Parameters
-        ----------
-        host : str, default localhost
-            Webhookの通知を受けるローカルサーバーのホスト名。
-
-        port : int, default 8000
-            Webhookの通知を受けるローカルサーバーのポート番号。
-
-        tasks : List[asyncio.Task], default []
-            並列で実行したいタスクオブジェクトのリスト。
-
-            サーバー終了時にキャンセルされます。
+            第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
 
         Raises
         ----------
@@ -716,49 +676,109 @@ class AsyncClient:
             https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
 
         API呼び出し回数
-            1回 + 最大2回(access tokenが切れていた場合)
+            1回 + 1回(access tokenが切れていた場合)
 
         """
 
         response = await self.register_webhook_event(
             list(self._client._webhook_events_cb.keys())
         )
-        secret_key = response.secret
+        return response.secret
 
-        self.app = FastAPI()
+    def get_cb_func(self, body: dict) -> Tuple[Callable, EmoWebhookBody]:
+        """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
-        @self.app.post("/")
-        async def emo_callback(
-            request: Request, body: EmoWebhookBody, background_tasks: BackgroundTasks
-        ):
-            if request.headers.get("x-platform-api-secret") == secret_key:
-                if body.request_id not in self._client._request_id_deque:
-                    try:
-                        event_cb = self._client._webhook_events_cb[body.event]
-                    except KeyError:
-                        return "fail. no callback associated with the event.", 500
-                    room_id = body.uuid
-                    if room_id in event_cb:
-                        cb_func = event_cb[room_id]
-                    elif self._DEFAULT_ROOM_ID in event_cb:
-                        cb_func = event_cb[self._DEFAULT_ROOM_ID]
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. :func:`start_webhook_event` でwebhook通知を開始
+
+            5. ローカルサーバーを起動し、この関数を利用して、webhook通知があった際に対応するcallback関数を実行
+
+        Example
+        -----
+        aiohttpライブラリを使用してローカルサーバーを立てた例::
+
+            import asyncio
+            from aiohttp import web
+            from emo_platform import AsyncClient, WebHook, EmoPlatformError
+
+            client = AsyncClient()
+
+            async def print_queue(queue):
+                while True:
+                    item = await queue.get()
+                    print("body:", item)
+                    print("data:", item.data)
+
+            async def main():
+                # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
+                await client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
+
+                queue = asyncio.Queue()
+
+                @client.event("message.received")
+                async def message_callback(body):
+                    await asyncio.sleep(1)  # Do not use time.sleep in async def
+                    await queue.put(body)
+
+                secret_key = await client.start_webhook_event()
+
+                routes = web.RouteTableDef()
+
+                @routes.post('/')
+                async def emo_webhook(request):
+                    if request.headers["X-Platform-Api-Secret"] == secret_key:
+                        body = await request.json()
+                        emo_webhook_body = parse_webhook_body(body)
+                        try:
+                            cb_func, emo_webhook_body = client.get_cb_func(body)
+                        except EmoPlatformError:
+                            return web.Response(status=501)
+                        asyncio.create_task(cb_func(emo_webhook_body))
+                        return web.Response()
                     else:
-                        return "fail. no callback associated with the room.", 500
-                    background_tasks.add_task(cb_func, body)
-                    self._client._request_id_deque.append(body.request_id)
-                    return "success", 200
+                        return web.Response(status=401)
 
-        loop = asyncio.get_event_loop()
-        config = uvicorn.Config(
-            app=self.app, host=host, port=port, loop=loop, lifespan="off"
-        )
-        self.server = uvicorn.Server(config)
-        await self.server.serve()
-        for task in tasks:
-            task.cancel()
+                app = web.Application()
+                app.add_routes(routes)
+                runner = web.AppRunner(app)
+                await runner.setup()
+                site = web.TCPSite(runner, 'localhost', 8000)
+                await site.start()
 
-    def stop_webhook_event(self):
-        self.server.should_exit = True
+                await print_queue(queue)
+
+            asyncio.run(main())
+
+
+        Parameters
+        ----------
+        body : dict
+            受信したwebhookリクエストのボディのJSONペイロード
+
+        Returns
+        -------
+        cb_func, emo_webhook_body : Tuple[Callable, EmoWebhookBody]
+
+        Raises
+        ----------
+        EmoPlatformError
+            受信したwebhookイベントに対応するcallback関数が登録されていない場合。
+
+        Note
+        ----
+        API呼び出し回数
+            0回
+
+        """
+
+        return self._client.get_cb_func(body)
 
 
 class BizAsyncClient(AsyncClient):
@@ -1227,10 +1247,22 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def start_webhook_event(
-        self, host: str = "localhost", port: int = 8000, tasks: List[asyncio.Task] = []
-    ) -> NoReturn:
+    async def start_webhook_event(self) -> NoReturn:
         """BOCCO emoのWebhookのイベント通知の開始
+
+            Business Basic版では使用できないメソッドです。
+
+        Raises
+        ----------
+        UnavailableError
+            この関数を呼び出した場合。
+
+        """
+
+        raise UnavailableError(self._PLAN)
+
+    def get_cb_func(self, body: dict) -> NoReturn:
+        """受信したwebhookイベントに対応するcallback関数及びパースされたボディの取得
 
             Business Basic版では使用できないメソッドです。
 
@@ -1503,6 +1535,56 @@ class BizAdvancedAsyncClient(BizAsyncClient):
 
         with self._client._add_apikey2header(api_key):
             return await super().delete_webhook_setting()
+
+    async def start_webhook_event(self, api_key: str) -> str:
+        """BOCCO emoのWebhookのイベント通知の開始
+
+            :func: `event` で指定したイベントの通知が開始されます。
+
+            使用する際は、以下の手順を踏んでください。
+
+            1. ngrokなどを用いて、ローカルサーバーにForwardingするURLを発行
+
+            2. :func:`create_webhook_setting` で、1で発行したURLをBOCCO emoに設定
+
+            3. :func:`event` で通知したいeventとそれに対応するcallback関数を設定
+
+            4. この関数を実行
+
+            5. ローカルサーバーを起動し、 :func:`get_cb_func` を利用して、webhook通知があった際に対応するcallback関数を実行
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        Returns
+        -------
+        secret_key : str
+            BOCCO emoのWebhookリクエストのHTTP Headerに含まれるx-platform-api-secretという値と一致する文字列です。
+
+            第三者からの、予期せぬリクエストを防ぐため、この文字列を利用した認証を実装してください。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で呼び出している :func:`register_webhook_event` が例外を出した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#put-/v1/webhook/events
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        response = await self.register_webhook_event(api_key, list(self._client._webhook_events_cb.keys()))
+        return response.secret
 
 
 class AsyncRoom:
