@@ -135,6 +135,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 		# check secret_key
 		if not secret_key == self.headers[SECRET_KEY_ID]:
 			self.send_response(401)
+			return
 
 		content_len = int(self.headers['content-length'])
 		request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
@@ -157,7 +158,7 @@ You can't use the decorator `event` to register functions as callback functions.
 
 So, you need to call the callback functions yourself after webhook request body is parsed using `parse_webhook_body`.
 
-Please check if the SECRET_KEY_ID in the header of the webhook request is the same as the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
+Please check if the SECRET_KEY_ID in the header of the webhook request is correct using the return value of `register_webhook_event()` to avoid unexpected requests from third parties.
 
 ```python
 import json, http.server
@@ -178,9 +179,10 @@ def illuminance_callback(data):
 	print("illuminance changed")
 	print(data)
 
-secret_key = client.register_webhook_event(
+response = client.register_webhook_event(
 	['message.received','illuminance.changed' ]
 )
+secret_key = response.secret
 
 # localserver
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -188,6 +190,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 		# check secret_key
 		if not secret_key == self.headers[SECRET_KEY_ID]:
 			self.send_response(401)
+			return
 
 		content_len = int(self.headers['content-length'])
 		request_body = json.loads(self.rfile.read(content_len).decode('utf-8'))
