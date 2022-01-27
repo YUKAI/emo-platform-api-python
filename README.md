@@ -45,19 +45,6 @@ client = Client(Tokens(access_token="***", refresh_token="***"))
 - Once you set tokens as arguments or environment variables, the tokens are saved in the sdk and you don't need to specify any arguments or set any environment variables next time.
 - If you want to overwrite the tokens with the other tokens, for example if you want to change your account, set the new tokens again with arguments or environment variables.
 
-## For business user
-When you use business version, you need to give api_key as argument when initializing client.
-
-You can find the API key in [this page](https://platform-api.bocco.me/dashboard/login) after login with business account.
-```python
-from emo_platform import BizBasicClient, BizAdvancedClient
-
-# business basic version
-client = BizBasicClient(api_key="***")
-
-# business advanced version
-client = BizAdvancedClient(api_key="***")
-```
 
 ## Usage Example
 
@@ -93,6 +80,32 @@ room_client = client.create_room_client(room_id_list[0])
 print(room_client.get_msgs())
 room_client.move_to(Head(10,10))
 ```
+
+#### For business user
+When you use business version, you need to give api_key as argument for some functions.
+
+You can find the API key in [this page](https://platform-api.bocco.me/dashboard/login) after login with business account.
+```python
+from emo_platform import BizBasicClient, BizAdvancedClient
+
+# business basic version
+client = BizBasicClient()
+
+# business advanced version
+client = BizAdvancedClient()
+
+print(client.get_account_info())
+print(client.get_stamps_list(api_key))
+
+room_id_list = client.get_rooms_id(api_key)
+# give api_key to room client
+room_client = client.create_room_client(api_key, room_id_list[0])
+
+# need not to give api_key to room client method
+# if you want to change api_key, please create another room_client for each api_key
+print(room_client.get_msgs())
+```
+
 
 ### Example2 : Receive webhook
 

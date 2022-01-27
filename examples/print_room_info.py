@@ -1,14 +1,9 @@
 """Emo Platform API python example Getting information specific to room.
 """
 
-from emo_platform import BizAdvancedClient, BizBasicClient, Client
+from emo_platform import Client
 
-# personal version
 client = Client()
-
-# business advanced version
-# api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
-# client = BizAdvancedClient(api_key=api_key)
 
 rooms_id_list = client.get_rooms_id()
 # create room client
@@ -18,7 +13,7 @@ room = client.create_room_client(rooms_id_list[0])
 def main():
     get_latest_msg()
     get_sensors_list()
-    # get_room_sensor_info()
+    get_room_sensor_info()
     get_emo_settings()
 
 

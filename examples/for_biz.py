@@ -8,10 +8,10 @@ from emo_platform.models import AccountInfo, BroadcastMsg
 api_key = "YOUR API KEY"
 
 # business basic version
-client = BizBasicClient(api_key=api_key)
+client = BizBasicClient()
 
 # business advanced version
-# client = BizAdvancedClient(api_key=api_key)
+# client = BizAdvancedClient()
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     broadcast_msg = BroadcastMsg(
         title="テスト", text="テスト", executed_at=1819300000, immediate=True
     )
-    create_broadcast_msg(broadcast_msg)
+    create_broadcast_msg(api_key, broadcast_msg)
 
     get_broadcast_msgs()
 
@@ -70,9 +70,9 @@ def change_account_info(account_info):
     print("plan:", account_info.plan)
 
 
-def create_broadcast_msg(broadcast_msg):
+def create_broadcast_msg(api_key, broadcast_msg):
     print("\n" + "=" * 20 + " create broadcast message" + "=" * 20)
-    broadcast_msg = client.create_broadcast_msg(broadcast_msg)
+    broadcast_msg = client.create_broadcast_msg(api_key, broadcast_msg)
     print("id: ", broadcast_msg.id)
     print("title: ", broadcast_msg.title)
     print("text: ", broadcast_msg.text)

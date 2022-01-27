@@ -1,3 +1,6 @@
+"""Emo Platform API python example Executing method unique to buisness version.
+"""
+
 import asyncio
 
 from emo_platform import BizAdvancedAsyncClient, BizBasicAsyncClient
@@ -7,10 +10,10 @@ from emo_platform.models import AccountInfo, BroadcastMsg
 api_key = "YOUR API KEY"
 
 # business basic version
-client = BizBasicAsyncClient(api_key=api_key)
+client = BizBasicAsyncClient()
 
 # business advanced version
-# client = BizAdvancedAsyncClient(api_key=api_key)
+# client = BizAdvancedAsyncClient()
 
 
 async def main():
@@ -30,7 +33,7 @@ async def main():
     broadcast_msg = BroadcastMsg(
         title="テスト", text="テスト", executed_at=1819300000, immediate=True
     )
-    await create_broadcast_msg(broadcast_msg)
+    await create_broadcast_msg(api_key, broadcast_msg)
 
     await get_broadcast_msgs()
 
@@ -69,9 +72,9 @@ async def change_account_info(account_info):
     print("plan:", account_info.plan)
 
 
-async def create_broadcast_msg(broadcast_msg):
+async def create_broadcast_msg(api_key, broadcast_msg):
     print("\n" + "=" * 20 + " create broadcast message" + "=" * 20)
-    broadcast_msg = await client.create_broadcast_msg(broadcast_msg)
+    broadcast_msg = await client.create_broadcast_msg(api_key, broadcast_msg)
     print("id: ", broadcast_msg.id)
     print("title: ", broadcast_msg.title)
     print("text: ", broadcast_msg.text)

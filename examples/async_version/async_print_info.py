@@ -3,14 +3,10 @@
 
 import asyncio
 
-from emo_platform import AsyncClient, BizAdvancedAsyncClient, BizBasicAsyncClient
+from emo_platform import AsyncClient
 
 # personal version
 client = AsyncClient()
-
-# business advanced version
-# api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
-# client = BizAdvancedAsyncClient(api_key=api_key)
 
 
 async def main():
@@ -24,23 +20,21 @@ async def main():
 async def get_account_info():
     print("\n" + "=" * 20 + " account info " + "=" * 20)
     account_info = await client.get_account_info()
-    print(account_info)
-    # print("name:", account_info.name)
-    # print("email:", account_info.email)
-    # print("profile_image:", account_info.profile_image)
-    # print("uuid:", account_info.uuid)
-    # print("plan:", account_info.plan)
+    print("name:", account_info.name)
+    print("email:", account_info.email)
+    print("profile_image:", account_info.profile_image)
+    print("uuid:", account_info.uuid)
+    print("plan:", account_info.plan)
 
 
 async def delete_account_info():
     print("\n" + "=" * 20 + " delete account info " + "=" * 20)
     account_info = await client.delete_account_info()
-    print(account_info)
-    # print("name:", account_info.name)
-    # print("email:", account_info.email)
-    # print("profile_image:", account_info.profile_image)
-    # print("uuid:", account_info.uuid)
-    # print("plan:", account_info.plan)
+    print("name:", account_info.name)
+    print("email:", account_info.email)
+    print("profile_image:", account_info.profile_image)
+    print("uuid:", account_info.uuid)
+    print("plan:", account_info.plan)
 
 
 async def get_rooms_list():

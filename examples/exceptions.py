@@ -3,18 +3,12 @@
 
 from emo_platform import (
     BadRequestError,
-    BizAdvancedClient,
     Client,
     NotFoundError,
     RateLimitError,
 )
 
-# personal version
 client = Client()
-
-# business advanced version
-# api_key = "YOUR API KEY" # Please replace "YOUR API KEY" with your api key to use biz version
-# client = BizAdvancedClient(api_key=api_key)
 
 rooms_id_list = client.get_rooms_id()
 room = client.create_room_client(rooms_id_list[0])
