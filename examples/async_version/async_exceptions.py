@@ -3,12 +3,7 @@
 
 import asyncio
 
-from emo_platform import (
-    AsyncClient,
-    BadRequestError,
-    NotFoundError,
-    RateLimitError,
-)
+from emo_platform import AsyncClient, BadRequestError, NotFoundError, RateLimitError
 
 # personal version
 client = AsyncClient()

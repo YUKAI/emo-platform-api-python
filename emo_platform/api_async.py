@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict
 from functools import partial
-from typing import Callable, List, NoReturn, Optional, Union, Tuple
+from typing import Callable, List, NoReturn, Optional, Tuple, Union
 
 import aiohttp
 
@@ -97,7 +97,7 @@ class AsyncClient:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
-        is_server: bool = False
+        is_server: bool = False,
     ):
         self._client = Client(endpoint_url, tokens, token_file_path, is_server)
 
@@ -1028,7 +1028,9 @@ class BizAsyncClient(AsyncClient):
         response = await self._get("/v1/broadcast_messages/" + str(message_id))
         return EmoBroadcastInfo(**response)
 
-    async def create_broadcast_msg(self, api_key: str, message: BroadcastMsg) -> EmoBroadcastMessage:
+    async def create_broadcast_msg(
+        self, api_key: str, message: BroadcastMsg
+    ) -> EmoBroadcastMessage:
         """配信メッセージの新規作成
 
         Parameters
@@ -1155,9 +1157,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def get_webhook_setting(
-        self, api_key: str
-    ) -> NoReturn:
+    async def get_webhook_setting(self, api_key: str) -> NoReturn:
         """現在設定されているWebhookの情報の取得
 
             Business Basic版では使用できないメソッドです。
@@ -1214,7 +1214,8 @@ class BizBasicAsyncClient(BizAsyncClient):
         raise UnavailableError(self._PLAN)
 
     async def delete_webhook_setting(
-        self, api_key: str,
+        self,
+        api_key: str,
     ) -> NoReturn:
         """現在設定されているWebhookの情報の削除
 
@@ -1382,7 +1383,9 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().get_webhook_setting()
 
-    async def change_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+    async def change_webhook_setting(
+        self, api_key: str, webhook: WebHook
+    ) -> EmoWebhookInfo:
         """Webhookの設定の変更
 
         Parameters
@@ -1420,7 +1423,9 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().change_webhook_setting(webhook)
 
-    async def register_webhook_event(self, api_key: str, events: List[str]) -> EmoWebhookInfo:
+    async def register_webhook_event(
+        self, api_key: str, events: List[str]
+    ) -> EmoWebhookInfo:
         """Webhook通知するイベントの指定
 
             eventの種類は、
@@ -1462,7 +1467,9 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().register_webhook_event(events)
 
-    async def create_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+    async def create_webhook_setting(
+        self, api_key: str, webhook: WebHook
+    ) -> EmoWebhookInfo:
         """Webhookの設定の作成
 
         Parameters
@@ -1581,7 +1588,9 @@ class BizAdvancedAsyncClient(BizAsyncClient):
 
         """
 
-        response = await self.register_webhook_event(api_key, list(self._client._webhook_events_cb.keys()))
+        response = await self.register_webhook_event(
+            api_key, list(self._client._webhook_events_cb.keys())
+        )
         return response.secret
 
 
@@ -2058,6 +2067,7 @@ class AsyncRoom:
         )
         return EmoSettingsInfo(**response)
 
+
 class BizAsyncRoom(AsyncRoom):
     """部屋固有の各種apiを呼び出す非同期版のclient(Business版)
 
@@ -2103,7 +2113,9 @@ class BizAsyncRoom(AsyncRoom):
         with self._base_client._client._add_apikey2header(self.api_key):
             return await super().send_msg(msg)
 
-    async def send_stamp(self, stamp_id: str, msg: Optional[str] = None) -> EmoMessageInfo:
+    async def send_stamp(
+        self, stamp_id: str, msg: Optional[str] = None
+    ) -> EmoMessageInfo:
         with self._base_client._client._add_apikey2header(self.api_key):
             return await super().send_stamp(stamp_id, msg)
 
@@ -2227,7 +2239,9 @@ class BizAdvancedAsyncRoom(BizAsyncRoom):
         with self._base_client._client._add_apikey2header(self.api_key):
             return await super().get_sensor_values(sensor_id)
 
-    async def send_original_motion(self, motion_data: Union[str, dict]) -> EmoMessageInfo:
+    async def send_original_motion(
+        self, motion_data: Union[str, dict]
+    ) -> EmoMessageInfo:
         with self._base_client._client._add_apikey2header(self.api_key):
             return await super().send_original_motion(motion_data)
 

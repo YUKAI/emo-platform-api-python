@@ -4,7 +4,6 @@
 import asyncio
 
 from emo_platform import BizAdvancedAsyncClient, BizBasicAsyncClient
-from emo_platform.models import AccountInfo, BroadcastMsg
 
 # Please replace "YOUR API KEY" with your api key to use biz version
 api_key = "YOUR API KEY"
@@ -26,6 +25,7 @@ async def main():
     # if you want to change api_key, please create another room_client for each api_key
     response = await room_client.get_msgs()
     print(response)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

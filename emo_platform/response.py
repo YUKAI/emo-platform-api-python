@@ -1,8 +1,8 @@
+import pprint
 from typing import List, Union
 
 from pydantic import BaseModel
 
-import pprint
 
 class PrintModel(BaseModel):
     def __str__(self):

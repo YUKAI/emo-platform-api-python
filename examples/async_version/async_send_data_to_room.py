@@ -4,11 +4,7 @@
 import asyncio
 import os
 
-from emo_platform import (
-    AsyncClient,
-    Color,
-    Head,
-)
+from emo_platform import AsyncClient, Color, Head
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 

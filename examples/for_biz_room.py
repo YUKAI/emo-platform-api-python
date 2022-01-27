@@ -2,7 +2,6 @@
 """
 
 from emo_platform import BizAdvancedClient, BizBasicClient
-from emo_platform.models import AccountInfo, BroadcastMsg
 
 # Please replace "YOUR API KEY" with your api key to use biz version
 api_key = "YOUR API KEY"
@@ -12,6 +11,7 @@ client = BizBasicClient()
 
 # business advanced version
 # client = BizAdvancedClient()
+
 
 def main():
     rooms_id = client.get_rooms_id(api_key)
@@ -23,6 +23,7 @@ def main():
     # if you want to change api_key, please create another room_client for each api_key
     response = room_client.get_msgs()
     print(response)
+
 
 if __name__ == "__main__":
     main()

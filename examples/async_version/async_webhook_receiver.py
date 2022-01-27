@@ -1,17 +1,21 @@
 """Emo Platform API python example Receiving webhook data.
 """
 
-import json, asyncio
+import asyncio
+
 from aiohttp import web
-from emo_platform import AsyncClient, WebHook, EmoPlatformError
+
+from emo_platform import AsyncClient, EmoPlatformError, WebHook
 
 client = AsyncClient()
+
 
 async def print_queue(queue):
     while True:
         item = await queue.get()
         print("body:", item)
         print("data:", item.data)
+
 
 async def main():
     # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
@@ -28,7 +32,7 @@ async def main():
 
     routes = web.RouteTableDef()
 
-    @routes.post('/')
+    @routes.post("/")
     async def emo_webhook(request):
         if request.headers["X-Platform-Api-Secret"] == secret_key:
             body = await request.json()
@@ -45,9 +49,10 @@ async def main():
     app.add_routes(routes)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, 'localhost', 8000)
+    site = web.TCPSite(runner, "localhost", 8000)
     await site.start()
 
     await print_queue(queue)
+
 
 asyncio.run(main())

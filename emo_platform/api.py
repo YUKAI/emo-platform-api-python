@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import asdict
 from functools import partial
 from typing import Callable, Dict, List, NoReturn, Optional, Tuple, Union
+
 import requests
 
 from emo_platform.exceptions import (
@@ -1688,7 +1689,9 @@ class BizAdvancedClient(BizClient):
 
         """
 
-        response = self.register_webhook_event(api_key, list(self._webhook_events_cb.keys()))
+        response = self.register_webhook_event(
+            api_key, list(self._webhook_events_cb.keys())
+        )
         return response.secret
 
 

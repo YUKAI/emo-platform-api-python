@@ -5,6 +5,7 @@ from emo_platform import Client
 
 client = Client()
 
+
 def main():
     get_account_info()
     get_rooms_list()
