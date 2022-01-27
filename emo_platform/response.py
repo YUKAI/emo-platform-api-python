@@ -2,8 +2,14 @@ from typing import List, Union
 
 from pydantic import BaseModel
 
+import pprint
 
-class EmoAccountInfo(BaseModel):
+class PrintModel(BaseModel):
+    def __str__(self):
+        return pprint.pformat(self.dict())
+
+
+class EmoAccountInfo(PrintModel):
     """BOCCOアカウント情報(Personal版)。"""
 
     name: str
@@ -27,7 +33,7 @@ class EmoAccountInfo(BaseModel):
     """
 
 
-class EmoBizAccountInfo(BaseModel):
+class EmoBizAccountInfo(PrintModel):
     """BOCCOアカウント情報(Business版)。"""
 
     account_id: int
@@ -63,7 +69,7 @@ class EmoBizAccountInfo(BaseModel):
     """
 
 
-class EmoTokens(BaseModel):
+class EmoTokens(PrintModel):
     """API利用に必要なトークンの情報。"""
 
     access_token: str
@@ -75,13 +81,13 @@ class EmoTokens(BaseModel):
     """
 
 
-class Listing(BaseModel):
+class Listing(PrintModel):
     offset: Union[int, float]
     limit: Union[int, float]
     total: Union[int, float]
 
 
-class EmoRoomMember(BaseModel):
+class EmoRoomMember(PrintModel):
     """部屋に参加しているメンバーの情報"""
 
     uuid: str
@@ -101,7 +107,7 @@ class EmoRoomMember(BaseModel):
     """
 
 
-class RoomInfo(BaseModel):
+class RoomInfo(PrintModel):
     """部屋の情報"""
 
     uuid: str
@@ -121,7 +127,7 @@ class RoomInfo(BaseModel):
     """
 
 
-class EmoRoomInfo(BaseModel):
+class EmoRoomInfo(PrintModel):
     """ユーザーが参加している部屋の一覧情報"""
 
     listing: Listing
@@ -131,13 +137,13 @@ class EmoRoomInfo(BaseModel):
     """
 
 
-class EmoMessage(BaseModel):
+class EmoMessage(PrintModel):
     """部屋に投稿されたテキストメッセージの内容"""
 
     ja: str
 
 
-class EmoMessageInfo(BaseModel):
+class EmoMessageInfo(PrintModel):
     """部屋に投稿されたメッセージの情報"""
 
     sequence: int
@@ -187,7 +193,7 @@ class EmoMessageInfo(BaseModel):
     """
 
 
-class EmoMsgsInfo(BaseModel):
+class EmoMsgsInfo(PrintModel):
     """部屋に投稿されたメッセージの一覧情報"""
 
     messages: List[EmoMessageInfo]
@@ -195,7 +201,7 @@ class EmoMsgsInfo(BaseModel):
     """
 
 
-class EmoStamp(BaseModel):
+class EmoStamp(PrintModel):
     """スタンプの情報"""
 
     uuid: str
@@ -215,7 +221,7 @@ class EmoStamp(BaseModel):
     """
 
 
-class EmoStampsInfo(BaseModel):
+class EmoStampsInfo(PrintModel):
     """利用可能なスタンプの一覧情報"""
 
     listing: Listing
@@ -225,7 +231,7 @@ class EmoStampsInfo(BaseModel):
     """
 
 
-class EmoMotion(BaseModel):
+class EmoMotion(PrintModel):
     """モーションの情報"""
 
     uuid: str
@@ -241,7 +247,7 @@ class EmoMotion(BaseModel):
     """
 
 
-class EmoMotionsInfo(BaseModel):
+class EmoMotionsInfo(PrintModel):
     """利用可能なモーションの一覧情報"""
 
     listing: Listing
@@ -250,7 +256,7 @@ class EmoMotionsInfo(BaseModel):
     """
 
 
-class EmoWebhookInfo(BaseModel):
+class EmoWebhookInfo(PrintModel):
     """現在設定されているWebhookの情報"""
 
     description: str
@@ -276,7 +282,7 @@ class EmoWebhookInfo(BaseModel):
     """
 
 
-class EmoSensor(BaseModel):
+class EmoSensor(PrintModel):
     """BOCCO emoとペアリングされているセンサ情報"""
 
     uuid: str
@@ -300,7 +306,7 @@ class EmoSensor(BaseModel):
     """
 
 
-class EmoSensorsInfo(BaseModel):
+class EmoSensorsInfo(PrintModel):
     """BOCCO emoとペアリングされているセンサ情報の一覧"""
 
     sensors: List[EmoSensor]
@@ -308,7 +314,7 @@ class EmoSensorsInfo(BaseModel):
     """
 
 
-class EmoRoomSensorEvent(BaseModel):
+class EmoRoomSensorEvent(PrintModel):
     """部屋センサの送信値"""
 
     temperature: Union[int, float]
@@ -324,7 +330,7 @@ class EmoRoomSensorEvent(BaseModel):
     """
 
 
-class EmoRoomSensorInfo(BaseModel):
+class EmoRoomSensorInfo(PrintModel):
     """部屋センサの送信値の一覧"""
 
     sensor_type: str
@@ -344,7 +350,7 @@ class EmoRoomSensorInfo(BaseModel):
     """
 
 
-class EmoSettingsInfo(BaseModel):
+class EmoSettingsInfo(PrintModel):
     """現在のBOCCO emoの設定値"""
 
     nickname: str
@@ -384,7 +390,7 @@ class EmoSettingsInfo(BaseModel):
     """
 
 
-class EmoBroadcastMessage(BaseModel):
+class EmoBroadcastMessage(PrintModel):
     """配信メッセージの情報"""
 
     id: int
@@ -420,7 +426,7 @@ class EmoBroadcastMessage(BaseModel):
     """
 
 
-class EmoBroadcastInfoList(BaseModel):
+class EmoBroadcastInfoList(PrintModel):
     """配信メッセージの一覧情報"""
 
     listing: Listing
@@ -430,7 +436,7 @@ class EmoBroadcastInfoList(BaseModel):
     """
 
 
-class EmoBroadcastMessageDetail(BaseModel):
+class EmoBroadcastMessageDetail(PrintModel):
     """配信メッセージの詳細"""
 
     room_uuid: str
@@ -458,7 +464,7 @@ class EmoBroadcastMessageDetail(BaseModel):
     """
 
 
-class EmoBroadcastInfo(BaseModel):
+class EmoBroadcastInfo(PrintModel):
     """配信メッセージの詳細情報"""
 
     message: EmoBroadcastMessage
@@ -470,13 +476,13 @@ class EmoBroadcastInfo(BaseModel):
     """
 
 
-class EmoKind(BaseModel):
+class EmoKind(PrintModel):
     """様々な種別に関する情報"""
 
     kind: str
 
 
-class EmoWebhookTriggerWord(BaseModel):
+class EmoWebhookTriggerWord(PrintModel):
     """Webhookで受信したトリガーワードイベントに関する情報"""
 
     trigger_word: EmoKind
@@ -491,7 +497,7 @@ class EmoWebhookTriggerWord(BaseModel):
     """
 
 
-class EmoPerformedBy(BaseModel):
+class EmoPerformedBy(PrintModel):
     """録音が実行されたきっかけに関する情報"""
 
     performed_by: str
@@ -504,7 +510,7 @@ class EmoPerformedBy(BaseModel):
     """
 
 
-class EmoWebhookRecording(BaseModel):
+class EmoWebhookRecording(PrintModel):
     """Webhookで受信した録音イベントに関する情報"""
 
     recording: EmoPerformedBy
@@ -512,31 +518,31 @@ class EmoWebhookRecording(BaseModel):
     """
 
 
-class EmoMinutes(BaseModel):
+class EmoMinutes(PrintModel):
     """Webhookで受信した音声イベントコマンドのタイマーでセットした時間(分)に関する情報"""
 
     minutes: str
 
 
-class EmoTime(BaseModel):
+class EmoTime(PrintModel):
     """Webhookで受信した音声イベントコマンドのアラームのセット時刻に関する情報"""
 
     time: str
 
 
-class EmoArea(BaseModel):
+class EmoArea(PrintModel):
     """Webhookで受信した音声イベントコマンドの天気の場所に関する情報"""
 
     area: str
 
 
-class EmoVolume(BaseModel):
+class EmoVolume(PrintModel):
     """Webhookで受信した音声イベントコマンドの音量の値に関する情報"""
 
     volume: str
 
 
-class EmoVuiCommand(BaseModel):
+class EmoVuiCommand(PrintModel):
     """音声コマンドに関する情報"""
 
     kind: str
@@ -550,7 +556,7 @@ class EmoVuiCommand(BaseModel):
     """
 
 
-class EmoWebhookVuiCommand(BaseModel):
+class EmoWebhookVuiCommand(PrintModel):
     """Webhookで受信した音声コマンドイベントに関する情報"""
 
     vui_command: Union[EmoVuiCommand, EmoKind]
@@ -558,7 +564,7 @@ class EmoWebhookVuiCommand(BaseModel):
     """
 
 
-class EmoWebhookMotion(BaseModel):
+class EmoWebhookMotion(PrintModel):
     """Webhookで受信したモーション実行完了イベントに関する情報"""
 
     motion: EmoKind
@@ -566,7 +572,7 @@ class EmoWebhookMotion(BaseModel):
     """
 
 
-class EmoTalk(BaseModel):
+class EmoTalk(PrintModel):
     """BOCCO emoが発話した内容に関する情報"""
 
     talk: str
@@ -574,7 +580,7 @@ class EmoTalk(BaseModel):
     """
 
 
-class EmoWebhookEmoTalk(BaseModel):
+class EmoWebhookEmoTalk(PrintModel):
     """Webhookで受信した発話完了イベントに関する情報"""
 
     emo_talk: EmoTalk
@@ -582,7 +588,7 @@ class EmoWebhookEmoTalk(BaseModel):
     """
 
 
-class EmoWebhookAccel(BaseModel):
+class EmoWebhookAccel(PrintModel):
     """Webhookで受信した内蔵加速度センサイベントに関する情報"""
 
     accel: EmoKind
@@ -605,7 +611,7 @@ class EmoWebhookAccel(BaseModel):
     """
 
 
-class EmoWebhookIlluminance(BaseModel):
+class EmoWebhookIlluminance(PrintModel):
     """Webhookで受信した内蔵照度センサイベントに関する情報"""
 
     illuminance: EmoKind
@@ -618,7 +624,7 @@ class EmoWebhookIlluminance(BaseModel):
     """
 
 
-class EmoRadar(BaseModel):
+class EmoRadar(PrintModel):
     """レーダセンサが検知したイベントの情報"""
 
     begin: bool
@@ -638,7 +644,7 @@ class EmoRadar(BaseModel):
     """
 
 
-class EmoWebhookRadar(BaseModel):
+class EmoWebhookRadar(PrintModel):
     """Webhookで受信した内蔵レーダーセンサイベントに関する情報"""
 
     radar: EmoRadar
@@ -646,7 +652,7 @@ class EmoWebhookRadar(BaseModel):
     """
 
 
-class EmoWebhookMessage(BaseModel):
+class EmoWebhookMessage(PrintModel):
     """Webhookで受信した新規メッセージ受信イベントに関する情報"""
 
     message: EmoMessageInfo
@@ -654,7 +660,7 @@ class EmoWebhookMessage(BaseModel):
     """
 
 
-class EmoWebhookSensorMessage(BaseModel):
+class EmoWebhookSensorMessage(PrintModel):
     """センサの通知内容"""
 
     sequence: int
@@ -686,7 +692,7 @@ class EmoWebhookSensorMessage(BaseModel):
     """
 
 
-class EmoWebhookMovementSensor(BaseModel):
+class EmoWebhookMovementSensor(PrintModel):
     """Webhookで受信した振動センサ反応イベントに関する情報"""
 
     movement_sensor: EmoWebhookSensorMessage
@@ -694,7 +700,7 @@ class EmoWebhookMovementSensor(BaseModel):
     """
 
 
-class EmoWebhookLockSensor(BaseModel):
+class EmoWebhookLockSensor(PrintModel):
     """Webhookで受信した鍵センサ反応イベントに関する情報"""
 
     lock_sensor: EmoWebhookSensorMessage
@@ -702,7 +708,7 @@ class EmoWebhookLockSensor(BaseModel):
     """
 
 
-class EmoWebhookHumanSensor(BaseModel):
+class EmoWebhookHumanSensor(PrintModel):
     """Webhookで受信した人感センサ反応イベントに関する情報"""
 
     human_sensor: EmoWebhookSensorMessage
@@ -710,7 +716,7 @@ class EmoWebhookHumanSensor(BaseModel):
     """
 
 
-class EmoWebhookRoomSensor(BaseModel):
+class EmoWebhookRoomSensor(PrintModel):
     """Webhookで受信した部屋センサ反応イベントに関する情報"""
 
     room_sensor: EmoWebhookSensorMessage
@@ -718,7 +724,7 @@ class EmoWebhookRoomSensor(BaseModel):
     """
 
 
-class EmoWebhookBody(BaseModel):
+class EmoWebhookBody(PrintModel):
     """受信したWebhookの内容"""
 
     request_id: str
