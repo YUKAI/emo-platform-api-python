@@ -64,6 +64,7 @@ class TokenManager:
             self._current_set_tokens = self._get_current_set_tokens(tokens)
             self._update_previous_set_tokens_file(tokens)
             self.tokens = self._get_latest_tokens()
+            self.save_tokens()
         else:
             if tokens:
                 self.tokens = tokens
@@ -206,7 +207,6 @@ class Client:
         }
         self._webhook_events_cb: Dict[str, Dict[str, Callable]] = {}
         self._request_id_deque: deque = deque([], self._MAX_SAVED_REQUEST_ID)
-        self._is_first_http_request = True
 
     @contextmanager
     def _add_apikey2header(self, api_key: str):
@@ -258,9 +258,6 @@ class Client:
             if not update_tokens:
                 raise
         else:
-            if self._is_first_http_request:
-                self._is_first_http_request = False
-                self._tm.save_tokens()
             return response.json()
 
         self.update_tokens()

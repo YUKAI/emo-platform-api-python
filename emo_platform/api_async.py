@@ -152,9 +152,6 @@ class AsyncClient:
                 if not update_tokens:
                     raise
             else:
-                if self._client._is_first_http_request:
-                    self._client._is_first_http_request = False
-                    self._client._tm.save_tokens()
                 return await response.json()
 
         await self.update_tokens()
