@@ -66,11 +66,15 @@ class BizBasicClient(emo_platform.BizBasicClient):
         room_id = self.get_rooms_id(api_key)[0]
         return Room(self, room_id)
 
-    def change_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
+    def change_webhook_setting(
+        self, api_key: str, url: str, description: str = ""
+    ) -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().change_webhook_setting(api_key, webhook)
 
-    def create_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
+    def create_webhook_setting(
+        self, api_key: str, url: str, description: str = ""
+    ) -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().create_webhook_setting(api_key, webhook)
 
@@ -124,11 +128,15 @@ class BizAdvancedClient(emo_platform.BizAdvancedClient):
         room_id = self.get_rooms_id(api_key)[0]
         return BizAdvancedRoom(self, room_id, api_key)
 
-    def change_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
+    def change_webhook_setting(
+        self, api_key: str, url: str, description: str = ""
+    ) -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().change_webhook_setting(api_key, webhook)
 
-    def create_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
+    def create_webhook_setting(
+        self, api_key: str, url: str, description: str = ""
+    ) -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().create_webhook_setting(api_key, webhook)
 

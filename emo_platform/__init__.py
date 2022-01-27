@@ -9,9 +9,9 @@ from .exceptions import (
     TokenError,
     UnauthorizedError,
     UnavailableError,
+    UnknownError,
     WebhookCallbackError,
     WebhookRequestError,
-    UnknownError,
 )
 from .models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
 from .response import parse_webhook_body
