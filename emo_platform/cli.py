@@ -61,26 +61,26 @@ class BizBasicClient(emo_platform.BizBasicClient):
     def create_room_client(self, room_id: str, api_key: str):
         return BizBasicRoom(self, room_id, api_key)
 
-    def room(self, api_key):
+    def room(self, api_key: str):
         """部屋固有の各種apiを呼び出すclientの作成(部屋のidの自動取得を行う)"""
         room_id = self.get_rooms_id(api_key)[0]
         return Room(self, room_id)
 
-    def change_webhook_setting(self, api_key, url, description="") -> EmoWebhookInfo:
+    def change_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().change_webhook_setting(api_key, webhook)
 
-    def create_webhook_setting(self, api_key, url, description="") -> EmoWebhookInfo:
+    def create_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().create_webhook_setting(api_key, webhook)
 
     def change_account_info(
         self,
-        name,
-        name_furigana,
-        organization_name,
-        organization_unit_name,
-        phone_number,
+        name: str,
+        name_furigana: str,
+        organization_name: str,
+        organization_unit_name: str,
+        phone_number: str,
     ) -> EmoBizAccountInfo:
         account_info = AccountInfo(
             name,
@@ -93,7 +93,7 @@ class BizBasicClient(emo_platform.BizBasicClient):
         return super().change_account_info(account_info)
 
     def create_broadcast_msg(
-        self, api_key, title, text, executed_at, immediate
+        self, api_key: str, title: str, text: str, executed_at: int, immediate: bool
     ) -> EmoBroadcastMessage:
         broadcast_msg = BroadcastMsg(title, text, executed_at, immediate)
         return super().create_broadcast_msg(api_key, broadcast_msg)
@@ -119,26 +119,26 @@ class BizAdvancedClient(emo_platform.BizAdvancedClient):
     def create_room_client(self, room_id: str, api_key: str):
         return BizAdvancedRoom(self, room_id, api_key)
 
-    def room(self, api_key):
+    def room(self, api_key: str):
         """部屋固有の各種apiを呼び出すclientの作成(部屋のidの自動取得を行う)"""
         room_id = self.get_rooms_id(api_key)[0]
         return BizAdvancedRoom(self, room_id, api_key)
 
-    def change_webhook_setting(self, api_key, url, description="") -> EmoWebhookInfo:
+    def change_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().change_webhook_setting(api_key, webhook)
 
-    def create_webhook_setting(self, api_key, url, description="") -> EmoWebhookInfo:
+    def create_webhook_setting(self, api_key: str, url: str, description: str="") -> EmoWebhookInfo:
         webhook = WebHook(url, description)
         return super().create_webhook_setting(api_key, webhook)
 
     def change_account_info(
         self,
-        name,
-        name_furigana,
-        organization_name,
-        organization_unit_name,
-        phone_number,
+        name: str,
+        name_furigana: str,
+        organization_name: str,
+        organization_unit_name: str,
+        phone_number: str,
     ) -> EmoBizAccountInfo:
         account_info = AccountInfo(
             name,
@@ -151,7 +151,7 @@ class BizAdvancedClient(emo_platform.BizAdvancedClient):
         return super().change_account_info(account_info)
 
     def create_broadcast_msg(
-        self, api_key, title, text, executed_at, immediate
+        self, api_key: str, title: str, text: str, executed_at: int, immediate: bool
     ) -> EmoBroadcastMessage:
         broadcast_msg = BroadcastMsg(title, text, executed_at, immediate)
         return super().create_broadcast_msg(api_key, broadcast_msg)

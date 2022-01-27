@@ -865,7 +865,7 @@ class BizAsyncClient(AsyncClient):
         response = await self._put("/v1/me", json.dumps(payload))
         return EmoBizAccountInfo(**response)
 
-    async def get_rooms_list(self, api_key: str) -> EmoRoomInfo:
+    async def get_rooms_list(self, api_key: str) -> EmoRoomInfo: # type: ignore[override]
         """ユーザが参加している部屋の一覧の取得
 
             取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
@@ -900,7 +900,7 @@ class BizAsyncClient(AsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().get_rooms_list()
 
-    async def get_rooms_id(self, api_key: str) -> List[str]:
+    async def get_rooms_id(self, api_key: str) -> List[str]: # type: ignore[override]
         """ユーザーが参加している全ての部屋のidの取得
 
         Parameters
@@ -935,7 +935,7 @@ class BizAsyncClient(AsyncClient):
         rooms_info = await self.get_rooms_list(api_key)
         return self._client._get_rooms_id(rooms_info)
 
-    async def get_stamps_list(self, api_key: str) -> EmoStampsInfo:
+    async def get_stamps_list(self, api_key: str) -> EmoStampsInfo: # type: ignore[override]
         """利用可能なスタンプ一覧の取得
 
         Parameters
@@ -1110,7 +1110,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
     _PLAN = BizBasicClient._PLAN
 
-    def create_room_client(self, api_key: str, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str): # type: ignore[override]
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
@@ -1154,7 +1154,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def get_webhook_setting(self, api_key: str) -> NoReturn:
+    async def get_webhook_setting(self, api_key: str) -> NoReturn: # type: ignore[override]
         """現在設定されているWebhookの情報の取得
 
             Business Basic版では使用できないメソッドです。
@@ -1168,7 +1168,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def change_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
+    async def change_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn: # type: ignore[override]
         """Webhookの設定の変更
 
             Business Basic版では使用できないメソッドです。
@@ -1182,7 +1182,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def register_webhook_event(self, api_key: str, events: List[str]) -> NoReturn:
+    async def register_webhook_event(self, api_key: str, events: List[str]) -> NoReturn: # type: ignore[override]
         """Webhook通知するイベントの指定
 
             Business Basic版では使用できないメソッドです。
@@ -1196,7 +1196,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def create_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
+    async def create_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn: # type: ignore[override]
         """Webhookの設定の作成
 
             Business Basic版では使用できないメソッドです。
@@ -1210,7 +1210,7 @@ class BizBasicAsyncClient(BizAsyncClient):
 
         raise UnavailableError(self._PLAN)
 
-    async def delete_webhook_setting(
+    async def delete_webhook_setting( # type: ignore[override]
         self,
         api_key: str,
     ) -> NoReturn:
@@ -1313,7 +1313,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
 
     _PLAN = BizAdvancedClient._PLAN
 
-    def create_room_client(self, api_key: str, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str): # type: ignore[override]
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
@@ -1343,7 +1343,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
 
         return BizAdvancedAsyncRoom(self, room_id, api_key)
 
-    async def get_webhook_setting(
+    async def get_webhook_setting( # type: ignore[override]
         self,
         api_key: str,
     ) -> EmoWebhookInfo:
@@ -1380,7 +1380,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().get_webhook_setting()
 
-    async def change_webhook_setting(
+    async def change_webhook_setting( # type: ignore[override]
         self, api_key: str, webhook: WebHook
     ) -> EmoWebhookInfo:
         """Webhookの設定の変更
@@ -1420,7 +1420,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().change_webhook_setting(webhook)
 
-    async def register_webhook_event(
+    async def register_webhook_event( # type: ignore[override]
         self, api_key: str, events: List[str]
     ) -> EmoWebhookInfo:
         """Webhook通知するイベントの指定
@@ -1464,7 +1464,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().register_webhook_event(events)
 
-    async def create_webhook_setting(
+    async def create_webhook_setting( # type: ignore[override]
         self, api_key: str, webhook: WebHook
     ) -> EmoWebhookInfo:
         """Webhookの設定の作成
@@ -1503,7 +1503,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().create_webhook_setting(webhook)
 
-    async def delete_webhook_setting(self, api_key: str) -> EmoWebhookInfo:
+    async def delete_webhook_setting(self, api_key: str) -> EmoWebhookInfo: # type: ignore[override]
         """現在設定されているWebhookの情報の削除
 
         Parameters
@@ -1538,7 +1538,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
         with self._client._add_apikey2header(api_key):
             return await super().delete_webhook_setting()
 
-    async def start_webhook_event(self, api_key: str) -> str:
+    async def start_webhook_event(self, api_key: str) -> str: # type: ignore[override]
         """BOCCO emoのWebhookのイベント通知の開始
 
             :func:`event` で指定したイベントの通知が開始されます。
@@ -2084,7 +2084,7 @@ class BizAsyncRoom(AsyncRoom):
 
     """
 
-    def __init__(self, base_client: Client, room_id: str, api_key: str):
+    def __init__(self, base_client: BizAsyncClient, room_id: str, api_key: str):
         super().__init__(base_client=base_client, room_id=room_id)
         self.api_key = api_key
 

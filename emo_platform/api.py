@@ -89,7 +89,7 @@ class TokenManager:
     def _get_current_os_env_tokens(self) -> Tokens:
         access_token = self._get_currnet_os_env_access_token()
         refresh_token = self._get_currnet_os_env_refresh_token()
-        return Tokens(**{"refresh_token": refresh_token, "access_token": access_token})
+        return Tokens(**{"refresh_token": refresh_token, "access_token": access_token})  # type: ignore
 
     def _get_currnet_os_env_access_token(self) -> str:
         try:
@@ -112,7 +112,7 @@ class TokenManager:
 
     def _update_previous_set_tokens_file(self, tokens) -> None:
         how2set = "os" if tokens is None else "args"
-        self._previous_set_tokens = Tokens(**self._previous_set_tokens_dict[how2set])
+        self._previous_set_tokens = Tokens(**self._previous_set_tokens_dict[how2set]) # type: ignore
         self._previous_set_tokens_dict[how2set] = asdict(self._current_set_tokens)
 
         with open(self._PREVIOUS_TOKEN_FILE, "w") as f:
@@ -123,7 +123,7 @@ class TokenManager:
         if self._current_set_tokens == self._previous_set_tokens:
             try:
                 with open(self._TOKEN_FILE) as f:
-                    return Tokens(**json.load(f))
+                    return Tokens(**json.load(f)) # type: ignore
             except FileNotFoundError:
                 return self._current_set_tokens
         else:  # reset json file when set tokens updated
@@ -980,7 +980,7 @@ class BizClient(Client):
         response = self._put("/v1/me", json.dumps(payload))
         return EmoBizAccountInfo(**response)
 
-    def get_rooms_list(self, api_key: str) -> EmoRoomInfo:
+    def get_rooms_list(self, api_key: str) -> EmoRoomInfo: # type: ignore[override]
         """ユーザが参加している部屋の一覧の取得
 
             取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
@@ -1015,7 +1015,7 @@ class BizClient(Client):
         with self._add_apikey2header(api_key):
             return super().get_rooms_list()
 
-    def get_rooms_id(self, api_key: str) -> List[str]:
+    def get_rooms_id(self, api_key: str) -> List[str]: # type: ignore[override]
         """ユーザーが参加している全ての部屋のidの取得
 
         Parameters
@@ -1050,7 +1050,7 @@ class BizClient(Client):
         rooms_info = self.get_rooms_list(api_key)
         return self._get_rooms_id(rooms_info)
 
-    def get_stamps_list(self, api_key: str) -> EmoStampsInfo:
+    def get_stamps_list(self, api_key: str) -> EmoStampsInfo: # type: ignore[override]
         """利用可能なスタンプ一覧の取得
 
         Parameters
@@ -1225,7 +1225,7 @@ class BizBasicClient(BizClient):
 
     _PLAN = "Business Basic"
 
-    def create_room_client(self, api_key: str, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str): # type: ignore[override]
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
@@ -1269,7 +1269,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def get_webhook_setting(self, api_key: str) -> NoReturn:
+    def get_webhook_setting(self, api_key: str) -> NoReturn: # type: ignore[override]
         """現在設定されているWebhookの情報の取得
 
             Business Basic版では使用できないメソッドです。
@@ -1283,7 +1283,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
+    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn: # type: ignore[override]
         """Webhookの設定の変更
 
             Business Basic版では使用できないメソッドです。
@@ -1297,7 +1297,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def register_webhook_event(self, api_key: str, events: List[str]) -> NoReturn:
+    def register_webhook_event(self, api_key: str, events: List[str]) -> NoReturn: # type: ignore[override]
         """Webhook通知するイベントの指定
 
             Business Basic版では使用できないメソッドです。
@@ -1311,7 +1311,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn:
+    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> NoReturn: # type: ignore[override]
         """Webhookの設定の作成
 
             Business Basic版では使用できないメソッドです。
@@ -1325,7 +1325,7 @@ class BizBasicClient(BizClient):
 
         raise UnavailableError(self._PLAN)
 
-    def delete_webhook_setting(self, api_key: str) -> NoReturn:
+    def delete_webhook_setting(self, api_key: str) -> NoReturn: # type: ignore[override]
         """現在設定されているWebhookの情報の削除
 
             Business Basic版では使用できないメソッドです。
@@ -1425,7 +1425,7 @@ class BizAdvancedClient(BizClient):
 
     _PLAN = "Business Advanced"
 
-    def create_room_client(self, api_key: str, room_id: str):
+    def create_room_client(self, api_key: str, room_id: str): # type: ignore[override]
         """部屋固有の各種apiを呼び出すclientの作成
 
             部屋のidは、:func:`get_rooms_id` を使用することで、取得できます。
@@ -1455,7 +1455,7 @@ class BizAdvancedClient(BizClient):
 
         return BizAdvancedRoom(self, room_id, api_key)
 
-    def get_webhook_setting(
+    def get_webhook_setting( # type: ignore[override]
         self,
         api_key: str,
     ) -> EmoWebhookInfo:
@@ -1492,7 +1492,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             return super().get_webhook_setting()
 
-    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+    def change_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo: # type: ignore[override]
         """Webhookの設定の変更
 
         Parameters
@@ -1530,7 +1530,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             return super().change_webhook_setting(webhook)
 
-    def register_webhook_event(self, api_key: str, events: List[str]) -> EmoWebhookInfo:
+    def register_webhook_event(self, api_key: str, events: List[str]) -> EmoWebhookInfo: # type: ignore[override]
         """Webhook通知するイベントの指定
 
             eventの種類は、
@@ -1572,7 +1572,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             return super().register_webhook_event(events)
 
-    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo:
+    def create_webhook_setting(self, api_key: str, webhook: WebHook) -> EmoWebhookInfo: # type: ignore[override]
         """Webhookの設定の作成
 
         Parameters
@@ -1609,7 +1609,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             return super().create_webhook_setting(webhook)
 
-    def delete_webhook_setting(self, api_key: str) -> EmoWebhookInfo:
+    def delete_webhook_setting(self, api_key: str) -> EmoWebhookInfo: # type: ignore[override]
         """現在設定されているWebhookの情報の削除
 
         Parameters
@@ -1644,7 +1644,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             return super().delete_webhook_setting()
 
-    def start_webhook_event(self, api_key: str) -> str:
+    def start_webhook_event(self, api_key: str) -> str: # type: ignore[override]
         """BOCCO emoのWebhookのイベント通知の開始
 
             :func:`event` で指定したイベントの通知が開始されます。
