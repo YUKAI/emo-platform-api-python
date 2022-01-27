@@ -90,6 +90,11 @@ class WebhookCallbackError(EmoPlatformError):
     def __str__(self):
         return "No callback function associated with the " + self.message + "."
 
+class WebhookRequestError(EmoPlatformError):
+    """受信したwebhookリクエスト自体に関するエラー"""
+
+    pass
+
 
 def _http_status_to_exception(code):
     if code == 400:

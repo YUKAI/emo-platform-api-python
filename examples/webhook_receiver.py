@@ -46,6 +46,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             cb_func, emo_webhook_body = client.get_cb_func(request_body)
         except EmoPlatformError:
             self._send_status(501)
+            return
+
         cb_func(emo_webhook_body)
 
         self._send_status(200)

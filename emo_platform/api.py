@@ -14,6 +14,7 @@ from emo_platform.exceptions import (
     UnauthorizedError,
     UnavailableError,
     WebhookCallbackError,
+    WebhookRequestError,
     _http_error_handler,
 )
 from emo_platform.models import AccountInfo, BroadcastMsg, Color, Head, Tokens, WebHook
@@ -843,6 +844,8 @@ class Client:
                         cb_func, emo_webhook_body = client.get_cb_func(request_body)
                     except emo_platform.EmoPlatformError:
                         self._send_status(501)
+                        return
+
                     cb_func(emo_webhook_body)
 
                     self._send_status(200)
@@ -871,21 +874,23 @@ class Client:
 
         """
 
-        body = EmoWebhookBody(**body)
-        if body.request_id not in self._request_id_deque:
+        emo_webhook_body = EmoWebhookBody(**body)
+        if emo_webhook_body.request_id not in self._request_id_deque:
             try:
-                event_cb = self._webhook_events_cb[body.event]
+                event_cb = self._webhook_events_cb[emo_webhook_body.event]
             except KeyError as e:
                 raise WebhookCallbackError("event") from e
-            room_id = body.uuid
+            room_id = emo_webhook_body.uuid
             if room_id in event_cb:
                 cb_func = event_cb[room_id]
             elif self._DEFAULT_ROOM_ID in event_cb:
                 cb_func = event_cb[self._DEFAULT_ROOM_ID]
             else:
                 raise WebhookCallbackError("room")
-            self._request_id_deque.append(body.request_id)
-            return cb_func, body
+            self._request_id_deque.append(emo_webhook_body.request_id)
+            return cb_func, emo_webhook_body
+        else:
+            raise WebhookRequestError("Webhook request id is duplicated")
 
 
 class BizClient(Client):
