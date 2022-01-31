@@ -322,7 +322,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -359,7 +359,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -388,7 +388,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているDELETEの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -413,7 +413,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -439,7 +439,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合
+            関数内部で行っているAPI呼び出しが失敗した場合
             あるいは、ユーザーが参加している部屋が1つもなかった場合。
 
         Note
@@ -501,7 +501,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -528,7 +528,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -555,7 +555,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -587,7 +587,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPUTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -624,7 +624,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPUTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -657,7 +657,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -686,7 +686,7 @@ class Client:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているDELETEの処理が失敗した場合
+            関数内部で行っているAPI呼び出しが失敗した場合
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -909,7 +909,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -962,7 +962,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPUTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -996,7 +996,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1030,7 +1030,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合
+            関数内部で行っているAPI呼び出しが失敗した場合
             あるいは、ユーザーが参加している部屋が1つもなかった場合。
 
         Note
@@ -1064,7 +1064,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1090,7 +1090,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1121,7 +1121,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1160,7 +1160,7 @@ class BizClient(Client):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1472,7 +1472,7 @@ class BizAdvancedClient(BizClient):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -1510,7 +1510,7 @@ class BizAdvancedClient(BizClient):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPUTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -1552,7 +1552,7 @@ class BizAdvancedClient(BizClient):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPUTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -1590,7 +1590,7 @@ class BizAdvancedClient(BizClient):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1624,7 +1624,7 @@ class BizAdvancedClient(BizClient):
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているDELETEの処理が失敗した場合
+            関数内部で行っているAPI呼び出しが失敗した場合
             (BOCCO emoにWebhookの設定がされていない場合を含む)
 
         Note
@@ -1728,7 +1728,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1763,7 +1763,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1796,7 +1796,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (部屋センサ以外のBOCCOセンサ / 紐づいていない部屋センサ、のidを指定した場合も含みます)
 
         Note
@@ -1837,7 +1837,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1881,7 +1881,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1918,7 +1918,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -1959,7 +1959,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -2001,7 +2001,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
             (モーションのデータ形式が誤っている場合も含みます)
 
         Note
@@ -2042,7 +2042,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -2078,7 +2078,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -2114,7 +2114,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているPOSTの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
@@ -2145,7 +2145,7 @@ class Room:
         Raises
         ----------
         EmoPlatformError
-            関数内部で行っているGETの処理が失敗した場合。
+            関数内部で行っているAPI呼び出しが失敗した場合。
 
         Note
         ----
