@@ -51,7 +51,7 @@ client = Client(Tokens(access_token="***", refresh_token="***"))
 You can also see other examples in "examples" directory.
 
 ### Note
-- When you initialize emo_platform.Client, without the argument `is_server` given as `True` , two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path where emo_platform module was installed.
+- When you initialize emo_platform.Client, without the argument `use_cached_credentials` given as `True` , two json files (emo-platform-api.json & emo-platform-api_previous.json) are created in the path where emo_platform module was installed.
 	- These files are used to store the tokens information.
 	- See the documentation for details.
 - You can change the path where these json files are created, as shown below.

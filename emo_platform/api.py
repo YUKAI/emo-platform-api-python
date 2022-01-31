@@ -55,10 +55,10 @@ class TokenManager:
         self,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
-        is_server=False,
+        use_cached_credentials=False,
     ):
-        self._is_server = is_server
-        if not self._is_server:
+        self._use_cached_credentials = use_cached_credentials
+        if not self._use_cached_credentials:
             self._set_token_file_path(token_file_path)
             self._previous_set_tokens_dict = self._load_previous_set_tokens_file()
             self._current_set_tokens = self._get_current_set_tokens(tokens)
@@ -130,7 +130,7 @@ class TokenManager:
             return self._current_set_tokens
 
     def save_tokens(self) -> None:
-        if not self._is_server:
+        if not self._use_cached_credentials:
             with open(self._TOKEN_FILE, "w") as f:
                 json.dump(asdict(self.tokens), f)
 
@@ -160,7 +160,7 @@ class Client:
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
 
-    is_server : bool, default False
+    use_cached_credentials : bool, default False
         Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。
 
         この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)
@@ -194,10 +194,10 @@ class Client:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
-        is_server: bool = False,
+        use_cached_credentials: bool = False,
     ):
         self._tm = TokenManager(
-            tokens=tokens, token_file_path=token_file_path, is_server=is_server
+            tokens=tokens, token_file_path=token_file_path, use_cached_credentials=use_cached_credentials
         )
         self._endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self._headers: Dict[str, Optional[str]] = {

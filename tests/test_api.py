@@ -260,16 +260,16 @@ class TestGetTokens(unittest.TestCase, TestBaseClass):
         client = Client(self.test_endpoint)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
-    def test_is_server(self):
+    def test_use_cached_credentials(self):
         tokens = Tokens(
             refresh_token=self.right_refresh_token,
             access_token=self.wrong_access_token
         )
-        client = Client(self.test_endpoint, tokens=tokens, is_server=True)
+        client = Client(self.test_endpoint, tokens=tokens, use_cached_credentials=True)
         self.assertEqual(client.get_account_info(), self.test_account_info)
 
         with self.assertRaises(TokenError):
-            client = Client(self.test_endpoint, is_server=True)
+            client = Client(self.test_endpoint, use_cached_credentials=True)
 
 class TestCheckHttpError(unittest.TestCase, TestBaseClass):
     def setUp(self):

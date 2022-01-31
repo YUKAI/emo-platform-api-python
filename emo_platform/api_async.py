@@ -64,7 +64,7 @@ class AsyncClient:
 
                 更新があった場合は、emo-platform-api.jsonに保存されているトークンが上書きされます。
 
-    is_server : bool, default False
+    use_cached_credentials : bool, default False
         Trueにした場合、上述した2つのファイルにrefresh token及びaccess tokenを保存しなくなります。
 
         この時、引数tokensにトークン情報を与えるようにしてください。(与えない場合は、例外が出されます。)
@@ -97,9 +97,9 @@ class AsyncClient:
         endpoint_url: Optional[str] = None,
         tokens: Optional[Tokens] = None,
         token_file_path: Optional[str] = None,
-        is_server: bool = False,
+        use_cached_credentials: bool = False,
     ):
-        self._client = Client(endpoint_url, tokens, token_file_path, is_server)
+        self._client = Client(endpoint_url, tokens, token_file_path, use_cached_credentials)
 
     async def update_tokens(self) -> None:
         """トークンの更新と保存
