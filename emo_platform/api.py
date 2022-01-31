@@ -406,8 +406,6 @@ class Client:
     def get_rooms_list(self) -> EmoRoomInfo:
         """ユーザが参加している部屋の一覧の取得
 
-            取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
-
         Returns
         -------
         rooms_list : EmoRoomInfo
@@ -982,8 +980,6 @@ class BizClient(Client):
 
     def get_rooms_list(self, api_key: str) -> EmoRoomInfo:  # type: ignore[override]
         """ユーザが参加している部屋の一覧の取得
-
-            取得可能な部屋は、「BOCCO emo Wi-Fiモデル」のものに限られます。
 
         Parameters
         ----------
