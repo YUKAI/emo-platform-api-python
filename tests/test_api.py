@@ -298,7 +298,7 @@ class TestCheckHttpError(unittest.TestCase, TestBaseClass):
             requests.get, self.test_endpoint + "/v1/me", headers={"Authorization": ""}
         )
         with self.assertRaises(UnauthorizedError):
-            client._check_http_error(request=request, update_tokens=False)
+            client._check_http_error(request=request, _update_tokens=False)
 
     def test_http_request_success_with_retry(self):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token

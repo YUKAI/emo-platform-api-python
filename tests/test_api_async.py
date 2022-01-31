@@ -339,7 +339,7 @@ class TestCheckHttpError(unittest.IsolatedAsyncioTestCase, TestBaseClass):
                 headers={"Authorization": ""},
             )
             with self.assertRaises(UnauthorizedError):
-                await client._check_http_error(request=request, update_tokens=False)
+                await client._check_http_error(request=request, _update_tokens=False)
 
     async def test_http_request_success_with_retry(self):
         os.environ["EMO_PLATFORM_API_REFRESH_TOKEN"] = self.right_refresh_token

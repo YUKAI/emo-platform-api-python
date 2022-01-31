@@ -214,7 +214,7 @@ class Client:
         yield
         self._headers.pop("X-Channel-User")
 
-    def update_tokens(self) -> None:
+    def _update_tokens(self) -> None:
         """トークンの更新と保存
 
             jsonファイルに保存されているrefresh tokenを用いて、
@@ -249,18 +249,18 @@ class Client:
             self._tm.save_tokens()
             return
 
-    def _check_http_error(self, request: Callable, update_tokens: bool = True) -> dict:
+    def _check_http_error(self, request: Callable, _update_tokens: bool = True) -> dict:
         response = request()
         try:
             with _http_error_handler():
                 response.raise_for_status()
         except UnauthorizedError:
-            if not update_tokens:
+            if not _update_tokens:
                 raise
         else:
             return response.json()
 
-        self.update_tokens()
+        self._update_tokens()
         response = request()
         with _http_error_handler():
             response.raise_for_status()
@@ -281,7 +281,7 @@ class Client:
         data: str = "",
         files: Optional[dict] = None,
         content_type: Optional[str] = PostContentType.APPLICATION_JSON,
-        update_tokens: bool = True,
+        _update_tokens: bool = True,
     ) -> dict:
         self._headers["Content-Type"] = content_type
         request = partial(
@@ -291,7 +291,7 @@ class Client:
             files=files,
             headers=self._headers,
         )
-        return self._check_http_error(request, update_tokens=update_tokens)
+        return self._check_http_error(request, _update_tokens=_update_tokens)
 
     def _put(self, path: str, data: str = "{}") -> dict:
         request = partial(
@@ -340,7 +340,7 @@ class Client:
             )
         payload = {"refresh_token": refresh_token}
         response = self._post(
-            "/oauth/token/refresh", json.dumps(payload), update_tokens=False
+            "/oauth/token/refresh", json.dumps(payload), _update_tokens=False
         )
         return EmoTokens(**response)
 

@@ -101,7 +101,7 @@ class AsyncClient:
     ):
         self._client = Client(endpoint_url, tokens, token_file_path, use_cached_credentials)
 
-    async def update_tokens(self) -> None:
+    async def _update_tokens(self) -> None:
         """トークンの更新と保存
 
             jsonファイルに保存されているrefresh tokenを用いて、
@@ -141,7 +141,7 @@ class AsyncClient:
             return
 
     async def _check_http_error(
-        self, request: Callable, update_tokens: bool = True
+        self, request: Callable, _update_tokens: bool = True
     ) -> dict:
         async with request() as response:
             try:
@@ -149,12 +149,12 @@ class AsyncClient:
                 with _aiohttp_error_handler(response_msg):
                     response.raise_for_status()
             except UnauthorizedError:
-                if not update_tokens:
+                if not _update_tokens:
                     raise
             else:
                 return await response.json()
 
-        await self.update_tokens()
+        await self._update_tokens()
         async with request() as response:
             response_msg = await response.text()
             with _aiohttp_error_handler(response_msg):
@@ -177,7 +177,7 @@ class AsyncClient:
         data: Union[str, aiohttp.FormData] = "{}",
         files: Optional[dict] = None,
         content_type: Optional[str] = PostContentType.APPLICATION_JSON,
-        update_tokens: bool = True,
+        _update_tokens: bool = True,
     ) -> dict:
         if content_type is None:
             if "Content-Type" in self._client._headers:
@@ -191,7 +191,7 @@ class AsyncClient:
                 data=data,
                 headers=self._client._headers,
             )
-            return await self._check_http_error(request, update_tokens=update_tokens)
+            return await self._check_http_error(request, _update_tokens=_update_tokens)
 
     async def _put(self, path: str, data: str = "{}") -> dict:
         async with aiohttp.ClientSession() as session:
@@ -247,7 +247,7 @@ class AsyncClient:
             )
         payload = {"refresh_token": refresh_token}
         response = await self._post(
-            "/oauth/token/refresh", json.dumps(payload), update_tokens=False
+            "/oauth/token/refresh", json.dumps(payload), _update_tokens=False
         )
         return EmoTokens(**response)
 

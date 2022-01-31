@@ -124,31 +124,6 @@
 </dl>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="emo_platform.api.Client.update_tokens">
-<span class="sig-name descname"><span class="pre">update_tokens</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#emo_platform.api.Client.update_tokens" title="Permalink to this definition"></a></dt>
-<dd><p>トークンの更新と保存</p>
-<blockquote>
-<div><p>jsonファイルに保存されているrefresh tokenを用いて、
-refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p>
-<p>access tokenが切れると自動で呼び出されるため、基本的に外部から使用することはありません。</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.TokenError" title="emo_platform.exceptions.TokenError"><strong>TokenError</strong></a> – refresh tokenが間違っている場合。</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<dl class="simple">
-<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh">https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh</a></p>
-</dd>
-<dt>API呼び出し回数</dt><dd><p>1回</p>
-</dd>
-</dl>
-</div>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api.Client.get_access_token">
 <span class="sig-name descname"><span class="pre">get_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#emo_platform.response.EmoTokens" title="emo_platform.response.EmoTokens"><span class="pre">emo_platform.response.EmoTokens</span></a></span></span><a class="headerlink" href="#emo_platform.api.Client.get_access_token" title="Permalink to this definition"></a></dt>
 <dd><p>トークンの取得</p>
@@ -2434,31 +2409,6 @@ refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p
 </dd>
 </dl>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="emo_platform.api_async.AsyncClient.update_tokens">
-<em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">update_tokens</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.update_tokens" title="Permalink to this definition"></a></dt>
-<dd><p>トークンの更新と保存</p>
-<blockquote>
-<div><p>jsonファイルに保存されているrefresh tokenを用いて、
-refresh tokenとaccess tokenを更新、jsonファイルに保存します。</p>
-<p>access tokenが切れると自動で呼び出されるため、基本的に外部から使用することはありません。</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#emo_platform.exceptions.TokenError" title="emo_platform.exceptions.TokenError"><strong>TokenError</strong></a> – refresh tokenが間違っている場合。</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<dl class="simple">
-<dt>呼び出しているAPI</dt><dd><p><a class="reference external" href="https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh">https://platform-api.bocco.me/dashboard/api-docs#post-/oauth/token/refresh</a></p>
-</dd>
-<dt>API呼び出し回数</dt><dd><p>1回</p>
-</dd>
-</dl>
-</div>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="emo_platform.api_async.AsyncClient.get_access_token">
 <em class="property"><span class="pre">async</span> </em><span class="sig-name descname"><span class="pre">get_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh_token</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#emo_platform.response.EmoTokens" title="emo_platform.response.EmoTokens"><span class="pre">emo_platform.response.EmoTokens</span></a></span></span><a class="headerlink" href="#emo_platform.api_async.AsyncClient.get_access_token" title="Permalink to this definition"></a></dt>
