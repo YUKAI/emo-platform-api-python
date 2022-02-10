@@ -8,14 +8,17 @@ from emo_platform import AsyncClient, Color, Head
 
 THIS_FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 
+# personal version
 client = AsyncClient()
-rooms_id_list = client.get_rooms_id()
-# create room client
-room = client.create_room_client(rooms_id_list[0])
+
+room = []
 
 
 async def main():
-    pass
+    global room
+    rooms_id_list = await client.get_rooms_id()
+    # create room client
+    room = client.create_room_client(rooms_id_list[0])
 
     """
     Uncomment code block you want to execute.

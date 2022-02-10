@@ -5,20 +5,21 @@ import asyncio
 
 from emo_platform import AsyncClient
 
+# personal version
 client = AsyncClient()
-rooms_id_list = client.get_rooms_id()
-# create room client
-room = client.create_room_client(rooms_id_list[0])
 
 
 async def main():
-    await get_latest_msg()
-    await get_sensors_list()
-    await get_sensor_values()
-    await get_emo_settings()
+    rooms_id_list = await client.get_rooms_id()
+    # create room client
+    room = client.create_room_client(rooms_id_list[0])
+    await get_latest_msg(room)
+    await get_sensors_list(room)
+    await get_sensor_values(room)
+    await get_emo_settings(room)
 
 
-async def get_latest_msg():
+async def get_latest_msg(room):
     print("\n" + "=" * 20 + " room msgs " + "=" * 20)
     msgs = await room.get_msgs()
     msg_latest = msgs.messages[0]
@@ -29,12 +30,12 @@ async def get_latest_msg():
     print("media:", msg_latest.media)
 
 
-async def get_sensors_list():
+async def get_sensors_list(room):
     print("\n" + "=" * 20 + " room sensors list " + "=" * 20)
     print(await room.get_sensors_list())
 
 
-async def get_sensor_values():
+async def get_sensor_values(room):
     print("\n" + "=" * 20 + " room sensor values " + "=" * 20)
     sensor_list = await room.get_sensors_list()
     for sensor in sensor_list.sensors:
@@ -47,7 +48,7 @@ async def get_sensor_values():
             print("events:", room_sensor_values.events)
 
 
-async def get_emo_settings():
+async def get_emo_settings(room):
     print("\n" + "=" * 20 + " room emo settings " + "=" * 20)
     emo_settings = await room.get_emo_settings()
     print("nickname:", emo_settings.nickname)

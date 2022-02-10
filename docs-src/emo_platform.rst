@@ -1,15 +1,11 @@
 emo\_platform package
 =====================
 
-Submodules
-----------
-
 emo\_platform.api module
 ------------------------
 
 .. automodule:: emo_platform.api
    :members:
-   :undoc-members:
    :show-inheritance:
 
 emo\_platform.api\_async module

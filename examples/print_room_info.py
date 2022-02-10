@@ -4,6 +4,7 @@
 from emo_platform import Client
 
 client = Client()
+
 rooms_id_list = client.get_rooms_id()
 # create room client
 room = client.create_room_client(rooms_id_list[0])

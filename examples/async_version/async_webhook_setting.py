@@ -5,22 +5,23 @@ import asyncio
 
 from emo_platform import AsyncClient, WebHook
 
+# personal version
 client = AsyncClient()
 
 
 async def main():
     webhook = WebHook("http://localhost:8000", "test")
     events = ["message.received"]
-    create_webhook_setting(webhook)
+    await create_webhook_setting(webhook)
     await get_webhook_setting()
-    register_webhook_event(events)
+    await register_webhook_event(events)
     await get_webhook_setting()
     await delete_webhook_setting()
 
 
-def create_webhook_setting(webhook):
+async def create_webhook_setting(webhook):
     print("\n" + "=" * 20 + " create webhook setting " + "=" * 20)
-    print(client.create_webhook_setting(webhook))
+    print(await client.create_webhook_setting(webhook))
 
 
 async def get_webhook_setting():

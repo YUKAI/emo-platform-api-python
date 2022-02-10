@@ -5,6 +5,7 @@ import asyncio
 
 from emo_platform import AsyncClient
 
+# personal version
 client = AsyncClient()
 
 

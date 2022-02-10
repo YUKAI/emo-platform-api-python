@@ -77,6 +77,26 @@ class TokenError(EmoPlatformError):
     pass
 
 
+class UnavailableError(EmoPlatformError):
+    """現在のプランでは使用できない場合に出るエラー"""
+
+    def __str__(self):
+        return "You can't use this method in " + self.message + " plan."
+
+
+class WebhookCallbackError(EmoPlatformError):
+    """webhookイベントに紐づいたcallback関数の呼び出しに失敗した時に出るエラー"""
+
+    def __str__(self):
+        return "No callback function associated with the " + self.message + "."
+
+
+class WebhookRequestError(EmoPlatformError):
+    """受信したwebhookリクエスト自体に関するエラー"""
+
+    pass
+
+
 def _http_status_to_exception(code):
     if code == 400:
         return BadRequestError

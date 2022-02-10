@@ -3,11 +3,11 @@
 
 import asyncio
 
-from emo_platform import AsyncClient, WebHook
+from aiohttp import web
+
+from emo_platform import AsyncClient, EmoPlatformError, WebHook
 
 client = AsyncClient()
-# Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
-client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
 
 
 async def print_queue(queue):
@@ -18,6 +18,9 @@ async def print_queue(queue):
 
 
 async def main():
+    # Please replace "YOUR WEBHOOK URL" with the URL forwarded to http://localhost:8000
+    await client.create_webhook_setting(WebHook("YOUR WEBHOOK URL"))
+
     queue = asyncio.Queue()
 
     @client.event("message.received")
@@ -25,13 +28,31 @@ async def main():
         await asyncio.sleep(1)  # Do not use time.sleep in async def
         await queue.put(body)
 
-    # Create task you want to execute in parallel
-    task_queue = asyncio.create_task(print_queue(queue))
+    secret_key = await client.start_webhook_event()
 
-    # Await start_webhook_event last.
-    # Give task list to be executed in parallel as the argument.
-    await client.start_webhook_event(port=8000, tasks=[task_queue])
+    routes = web.RouteTableDef()
+
+    @routes.post("/")
+    async def emo_webhook(request):
+        if request.headers["X-Platform-Api-Secret"] == secret_key:
+            body = await request.json()
+            try:
+                cb_func, emo_webhook_body = client.get_cb_func(body)
+            except EmoPlatformError:
+                return web.Response(status=501)
+            asyncio.create_task(cb_func(emo_webhook_body))
+            return web.Response()
+        else:
+            return web.Response(status=401)
+
+    app = web.Application()
+    app.add_routes(routes)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "localhost", 8000)
+    await site.start()
+
+    await print_queue(queue)
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
