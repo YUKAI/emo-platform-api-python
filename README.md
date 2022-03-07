@@ -1,4 +1,5 @@
 # BOCCO emo platform api python sdk
+- [Library Documentation](https://yukai.github.io/emo-platform-api-python/)
 
 ## How to install
 ### Using poetry (if you want to use in python virtual environment)
