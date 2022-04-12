@@ -99,7 +99,9 @@ class AsyncClient:
         token_file_path: Optional[str] = None,
         use_cached_credentials: bool = False,
     ):
-        self._client = Client(endpoint_url, tokens, token_file_path, use_cached_credentials)
+        self._client = Client(
+            endpoint_url, tokens, token_file_path, use_cached_credentials
+        )
 
     async def _update_tokens(self) -> None:
         """トークンの更新と保存
@@ -866,7 +868,7 @@ class BizAsyncClient(AsyncClient):
     async def get_rooms_list(self, api_key: str) -> EmoRoomInfo:  # type: ignore[override]
         """ユーザが参加している部屋の一覧の取得
 
-            
+
 
         Parameters
         ----------

@@ -197,7 +197,9 @@ class Client:
         use_cached_credentials: bool = False,
     ):
         self._tm = TokenManager(
-            tokens=tokens, token_file_path=token_file_path, use_cached_credentials=use_cached_credentials
+            tokens=tokens,
+            token_file_path=token_file_path,
+            use_cached_credentials=use_cached_credentials,
         )
         self._endpoint_url = endpoint_url if endpoint_url else self._BASE_URL
         self._headers: Dict[str, Optional[str]] = {
