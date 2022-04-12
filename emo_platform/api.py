@@ -1746,6 +1746,42 @@ class Room:
         )
         return EmoMsgsInfo(**response)
 
+    def get_channel_msgs(self, ts: int = None) -> EmoMsgsInfo:
+        """チャンネルから部屋に投稿されたメッセージの取得
+
+        Parameters
+        ----------
+        ts : int or None
+            指定した場合は、その時刻以前のメッセージを取得できます。
+
+                指定方法：2021/07/01 12:30:45以前なら、20210701123045000
+
+        Returns
+        -------
+        response : EmoMsgsInfo
+            投稿されたメッセージの情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/messages/channel
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        params = {"before": ts} if ts else {}
+        response = self._base_client._get(
+            "/v1/rooms/" + self.room_id + "/messages/channel", params=params
+        )
+        return EmoMsgsInfo(**response)
+
     def get_sensors_list(
         self,
     ) -> EmoSensorsInfo:
@@ -2187,6 +2223,10 @@ class BizRoom(Room):
     def get_msgs(self, ts: int = None) -> EmoMsgsInfo:
         with self._base_client._add_apikey2header(self.api_key):
             return super().get_msgs(ts)
+            
+    def get_channel_msgs(self, ts: int = None) -> EmoMsgsInfo:
+        with self._base_client._add_apikey2header(self.api_key):
+            return super().get_channel_msgs(ts)
 
     def get_sensors_list(
         self,
