@@ -2210,9 +2210,6 @@ class BizRoom(Room):
 
         Note
         ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/dashboard/api-docs#get-/v1/rooms/-room_uuid-/messages/channel
-
         API呼び出し回数
             1回 + 1回(access tokenが切れていた場合)
 
