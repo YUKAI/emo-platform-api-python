@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emo-platform-api_sdk"
-version = "1.0.0"
+version = "1.0.1"
 description = "emo platform api python sdk"
 authors = ["Keita Ito <kito@ux-xu.com>"]
 packages = [
