@@ -130,3 +130,6 @@ dmypy.json
 
 # emo_platform_api tokens
 emo_platform/tokens/*.json
+
+# vscode editor setting
+.vscode
