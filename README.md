@@ -1,10 +1,13 @@
 # BOCCO emo platform api python sdk
+- [Library Documentation](https://yukai.github.io/emo-platform-api-python/)
 
 ## How to install
 ### Using poetry (if you want to use in python virtual environment)
 If poetry has not been installed, please see [this page](https://python-poetry.org/docs/) to install.
 
 ```bash
+git clone https://github.com/YUKAI/emo-platform-api-python.git
+cd emo-platform-api-python
 # Python 3.7+ required
 poetry install --no-dev
 ```
@@ -38,7 +41,7 @@ Or, you can give as argument when initializing client in python code.
 ```python
 from emo_platform import Client, Tokens
 
-client = Client(Tokens(access_token="***", refresh_token="***"))
+client = Client(tokens=Tokens(access_token="***", refresh_token="***"))
 ```
 
 ### Note
