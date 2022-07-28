@@ -793,6 +793,14 @@ class EmoWebhookBody(PrintModel):
     """
 
 
+class EmoPostConversation(PrintModel):
+    """対話セッションのレスポンス"""
+
+    session_id: str
+    """対話セッションID
+    """
+
+
 def parse_webhook_body(body: dict) -> EmoWebhookBody:
     """受信したwebhookリクエストのボディのJSONペイロードのパース
 
