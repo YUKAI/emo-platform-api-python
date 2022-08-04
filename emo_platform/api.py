@@ -35,6 +35,7 @@ from emo_platform.response import (
     EmoTokens,
     EmoWebhookBody,
     EmoWebhookInfo,
+    EmoPostConversation,
 )
 
 EMO_PLATFORM_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -260,6 +261,9 @@ class Client:
             if not _update_tokens:
                 raise
         else:
+            if len(response.content) == 0:
+                return {}
+
             return response.json()
 
         self._update_tokens()
@@ -295,9 +299,23 @@ class Client:
         )
         return self._check_http_error(request, _update_tokens=_update_tokens)
 
-    def _put(self, path: str, data: str = "{}") -> dict:
+    def _put(
+        self,
+        path: str,
+        data: str = "{}",
+        files: Optional[dict] = None,
+        content_type: Optional[str] = PostContentType.APPLICATION_JSON,
+        accept: Optional[str] = "*/*",
+    ) -> dict:
+        self._headers["Content-Type"] = content_type
+        self._headers["accept"] = accept
+
         request = partial(
-            requests.put, self._endpoint_url + path, data=data, headers=self._headers
+            requests.put,
+            self._endpoint_url + path,
+            data=data,
+            files=files,
+            headers=self._headers,
         )
         return self._check_http_error(request)
 
@@ -1695,6 +1713,58 @@ class BizAdvancedClient(BizClient):
         return response.secret
 
 
+    def update_conversation_endpoint(
+        self,
+        api_key: str,
+        service_uuid: str,
+        endpoint: str,
+    ):
+        """対話セッションのコールバックURLの設定
+        対話セッションを通して、BOCCO emoからの応答を受信するためのコールバックURLを設定します。
+        管理画面からも、本APIと同等の操作を行うことが可能です。
+
+        Parameters
+        ----------
+        api_key : str
+            法人向けAPIキー
+
+            法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
+            から確認することができます。
+
+        service_uuid : str
+            編集したいサービスのUUID
+
+        endpoint : str
+            Conversation機能のイベントを受信するEndpoint.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#put-/v1/bocco_channel/services/-service_uuid-/conversation_endpoint
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+        with self._add_apikey2header(api_key):
+            files = {'endpoint': (None, endpoint)}
+            self._put(
+                "/v1/bocco_channel/services/" + service_uuid + "/conversation_endpoint",
+                "",
+                files=files,
+                content_type=PostContentType.MULTIPART_FORMDATA,
+                accept="multipart/form-data",
+            )
+
 class Room:
     """部屋固有の各種apiを呼び出す同期版のclient
 
@@ -2252,6 +2322,118 @@ class BizRoom(Room):
         with self._base_client._add_apikey2header(self.api_key):
             return super().get_emo_settings()
 
+    def create_conversation(
+        self,
+    ) -> EmoPostConversation:
+        """対話セッションを開始
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._base_client._add_apikey2header(self.api_key):
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations")
+            return EmoPostConversation(**response)
+
+
+    def create_conversation_recording(
+        self,
+        session_id: str,
+        speech_to_text: bool,
+    ) -> EmoPostConversation:
+        """対話セッション内での音声録音要求
+
+        Parameters
+        ----------
+        session_id : str
+            create_conversation で生成された session_id を指定します。
+
+	    speech_to_text: bool
+            trueの場合、Speech-To-Textを実行した結果も併せて通知します
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/recording
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+        with self._base_client._add_apikey2header(self.api_key):
+            payload = {"speech_to_text": speech_to_text}
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/recording", json.dumps(payload))
+            return EmoPostConversation(**response)
+
+
+    def create_conversation_text(
+        self,
+        session_id: str,
+        text: str,
+        display: bool,
+    ) -> EmoPostConversation:
+        """対話セッション内でのテキストメッセージ投稿
+
+        Parameters
+        ----------
+        session_id : str
+            create_conversation で生成された session_id を指定します。
+
+        text : str
+            送信するテキスト。(1-250文字)
+
+	    display: bool
+            trueの場合、チャットルームにもメッセージを投稿します
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/text
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+        with self._base_client._add_apikey2header(self.api_key):
+            payload = {"text": text, "display": display}
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/text", json.dumps(payload))
+            return EmoPostConversation(**response)
 
 class BizBasicRoom(BizRoom):
     """部屋固有の各種apiを呼び出す同期版のclient(Business Basic版)
