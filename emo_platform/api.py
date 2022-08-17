@@ -2322,119 +2322,6 @@ class BizRoom(Room):
         with self._base_client._add_apikey2header(self.api_key):
             return super().get_emo_settings()
 
-    def create_conversation(
-        self,
-    ) -> EmoPostConversation:
-        """対話セッションを開始
-
-        Returns
-        -------
-        response : EmoPostConversation
-            対話セッション情報。
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているAPI呼び出しが失敗した場合。
-
-        Note
-        ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations
-
-        API呼び出し回数
-            1回 + 1回(access tokenが切れていた場合)
-
-        """
-
-        with self._base_client._add_apikey2header(self.api_key):
-            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations")
-            return EmoPostConversation(**response)
-
-
-    def create_conversation_recording(
-        self,
-        session_id: str,
-        speech_to_text: bool,
-    ) -> EmoPostConversation:
-        """対話セッション内での音声録音要求
-
-        Parameters
-        ----------
-        session_id : str
-            create_conversation で生成された session_id を指定します。
-
-	    speech_to_text: bool
-            trueの場合、Speech-To-Textを実行した結果も併せて通知します
-
-        Returns
-        -------
-        response : EmoPostConversation
-            対話セッション情報。
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているAPI呼び出しが失敗した場合。
-
-        Note
-        ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/recording
-
-        API呼び出し回数
-            1回 + 1回(access tokenが切れていた場合)
-
-        """
-        with self._base_client._add_apikey2header(self.api_key):
-            payload = {"speech_to_text": speech_to_text}
-            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/recording", json.dumps(payload))
-            return EmoPostConversation(**response)
-
-
-    def create_conversation_text(
-        self,
-        session_id: str,
-        text: str,
-        display: bool,
-    ) -> EmoPostConversation:
-        """対話セッション内でのテキストメッセージ投稿
-
-        Parameters
-        ----------
-        session_id : str
-            create_conversation で生成された session_id を指定します。
-
-        text : str
-            送信するテキスト。(1-250文字)
-
-	    display: bool
-            trueの場合、チャットルームにもメッセージを投稿します
-
-        Returns
-        -------
-        response : EmoPostConversation
-            対話セッション情報。
-
-        Raises
-        ----------
-        EmoPlatformError
-            関数内部で行っているAPI呼び出しが失敗した場合。
-
-        Note
-        ----
-        呼び出しているAPI
-            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/text
-
-        API呼び出し回数
-            1回 + 1回(access tokenが切れていた場合)
-
-        """
-        with self._base_client._add_apikey2header(self.api_key):
-            payload = {"text": text, "display": display}
-            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/text", json.dumps(payload))
-            return EmoPostConversation(**response)
-
 class BizBasicRoom(BizRoom):
     """部屋固有の各種apiを呼び出す同期版のclient(Business Basic版)
 
@@ -2563,3 +2450,116 @@ class BizAdvancedRoom(BizRoom):
     def send_motion(self, motion_id: str) -> EmoMessageInfo:
         with self._base_client._add_apikey2header(self.api_key):
             return super().send_motion(motion_id)
+
+    def create_conversation(
+        self,
+    ) -> EmoPostConversation:
+        """対話セッションを開始
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+
+        with self._base_client._add_apikey2header(self.api_key):
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations")
+            return EmoPostConversation(**response)
+
+
+    def create_conversation_recording(
+        self,
+        session_id: str,
+        speech_to_text: bool,
+    ) -> EmoPostConversation:
+        """対話セッション内での音声録音要求
+
+        Parameters
+        ----------
+        session_id : str
+            create_conversation で生成された session_id を指定します。
+
+	    speech_to_text: bool
+            trueの場合、Speech-To-Textを実行した結果も併せて通知します
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/recording
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+        with self._base_client._add_apikey2header(self.api_key):
+            payload = {"speech_to_text": speech_to_text}
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/recording", json.dumps(payload))
+            return EmoPostConversation(**response)
+
+
+    def create_conversation_text(
+        self,
+        session_id: str,
+        text: str,
+        display: bool,
+    ) -> EmoPostConversation:
+        """対話セッション内でのテキストメッセージ投稿
+
+        Parameters
+        ----------
+        session_id : str
+            create_conversation で生成された session_id を指定します。
+
+        text : str
+            送信するテキスト。(1-250文字)
+
+	    display: bool
+            trueの場合、チャットルームにもメッセージを投稿します
+
+        Returns
+        -------
+        response : EmoPostConversation
+            対話セッション情報。
+
+        Raises
+        ----------
+        EmoPlatformError
+            関数内部で行っているAPI呼び出しが失敗した場合。
+
+        Note
+        ----
+        呼び出しているAPI
+            https://platform-api.bocco.me/api-docs/#post-/v1/rooms/-room_uuid-/conversations/-session_id-/text
+
+        API呼び出し回数
+            1回 + 1回(access tokenが切れていた場合)
+
+        """
+        with self._base_client._add_apikey2header(self.api_key):
+            payload = {"text": text, "display": display}
+            response = self._base_client._post("/v1/rooms/" + self.room_id + "/conversations/" + session_id + "/text", json.dumps(payload))
+            return EmoPostConversation(**response)
