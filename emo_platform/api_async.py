@@ -1609,7 +1609,6 @@ class BizAdvancedAsyncClient(BizAsyncClient):
     async def update_conversation_endpoint(
         self,
         api_key: str,
-        service_uuid: str,
         endpoint: str,
     ):
         """対話セッションのコールバックURLの設定
@@ -1623,9 +1622,6 @@ class BizAdvancedAsyncClient(BizAsyncClient):
 
             法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
             から確認することができます。
-
-        service_uuid : str
-            編集したいサービスのUUID
 
         endpoint : str
             Conversation機能のイベントを受信するEndpoint.
@@ -1654,7 +1650,7 @@ class BizAdvancedAsyncClient(BizAsyncClient):
             part.set_content_disposition("form-data", name="endpoint")
 
             await self._put(
-                "/v1/bocco_channel/services/" + service_uuid + "/conversation_endpoint",
+                "/v1/bocco_channel/services/" + api_key + "/conversation_endpoint",
                 data,
                 content_type=PostContentType.MULTIPART_FORMDATA,
                 accept="multipart/form-data",

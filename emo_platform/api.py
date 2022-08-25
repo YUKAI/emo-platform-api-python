@@ -1716,7 +1716,6 @@ class BizAdvancedClient(BizClient):
     def update_conversation_endpoint(
         self,
         api_key: str,
-        service_uuid: str,
         endpoint: str,
     ):
         """対話セッションのコールバックURLの設定
@@ -1730,9 +1729,6 @@ class BizAdvancedClient(BizClient):
 
             法人アカウントでログインした時の `ダッシュボード <https://platform-api.bocco.me/dashboard/>`_
             から確認することができます。
-
-        service_uuid : str
-            編集したいサービスのUUID
 
         endpoint : str
             Conversation機能のイベントを受信するEndpoint.
@@ -1758,7 +1754,7 @@ class BizAdvancedClient(BizClient):
         with self._add_apikey2header(api_key):
             files = {'endpoint': (None, endpoint)}
             self._put(
-                "/v1/bocco_channel/services/" + service_uuid + "/conversation_endpoint",
+                "/v1/bocco_channel/services/" + api_key + "/conversation_endpoint",
                 "",
                 files=files,
                 content_type=PostContentType.MULTIPART_FORMDATA,
